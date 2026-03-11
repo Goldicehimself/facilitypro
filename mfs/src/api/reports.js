@@ -58,6 +58,43 @@ export async function fetchReports() {
   }
 }
 
+export async function fetchReportWarnings() {
+  const useMockReports = import.meta.env.VITE_USE_MOCK_REPORTS === 'true';
+  if (useMockReports) {
+    return [
+      {
+        id: 'mock-warning-1',
+        type: 'pm_due_soon',
+        title: 'Preventive maintenance due soon',
+        message: 'Main HVAC is due in 2 days. Schedule the next cycle now.',
+        severity: 'high',
+        createdAt: new Date().toISOString(),
+        action: {
+          type: 'schedule_pm',
+          label: 'Schedule Now',
+          payload: {
+            name: 'Preventive maintenance - Main HVAC',
+            asset: 'mock-asset-id',
+            description: 'Auto-scheduled follow-up for Main HVAC.',
+            frequency: 'monthly',
+            priority: 'high',
+            nextDueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+            requiresCertification: false
+          }
+        }
+      }
+    ];
+  }
+
+  try {
+    const response = await axiosInstance.get('/reports/warnings', { suppressToast: true });
+    const payload = response.data?.data;
+    return payload?.warnings || [];
+  } catch (error) {
+    return [];
+  }
+}
+
 export async function exportReport(format = 'pdf') {
   try {
     const response = await axiosInstance.post('/reports/export', { format });

@@ -5,6 +5,7 @@ const reportController = require('../controllers/reportController');
 const { protect, requireScope } = require('../middleware/auth');
 
 router.get('/', protect, requireScope('reports:read'), reportController.getReports);
+router.get('/warnings', protect, requireScope('reports:read'), reportController.getReportWarnings);
 router.get('/my-reports', protect, requireScope('reports:read'), reportController.getMyReports);
 router.get('/type/:type', protect, requireScope('reports:read'), reportController.getReportsByType);
 router.get('/:id', protect, requireScope('reports:read'), reportController.getReportById);

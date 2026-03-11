@@ -44,7 +44,9 @@ import {
   Clock,
   DollarSign,
 } from 'lucide-react';
-import { fetchReports, exportReport } from '../../api/reports';
+import { toast } from 'react-toastify';
+import { fetchReports, exportReport, fetchReportWarnings } from '../../api/reports';
+import { createPreventiveMaintenance } from '../../api/preventiveMaintenance';
 
 const ReportsPage = () => {
   const theme = useTheme();
@@ -53,6 +55,9 @@ const ReportsPage = () => {
   const [activeFilter, setActiveFilter] = useState('All Status');
 
   const { data: reports = {} } = useQuery('reports', fetchReports);
+  const { data: reportWarnings = [] } = useQuery('report-warnings', fetchReportWarnings);
+  const [dismissedWarnings, setDismissedWarnings] = useState([]);
+  const [scheduling, setScheduling] = useState(false);
 
   const {
     summary = {},
@@ -84,6 +89,33 @@ const ReportsPage = () => {
 
   const handleExportReport = async () => {
     await exportReport('pdf');
+  };
+
+  const currentWarning = useMemo(
+    () => reportWarnings.find((warning) => !dismissedWarnings.includes(warning.id)),
+    [reportWarnings, dismissedWarnings]
+  );
+
+  const handleScheduleNow = async () => {
+    if (!currentWarning?.action?.payload) {
+      toast.error('No schedule data available.');
+      return;
+    }
+    try {
+      setScheduling(true);
+      await createPreventiveMaintenance(currentWarning.action.payload);
+      toast.success('Preventive maintenance scheduled.');
+      setDismissedWarnings((prev) => [...prev, currentWarning.id]);
+    } catch (error) {
+      toast.error(error?.response?.data?.message || 'Failed to schedule preventive maintenance.');
+    } finally {
+      setScheduling(false);
+    }
+  };
+
+  const handleLater = () => {
+    if (!currentWarning?.id) return;
+    setDismissedWarnings((prev) => [...prev, currentWarning.id]);
   };
 
   const getTrendColor = (value) => {
@@ -499,15 +531,32 @@ const ReportsPage = () => {
               <CardContent sx={{ p: 3 }}>
                 <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, mb: 3 }}>
                   <AlertCircle size={20} />
-                  <Typography variant="body2" sx={{ fontWeight: 500, lineHeight: 1.5 }}>
-                    HVAC system efficiency down 15% this week. Schedule preventive maintenance.
-                  </Typography>
+                  <Box>
+                    <Typography variant="body2" sx={{ fontWeight: 600, lineHeight: 1.4 }}>
+                      {currentWarning?.title || 'No active alerts'}
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 400, lineHeight: 1.5, opacity: 0.9 }}>
+                      {currentWarning?.message || 'You are all set for now.'}
+                    </Typography>
+                  </Box>
                 </Box>
                 <Box sx={{ display: 'flex', gap: 1 }}>
-                  <Button variant="contained" size="small" sx={{ flex: 1, backgroundColor: 'white', color: '#4f46e5', fontWeight: 600, textTransform: 'none', '&:hover': { backgroundColor: '#f3f4f6' } }}>
-                    Schedule Now
+                  <Button
+                    variant="contained"
+                    size="small"
+                    onClick={handleScheduleNow}
+                    disabled={!currentWarning?.action?.payload || scheduling}
+                    sx={{ flex: 1, backgroundColor: 'white', color: '#4f46e5', fontWeight: 600, textTransform: 'none', '&:hover': { backgroundColor: '#f3f4f6' } }}
+                  >
+                    {scheduling ? 'Scheduling...' : (currentWarning?.action?.label || 'Schedule Now')}
                   </Button>
-                  <Button variant="outlined" size="small" sx={{ borderColor: 'white', color: 'white', fontWeight: 600, textTransform: 'none', '&:hover': { backgroundColor: 'rgba(255,255,255,0.1)', borderColor: 'white' } }}>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={handleLater}
+                    disabled={!currentWarning}
+                    sx={{ borderColor: 'white', color: 'white', fontWeight: 600, textTransform: 'none', '&:hover': { backgroundColor: 'rgba(255,255,255,0.1)', borderColor: 'white' } }}
+                  >
                     Later
                   </Button>
                 </Box>
