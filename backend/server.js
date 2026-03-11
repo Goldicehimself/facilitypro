@@ -43,7 +43,17 @@ const app = express();
 app.use(helmet());
 
 // CORS
-app.use(cors());
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null
+].filter(Boolean);
+
+app.use(
+  cors({
+    origin: allowedOrigins.length ? allowedOrigins : true,
+    credentials: true
+  })
+);
 
 //  Body parsing
 app.use(express.json());

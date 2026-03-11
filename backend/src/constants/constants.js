@@ -1,6 +1,6 @@
 // Application Constants
 module.exports = {
-  PORT: process.env.EXPRESS_PORT || 5000,
+  PORT: process.env.PORT || process.env.EXPRESS_PORT || 5000,
   NODE_ENV: process.env.NODE_ENV || 'development',
   MONGODB_URL: process.env.DBSTRING,
   JWT_SECRET: process.env.JWT_SECRET || 'your-secret-key-change-in-production',
