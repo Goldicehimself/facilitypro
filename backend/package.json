@@ -1,5 +1,5 @@
 {
-  "name": "http-sever",
+  "name": "http-server",
   "version": "1.0.0",
   "description": "smiple node server",
   "main": "server.js",
