@@ -1,0 +1,87 @@
+@import './Login.css';
+
+.auth-card--tall {
+  max-width: 480px;
+}
+
+.auth-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.auth-tab-btn {
+  border: 1px solid #d7e0ea;
+  background: #f8fafc;
+  color: #2b4a70;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.auth-tab-btn.is-active {
+  background: #2b4a70;
+  border-color: #2b4a70;
+  color: #fff;
+}
+
+.auth-tab-btn:hover {
+  border-color: #2b4a70;
+}
+
+.auth-helper {
+  margin-top: 6px;
+  font-size: 12px;
+}
+
+.auth-helper--error {
+  color: #b91c1c;
+}
+
+.auth-field--phone .react-international-phone-input {
+  width: 100%;
+  padding: 11px 12px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.auth-field--phone .react-international-phone {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.auth-field--phone .react-international-phone-country-selector-button {
+  border-radius: 10px 0 0 10px;
+  margin-right: 8px;
+}
+
+.auth-field--phone .react-international-phone-input {
+  flex: 1;
+  margin-left: 0;
+}
+
+.auth-select {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  padding: 11px 12px;
+  font-size: 14px;
+  color: #0f172a;
+}
+
+.auth-select:disabled {
+  background: #f1f5f9;
+  color: #94a3b8;
+}
+
+.auth-check--terms {
+  font-size: 13px;
+  color: #475569;
+  margin-top: 2px;
+}

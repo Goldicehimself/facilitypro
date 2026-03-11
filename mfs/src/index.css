@@ -1,0 +1,179 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* --------------------------------------------------
+   SHADCN THEME TOKENS (GRAY / NEUTRAL)
+-------------------------------------------------- */
+@layer base {
+  :root {
+    --background: 210 20% 98%;
+    --foreground: 206 22% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 206 22% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 206 22% 15%;
+
+    --primary: 210 6% 46%;
+    --primary-foreground: 210 22% 15%;
+
+    --secondary: 210 16% 96%;
+    --secondary-foreground: 210 16% 10%;
+
+    --muted: 220 11% 96%;
+    --muted-foreground: 210 11% 45%;
+
+    --accent: 210 16% 96%;
+    --accent-foreground: 210 16% 10%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 210 20% 90%;
+    --input: 210 20% 90%;
+    --ring: 210 100% 50%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 210 10% 6%;
+    --foreground: 210 10% 96%;
+
+    --card: 210 10% 8%;
+    --card-foreground: 210 10% 96%;
+
+    --popover: 210 10% 8%;
+    --popover-foreground: 210 10% 96%;
+
+    --primary: 210 6% 60%;
+    --primary-foreground: 210 10% 6%;
+
+    --secondary: 210 12% 14%;
+    --secondary-foreground: 210 12% 96%;
+
+    --muted: 210 12% 14%;
+    --muted-foreground: 210 12% 68%;
+
+    --accent: 210 12% 14%;
+    --accent-foreground: 210 12% 96%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 210 12% 14%;
+    --input: 210 12% 14%;
+    --ring: 210 100% 60%;
+  }
+}
+
+/* --------------------------------------------------
+   SHADCN BASE LAYER (CRITICAL – DO NOT REMOVE)
+-------------------------------------------------- */
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont,
+      "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans";
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* --------------------------------------------------
+   OPTIONAL: SAFE MUI ISOLATION (DOES NOT AFFECT SHADCN)
+-------------------------------------------------- */
+.mui-scope .MuiPaper-root,
+.mui-scope .MuiCard-root {
+  background: hsl(var(--card));
+  color: hsl(var(--card-foreground));
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  box-shadow: none;
+}
+
+.mui-scope .MuiButton-root {
+  text-transform: none;
+  font-family: inherit;
+}
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* --------------------------------------------------
+   react-international-phone overrides
+-------------------------------------------------- */
+.react-international-phone-input {
+  background-color: #ffffff;
+  border: 1px solid #e6eef8;
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+
+.react-international-phone-country-selector-button {
+  background-color: #ffffff;
+  border: 1px solid #e6eef8;
+}
+
+/* Fix transparent country dropdown */
+.react-international-phone-country-selector-dropdown {
+  background: #fff !important;
+  opacity: 1 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  z-index: 99999 !important;
+  border: 1px solid rgba(0, 0, 0, 0.12) !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* Make each row solid too (optional) */
+.react-international-phone-country-selector-dropdown__list-item {
+  background: #fff !important;
+}
+.react-international-phone-country-selector-dropdown__list-item:hover {
+  background: rgba(0, 0, 0, 0.06) !important;
+}
+
+/* Dark mode for phone input */
+.dark .react-international-phone-input {
+  background-color: #0f172a;
+  border: 1px solid #1f2937;
+  color: #e2e8f0;
+}
+
+.dark .react-international-phone-country-selector-button {
+  background-color: #0f172a;
+  border: 1px solid #1f2937;
+  color: #e2e8f0;
+}
+
+.dark .react-international-phone-country-selector-dropdown {
+  background: #0f172a !important;
+  border: 1px solid #1f2937 !important;
+  box-shadow: 0 12px 30px rgba(2, 6, 23, 0.5) !important;
+  color: #e2e8f0 !important;
+}
+
+.dark .react-international-phone-country-selector-dropdown__list-item {
+  background: #0f172a !important;
+  color: #e2e8f0 !important;
+}
+
+.dark .react-international-phone-country-selector-dropdown__list-item:hover {
+  background: rgba(148, 163, 184, 0.15) !important;
+}
+
+.dark .react-international-phone-country-selector-search-input {
+  background-color: #0f172a !important;
+  border: 1px solid #1f2937 !important;
+  color: #e2e8f0 !important;
+}

@@ -1,0 +1,2 @@
+const fs=require('fs');const s=fs.readFileSync('src/pages/WorkOrders/WorkOrders.jsx','utf8');
+for(let i=0;i<s.length;i++){const ch=s.charCodeAt(i); if((ch<32 && ch!==10 && ch!==13 && ch!==9) || ch>127){ const prefix=s.substring(Math.max(0,i-20),i), suffix=s.substring(i,Math.min(s.length,i+20)); const line=s.substring(0,i).split(/\r?\n/).length; console.log('pos',i,'line',line,'charCode',ch,'context',prefix.replace(/\n/g,'\\n')+suffix.replace(/\n/g,'\\n')); }}
