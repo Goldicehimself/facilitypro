@@ -1,0 +1,111 @@
+﻿<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="x-apple-disable-message-reformatting" />
+    <title>FacilityPro Email</title>
+    <!--
+      FacilityPro Transactional Email Template
+      Replace the {{placeholders}} with your dynamic values.
+      Keep styles inline for best email client compatibility.
+    -->
+  </head>
+  <body style="margin:0; padding:0; background-color:#f5f7fb;">
+    <!-- Preheader (hidden in most clients) -->
+    <div style="display:none; font-size:1px; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden;">
+      {{preheader_text}}
+    </div>
+
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color:#f5f7fb;">
+      <tr>
+        <td align="center" style="padding:32px 16px;">
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="width:600px; max-width:600px; background-color:#ffffff; border-radius:12px; overflow:hidden; border:1px solid #e2e8f0;">
+            <!-- Header -->
+            <tr>
+              <td style="background-color:#0f766e; padding:20px 28px;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                  <tr>
+                    <td style="font-family:Arial,Helvetica,sans-serif; font-size:18px; font-weight:700; color:#ffffff;">
+                      FacilityPro
+                    </td>
+                    <td align="right" style="font-family:Arial,Helvetica,sans-serif; font-size:12px; color:#e6fffb;">
+                      {{header_badge}}
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- Body -->
+            <tr>
+              <td style="padding:32px;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                  <tr>
+                    <td style="font-family:Arial,Helvetica,sans-serif; font-size:20px; font-weight:700; color:#0f172a; padding-bottom:12px;">
+                      {{headline}}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="font-family:Arial,Helvetica,sans-serif; font-size:15px; line-height:1.6; color:#334155; padding-bottom:20px;">
+                      Hi {{recipient_name}},
+                      <br /><br />
+                      {{body_copy}}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td align="center" style="padding:8px 0 24px;">
+                      <a href="{{action_url}}" style="display:inline-block; background-color:#0f766e; color:#ffffff; text-decoration:none; font-family:Arial,Helvetica,sans-serif; font-size:15px; font-weight:600; padding:12px 24px; border-radius:6px;">
+                        {{action_label}}
+                      </a>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="font-family:Arial,Helvetica,sans-serif; font-size:13px; line-height:1.6; color:#64748b; padding-bottom:20px;">
+                      If the button does not work, copy and paste this link into your browser:
+                      <br />
+                      <a href="{{action_url}}" style="color:#0f766e; text-decoration:underline;">{{action_url}}</a>
+                    </td>
+                  </tr>
+
+                  <!-- Optional detail block -->
+                  <tr>
+                    <td style="background-color:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:16px; font-family:Arial,Helvetica,sans-serif; font-size:13px; line-height:1.6; color:#334155;">
+                      <strong>Account details</strong><br />
+                      Organization: {{org_name}}<br />
+                      Organization code: {{org_code}}<br />
+                      Requested by: {{requester_name}}<br />
+                      Requested at: {{request_time}}
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+              <td style="padding:24px 32px 32px; border-top:1px solid #e2e8f0;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                  <tr>
+                    <td style="font-family:Arial,Helvetica,sans-serif; font-size:12px; line-height:1.6; color:#64748b;">
+                      Need help? Contact us at
+                      <a href="mailto:{{support_email}}" style="color:#0f766e; text-decoration:underline;">{{support_email}}</a>.
+                      <br />
+                      {{footer_note}}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="font-family:Arial,Helvetica,sans-serif; font-size:12px; color:#94a3b8; padding-top:12px;">
+                      © {{year}} FacilityPro. All rights reserved.
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
+
