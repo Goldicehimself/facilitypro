@@ -1,5 +1,16 @@
 // Email Utility
 const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
+
+let resendClient = null;
+
+const getResendClient = () => {
+  if (!process.env.RESEND_API_KEY) return null;
+  if (!resendClient) {
+    resendClient = new Resend(process.env.RESEND_API_KEY);
+  }
+  return resendClient;
+};
 
 const getTransporter = () => {
   const {
@@ -29,6 +40,29 @@ const getTransporter = () => {
 };
 
 const sendEmail = async ({ to, subject, text, html }) => {
+  const resend = getResendClient();
+  if (resend) {
+    const from = process.env.EMAIL_FROM || process.env.SMTP_FROM || 'no-reply@facilitypro.local';
+    const toList = Array.isArray(to) ? to : [to];
+    try {
+      const { data, error } = await resend.emails.send({
+        from,
+        to: toList,
+        subject,
+        text,
+        html
+      });
+      if (error) {
+        console.error('[email] failed to send (resend):', error.message || error);
+        return false;
+      }
+      return Boolean(data?.id);
+    } catch (error) {
+      console.error('[email] failed to send (resend):', error.message);
+      return false;
+    }
+  }
+
   const transporter = getTransporter();
   if (!transporter) {
     console.log('[email] SMTP not configured; skipping send.');
