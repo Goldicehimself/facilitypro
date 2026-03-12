@@ -42,7 +42,7 @@ const getTransporter = () => {
 const sendEmail = async ({ to, subject, text, html }) => {
   const resend = getResendClient();
   if (resend) {
-    const from = process.env.EMAIL_FROM || process.env.SMTP_FROM ||  "FacilityPro <no-reply@resend.test>";
+    const from = process.env.EMAIL_FROM || process.env.SMTP_FROM ||  "FacilityPro <no-reply@example.com>";
     const toList = Array.isArray(to) ? to : [to];
     try {
       const { data, error } = await resend.emails.send({
@@ -69,7 +69,7 @@ const sendEmail = async ({ to, subject, text, html }) => {
     return false;
   }
 
-  const from = process.env.EMAIL_FROM || process.env.SMTP_FROM ||  "FacilityPro <no-reply@resend.test>";
+  const from = process.env.EMAIL_FROM || process.env.SMTP_FROM ||  "FacilityPro <no-reply@example.com>";
   try {
     await transporter.sendMail({
       from,
