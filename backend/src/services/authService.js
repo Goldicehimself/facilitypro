@@ -522,14 +522,14 @@ const requestPasswordReset = async (email, orgCode) => {
     support_email: getSupportEmail(organization),
     year: new Date().getFullYear()
   });
-  await sendEmail({
+  const emailSent = await sendEmail({
     to: user.email,
     subject: 'Reset your FacilityPro password',
     text: `Reset your password using this link: ${resetLink}`,
     html: resetHtml || `<p>Reset your password using the link below:</p><p><a href="${resetLink}">${resetLink}</a></p>`
   });
 
-  return { sent: true };
+  return { sent: emailSent };
 };
 
 const resetPassword = async (token, orgCode, newPassword) => {

@@ -29,8 +29,12 @@ const ForgotPassword = () => {
     }
 
     try {
-      await requestPasswordReset(email.trim(), orgCode.trim().toUpperCase());
-      setMessage('If an account exists with this email, a password reset link has been sent.');
+      const result = await requestPasswordReset(email.trim(), orgCode.trim().toUpperCase());
+      if (result?.sent) {
+        setMessage('If an account exists with this email, a password reset link has been sent.');
+      } else {
+        setError('We could not send the reset email right now. Please try again later.');
+      }
     } catch (err) {
       setError(err?.message || 'Unable to process password reset. Please try again.');
     }
