@@ -55,7 +55,7 @@ const verifyUserEmailQuerySchema = Joi.object({
   email: Joi.string().email().optional()
 });
 
-const resendUserEmailBodySchema = Joi.object({
+const sendUserEmailAgainBodySchema = Joi.object({
   orgCode: Joi.string().alphanum().min(6).max(12).required(),
   email: Joi.string().email().required()
 });
@@ -84,5 +84,5 @@ module.exports = {
   forgotPasswordSchema,
   resetPasswordSchema,
   verifyUserEmailQuerySchema,
-  resendUserEmailBodySchema
+  sendUserEmailAgainBodySchema
 };

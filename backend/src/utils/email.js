@@ -1,68 +1,44 @@
 // Email Utility
 const nodemailer = require('nodemailer');
-const { Resend } = require('resend');
-
-let resendClient = null;
-
-const getResendClient = () => {
-  if (!process.env.RESEND_API_KEY) return null;
-  if (!resendClient) {
-    resendClient = new Resend(process.env.RESEND_API_KEY);
-  }
-  return resendClient;
-};
-
 const getTransporter = () => {
   const {
     SMTP_HOST,
     SMTP_PORT,
     SMTP_USER,
     SMTP_PASS,
-    SMTP_SECURE
+    SMTP_SECURE,
+    BREVO_SMTP_HOST,
+    BREVO_SMTP_PORT,
+    BREVO_SMTP_USER,
+    BREVO_SMTP_PASS,
+    BREVO_SMTP_SECURE
   } = process.env;
 
-  if (!SMTP_HOST || !SMTP_PORT || !SMTP_USER || !SMTP_PASS) {
+  const host = SMTP_HOST || BREVO_SMTP_HOST;
+  const port = SMTP_PORT || BREVO_SMTP_PORT;
+  const user = SMTP_USER || BREVO_SMTP_USER;
+  const pass = SMTP_PASS || BREVO_SMTP_PASS;
+  const secure = (SMTP_SECURE || BREVO_SMTP_SECURE) === 'true';
+
+  if (!host || !port || !user || !pass) {
     return null;
   }
 
   return nodemailer.createTransport({
-    host: SMTP_HOST,
-    port: Number(SMTP_PORT),
-    secure: SMTP_SECURE === 'true',
+    host,
+    port: Number(port),
+    secure,
     connectionTimeout: 10000,
     greetingTimeout: 10000,
     socketTimeout: 10000,
     auth: {
-      user: SMTP_USER,
-      pass: SMTP_PASS
+      user,
+      pass
     }
   });
 };
 
 const sendEmail = async ({ to, subject, text, html }) => {
-  const resend = getResendClient();
-  if (resend) {
-    const from = process.env.EMAIL_FROM || process.env.SMTP_FROM ||  "FacilityPro <no-reply@example.com>";
-    const toList = Array.isArray(to) ? to : [to];
-    try {
-      const { data, error } = await resend.emails.send({
-        from,
-        to: toList,
-        subject,
-        text,
-        html
-      });
-      if (error) {
-        console.error('[email] failed to send (resend):', error.message || error);
-        return false;
-      }
-      return Boolean(data?.id);
-    } catch (error) {
-      console.error('[email] failed to send (resend):', error.message);
-      return false;
-    }
-  }
-
   const transporter = getTransporter();
   if (!transporter) {
     console.log('[email] SMTP not configured; skipping send.');

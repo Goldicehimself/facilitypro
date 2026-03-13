@@ -9,7 +9,7 @@ import { isEmailAllowedByPolicy } from '../../utils/securityPolicy';
 import { getOrgSettings } from '../../api/org';
 
 export const AdminSettings = () => {
-  const { invitations, sendAdminInvitation, revokeInvitation, resendInvitation } = useInvitations();
+  const { invitations, sendAdminInvitation, revokeInvitation, sendInvitationAgain } = useInvitations();
   const { user } = useAuth();
   const [showInviteForm, setShowInviteForm] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
@@ -65,9 +65,9 @@ export const AdminSettings = () => {
     }
   };
 
-  const handleResendInvite = (id) => {
-    resendInvitation(id);
-    toast.success('Invitation resent');
+  const handleSendInviteAgain = (id) => {
+    sendInvitationAgain(id);
+    toast.success('Invitation sent again');
   };
 
   const handleRevokeInvite = (id) => {
@@ -170,9 +170,9 @@ export const AdminSettings = () => {
                 {inv.status === 'pending' && (
                   <div className="flex gap-2">
                     <button
-                      onClick={() => handleResendInvite(inv.id)}
+                      onClick={() => handleSendInviteAgain(inv.id)}
                       className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900 rounded cursor-pointer"
-                      title="Resend invitation"
+                      title="Send invitation again"
                     >
                       <Copy className="h-4 w-4" />
                     </button>

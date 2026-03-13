@@ -133,11 +133,11 @@ const verifyUserEmail = async (req, res, next) => {
   }
 };
 
-const resendUserEmailVerification = async (req, res, next) => {
+const sendUserEmailVerificationAgain = async (req, res, next) => {
   try {
     const { orgCode, email } = req.validatedData || req.body;
-    const result = await authService.resendUserEmailVerification({ orgCode, email });
-    response.success(res, 'Verification email resent', result);
+    const result = await authService.sendUserEmailVerificationAgain({ orgCode, email });
+    response.success(res, 'Verification email sent again', result);
   } catch (error) {
     next(error);
   }
@@ -348,7 +348,7 @@ module.exports = {
   logout,
   verifyToken,
   verifyUserEmail,
-  resendUserEmailVerification,
+  sendUserEmailVerificationAgain,
   getProfile,
   updateProfile,
   uploadCertificates,

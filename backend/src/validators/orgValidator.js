@@ -81,7 +81,7 @@ const verifyOrgEmailQuerySchema = Joi.object({
   email: Joi.string().email().optional()
 });
 
-const resendOrgEmailBodySchema = Joi.object({
+const sendOrgEmailAgainBodySchema = Joi.object({
   orgCode: Joi.string().alphanum().min(6).max(12).required(),
   email: Joi.string().email().required()
 });
@@ -116,7 +116,7 @@ module.exports = {
   updateOrgSettingsSchema,
   publicSecurityPolicyQuerySchema,
   verifyOrgEmailQuerySchema,
-  resendOrgEmailBodySchema,
+  sendOrgEmailAgainBodySchema,
   createWebhookSchema,
   createApiKeySchema,
   updateCertificateStatusSchema

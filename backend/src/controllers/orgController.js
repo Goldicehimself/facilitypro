@@ -126,11 +126,11 @@ const verifyOrgEmail = async (req, res, next) => {
   }
 };
 
-const resendOrgEmailVerification = async (req, res, next) => {
+const sendOrgEmailVerificationAgain = async (req, res, next) => {
   try {
     const { orgCode, email } = req.validatedData || req.body;
-    const result = await orgService.resendOrgEmailVerification({ orgCode, email });
-    response.success(res, 'Verification email resent', result);
+    const result = await orgService.sendOrgEmailVerificationAgain({ orgCode, email });
+    response.success(res, 'Verification email sent again', result);
   } catch (error) {
     next(error);
   }
@@ -195,7 +195,7 @@ module.exports = {
   updateSettings,
   getPublicSecurityPolicy,
   verifyOrgEmail,
-  resendOrgEmailVerification,
+  sendOrgEmailVerificationAgain,
   getIntegrations,
   createWebhook,
   deleteWebhook,

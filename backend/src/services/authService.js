@@ -448,7 +448,7 @@ const verifyUserEmail = async (token, { orgCode, email } = {}) => {
   return { userId: user._id, verifiedAt: user.emailVerifiedAt };
 };
 
-const resendUserEmailVerification = async ({ orgCode, email } = {}) => {
+const sendUserEmailVerificationAgain = async ({ orgCode, email } = {}) => {
   const normalizedOrgCode = String(orgCode || '').toUpperCase();
   const normalizedEmail = String(email || '').toLowerCase();
   const org = await Organization.findOne({ orgCode: normalizedOrgCode });
@@ -569,7 +569,7 @@ module.exports = {
   createInviteCode,
   login,
   verifyUserEmail,
-  resendUserEmailVerification,
+  sendUserEmailVerificationAgain,
   requestPasswordReset,
   resetPassword,
   validateToken,

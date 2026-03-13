@@ -51,7 +51,7 @@ export const InvitationProvider = ({ children }) => {
     );
   };
 
-  const resendInvitation = (id) => {
+  const sendInvitationAgain = (id) => {
     setInvitations(prev =>
       prev.map(inv =>
         inv.id === id
@@ -81,7 +81,7 @@ export const InvitationProvider = ({ children }) => {
     sendAdminInvitation,
     acceptInvitation,
     revokeInvitation,
-    resendInvitation,
+    sendInvitationAgain,
     getInvitationByToken,
     isTokenValid,
   };

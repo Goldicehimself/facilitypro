@@ -464,7 +464,7 @@ const verifyOrgEmail = async (token, { orgCode, email } = {}) => {
   return { orgId: org._id, verifiedAt: org.orgEmailVerifiedAt };
 };
 
-const resendOrgEmailVerification = async ({ orgCode, email } = {}) => {
+const sendOrgEmailVerificationAgain = async ({ orgCode, email } = {}) => {
   const normalizedOrgCode = String(orgCode || '').toUpperCase();
   const normalizedEmail = String(email || '').toLowerCase();
   const org = await Organization.findOne({
@@ -663,7 +663,7 @@ module.exports = {
   updateSettings,
   getPublicSecurityPolicy,
   verifyOrgEmail,
-  resendOrgEmailVerification,
+  sendOrgEmailVerificationAgain,
   normalizeSettings,
   getEntitlements,
   getIntegrations,

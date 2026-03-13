@@ -10,7 +10,7 @@ export async function resetPassword({ token, orgCode, password }) {
   return response.data?.data;
 }
 
-export async function resendUserVerification({ email, orgCode }) {
-  const response = await api.post('/auth/resend-verify-user-email', { email, orgCode }, { suppressToast: true });
+export async function sendUserVerificationAgain({ email, orgCode }) {
+  const response = await api.post('/auth/send-verify-user-email', { email, orgCode }, { suppressToast: true });
   return response.data?.data;
 }

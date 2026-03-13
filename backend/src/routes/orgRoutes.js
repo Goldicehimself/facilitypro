@@ -10,7 +10,7 @@ const {
   updateOrgSettingsSchema,
   publicSecurityPolicyQuerySchema,
   verifyOrgEmailQuerySchema,
-  resendOrgEmailBodySchema,
+  sendOrgEmailAgainBodySchema,
   createWebhookSchema,
   createApiKeySchema,
   updateCertificateStatusSchema
@@ -23,7 +23,7 @@ router.get('/settings', protect, authorize('admin', 'facility_manager'), orgCont
 router.put('/settings', protect, authorize('admin', 'facility_manager'), validateRequest(updateOrgSettingsSchema), orgController.updateSettings);
 router.get('/public-security-policy', validateQuery(publicSecurityPolicyQuerySchema), orgController.getPublicSecurityPolicy);
 router.get('/verify-email', validateQuery(verifyOrgEmailQuerySchema), orgController.verifyOrgEmail);
-router.post('/resend-verify-email', validateRequest(resendOrgEmailBodySchema), orgController.resendOrgEmailVerification);
+router.post('/send-verify-email', validateRequest(sendOrgEmailAgainBodySchema), orgController.sendOrgEmailVerificationAgain);
 router.get('/integrations', protect, authorize('admin'), orgController.getIntegrations);
 router.post('/integrations/webhooks', protect, authorize('admin'), validateRequest(createWebhookSchema), orgController.createWebhook);
 router.delete('/integrations/webhooks/:id', protect, authorize('admin'), orgController.deleteWebhook);

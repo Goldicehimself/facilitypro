@@ -9,7 +9,7 @@ const VerifyOrgEmail = () => {
   const [searchParams] = useSearchParams();
   const [status, setStatus] = useState('loading');
   const [message, setMessage] = useState('Verifying your organization email...');
-  const [resendStatus, setResendStatus] = useState('idle');
+  const [sendStatus, setSendStatus] = useState('idle');
   const [orgCode, setOrgCode] = useState('');
   const [email, setEmail] = useState('');
   const hasVerifiedRef = useRef(false);
@@ -85,17 +85,17 @@ const VerifyOrgEmail = () => {
     }
   }, [searchParams]);
 
-  const handleResend = async () => {
-    setResendStatus('loading');
+  const handleSendAgain = async () => {
+    setSendStatus('loading');
     try {
-      const response = await axiosInstance.post('/org/resend-verify-email', {
+      const response = await axiosInstance.post('/org/send-verify-email', {
         orgCode,
         email
       }, { suppressToast: true });
-      setResendStatus('success');
+      setSendStatus('success');
     } catch (error) {
-      setResendStatus('error');
-      setMessage(error.response?.data?.message || 'Unable to resend verification email.');
+      setSendStatus('error');
+      setMessage(error.response?.data?.message || 'Unable to send verification email.');
     }
   };
 
@@ -147,8 +147,8 @@ const VerifyOrgEmail = () => {
             )}
             <button
               type="button"
-              onClick={handleResend}
-              disabled={resendStatus === 'loading' || !orgCode.trim() || !email.trim()}
+              onClick={handleSendAgain}
+              disabled={sendStatus === 'loading' || !orgCode.trim() || !email.trim()}
               style={{
                 padding: '0.6rem 1.2rem',
                 borderRadius: 10,
@@ -156,12 +156,12 @@ const VerifyOrgEmail = () => {
                 background: '#0f766e',
                 color: '#ffffff',
                 fontWeight: 600,
-                cursor: resendStatus === 'loading' ? 'not-allowed' : 'pointer'
+                cursor: sendStatus === 'loading' ? 'not-allowed' : 'pointer'
               }}
             >
-              {resendStatus === 'loading' ? 'Resending...' : 'Resend email'}
+              {sendStatus === 'loading' ? 'Sending...' : 'Send again'}
             </button>
-            {resendStatus === 'success' && (
+            {sendStatus === 'success' && (
               <div style={{ marginTop: 8, fontSize: 12, color: '#16a34a' }}>
                 Verification email sent. Check your inbox.
               </div>

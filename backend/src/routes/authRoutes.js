@@ -5,7 +5,7 @@ const authController = require('../controllers/authController');
 const { protect, authorize } = require('../middleware/auth');
 const { validateRequest, validateQuery } = require('../middleware/validation');
 const { parseMultipartJson } = require('../middleware/parseMultipartJson');
-const { updateUserSchema, registerSchema, registerOrgSchema, inviteSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema, verifyUserEmailQuerySchema, resendUserEmailBodySchema } = require('../validators/userValidator');
+const { updateUserSchema, registerSchema, registerOrgSchema, inviteSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema, verifyUserEmailQuerySchema, sendUserEmailAgainBodySchema } = require('../validators/userValidator');
 const { uploadAvatar, uploadCertificateMultiple } = require('../../multer/multer');
 const { uploadSingle, uploadMultiple } = require('../middleware/cloudinaryUpload');
 
@@ -28,7 +28,7 @@ router.post('/reset-password', validateRequest(resetPasswordSchema), authControl
 router.post('/logout', protect, authController.logout);
 router.get('/verify', protect, authController.verifyToken);
 router.get('/verify-user-email', validateQuery(verifyUserEmailQuerySchema), authController.verifyUserEmail);
-router.post('/resend-verify-user-email', validateRequest(resendUserEmailBodySchema), authController.resendUserEmailVerification);
+router.post('/send-verify-user-email', validateRequest(sendUserEmailAgainBodySchema), authController.sendUserEmailVerificationAgain);
 router.get('/profile', protect, authController.getProfile);
 router.put(
   '/profile',
