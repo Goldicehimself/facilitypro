@@ -148,4 +148,6 @@ runWebhookJobs();
 app.listen(EXPRESSPORT, () => {
   console.log(` Server is running on http://localhost:${EXPRESSPORT}`);
   console.log(` API Documentation: http://localhost:${EXPRESSPORT}/api/docs`);
+  console.log(` EMAIL_BASE_URL: ${process.env.EMAIL_BASE_URL || '(not set)'}`);
+  console.log(` FRONTEND_URL: ${process.env.FRONTEND_URL || '(not set)'}`);
 });
