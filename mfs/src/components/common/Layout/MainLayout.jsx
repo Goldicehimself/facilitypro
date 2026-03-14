@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Menu, LogOut, Settings, User, Search } from "lucide-react";
+import { Menu, LogOut, Settings, User, Search, Wrench } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../contexts/AuthContext";
 
@@ -91,12 +91,14 @@ const MainLayout = ({ children }) => {
           </Button>
 
           <div className="hidden md:flex items-center gap-3">
-            <div className="flex items-center">
-              <img
-                src="/facilitypro-logo.svg"
-                alt="FacilityPro logo"
-                className="h-14 w-auto fp-logo"
-              />
+            <div className="flex items-center gap-3">
+              <div
+                className="h-10 w-10 rounded-md flex items-center justify-center text-white"
+                style={{ backgroundColor: "var(--mp-brand)" }}
+              >
+                <Wrench size={18} />
+              </div>
+              <span className="font-semibold text-slate-900 dark:text-white">FacilityPro</span>
             </div>
 
           </div>

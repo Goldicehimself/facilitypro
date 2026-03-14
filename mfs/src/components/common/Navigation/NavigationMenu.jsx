@@ -392,12 +392,20 @@ const NavigationMenu = ({ onCloseMobile = () => {}, collapsed = false, onToggleC
     <Box className="h-full mp-sidebar">
       <Box className="mp-sidebar-header">
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, justifyContent: collapsed ? 'center' : 'flex-start' }}>
-          <img
-            src="/facilitypro-logo.svg"
-            alt="FacilityPro logo"
-            className="fp-logo"
-            style={{ width: 56, height: 56, objectFit: 'contain' }}
-          />
+          <Box
+            sx={{
+              width: 56,
+              height: 56,
+              borderRadius: 2,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              bgcolor: 'var(--mp-brand)',
+              color: '#fff',
+            }}
+          >
+            <Wrench size={22} />
+          </Box>
 
           {!collapsed && (
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Eye, EyeOff,Copyright } from 'lucide-react';
+import { Eye, EyeOff,Copyright, Wrench } from 'lucide-react';
 import { Link as RouterLink, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'react-toastify';
@@ -203,11 +203,9 @@ const Register = () => {
     <div className="auth-page">
       <div className="auth-card auth-card--tall">
         <RouterLink className="auth-brand" to="/" aria-label="FacilityPro home">
-          <img
-            src="/facilitypro-logo.svg"
-            alt="FacilityPro logo"
-            className="auth-logo-img fp-logo"
-          />
+          <div className="auth-logo-mark" aria-hidden="true">
+            <Wrench size={28} />
+          </div>
         </RouterLink>
 
         <div className="auth-header">

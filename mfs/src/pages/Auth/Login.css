@@ -35,6 +35,17 @@
   margin: 0 auto;
 }
 
+.auth-logo-mark {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--mp-brand, #2b4a70);
+  color: #fff;
+}
+
 
 .auth-header {
   text-align: center;

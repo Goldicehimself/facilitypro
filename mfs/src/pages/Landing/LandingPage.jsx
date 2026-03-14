@@ -99,12 +99,14 @@ const LandingPage = () => {
       {/* ================= HEADER ================= */}
       <header className="sticky top-0 z-50 bg-white/80 backdrop-blur border-b border-slate-100">
         <div className="mx-auto max-w-7xl px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center">
-            <img
-              src="/facilitypro-logo.svg"
-              alt="FacilityPro logo"
-              className="h-16 w-auto fp-logo"
-            />
+          <div className="flex items-center gap-3">
+            <div
+              className="h-10 w-10 rounded-md flex items-center justify-center text-white"
+              style={{ backgroundColor: "var(--mp-brand)" }}
+            >
+              <Wrench size={18} />
+            </div>
+            <span className="font-semibold text-slate-900">FacilityPro</span>
           </div>
 
           <div className="hidden md:flex items-center gap-4">
@@ -713,8 +715,11 @@ const LandingPage = () => {
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div>
               <div className="flex items-center gap-3 mb-4">
-                <div className="h-8 w-8 rounded-md flex items-center justify-center text-white" style={{ backgroundColor: "var(--mp-brand)" }}>
-                  <Wrench size={16} />
+                <div
+                  className="h-10 w-10 rounded-md flex items-center justify-center text-white"
+                  style={{ backgroundColor: "var(--mp-brand)" }}
+                >
+                  <Wrench size={18} />
                 </div>
                 <span className="font-semibold text-slate-900">FacilityPro</span>
               </div>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Eye, EyeOff, Copyright } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff, Copyright, Wrench } from 'lucide-react';
 import { Link as RouterLink } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import './Login.css';
@@ -40,11 +40,9 @@ const Login = () => {
     <div className="auth-page">
       <div className="auth-card">
         <RouterLink className="auth-brand" to="/" aria-label="FacilityPro home">
-          <img
-            src="/facilitypro-logo.svg"
-            alt="FacilityPro logo"
-            className="auth-logo-img fp-logo"
-          />
+          <div className="auth-logo-mark" aria-hidden="true">
+            <Wrench size={28} />
+          </div>
         </RouterLink>
 
         <div className="auth-header">
