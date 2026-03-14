@@ -62,6 +62,12 @@ const errorHandler = (err, req, res, next) => {
   err.statusCode = err.statusCode || 500;
   err.message = err.message || 'Internal server error';
 
+  // Multer/file upload errors
+  if (err && (err.name === 'MulterError' || (typeof err.code === 'string' && err.code.startsWith('LIMIT_')))) {
+    const message = err.message || 'Invalid file upload';
+    err = new BadRequestError(message);
+  }
+
   // Wrong MongoDB _id error
   if (err.name === 'CastError') {
     const message = `Resource not found. Invalid: ${err.path}`;

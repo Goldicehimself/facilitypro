@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import logger from '../../utils/logger';
 import { useNavigate, useParams } from 'react-router-dom';
 import { createAsset, updateAsset, getAsset, uploadAssetImage } from '../../api/assets';
 import { ArrowLeft, Save, Upload, Image as ImageIcon } from 'lucide-react';
@@ -103,7 +104,7 @@ export default function AssetForm() {
         setImagePreview(asset.imageUrl);
       }
     } catch (error) {
-      console.error('Error fetching asset:', error);
+      logger.error('Error fetching asset:', error);
     } finally {
       setLoading(false);
     }
@@ -260,13 +261,13 @@ export default function AssetForm() {
           }
         }
       } catch (imgErr) {
-        console.warn('Image upload failed but asset saved:', imgErr);
+        logger.warn('Image upload failed but asset saved:', imgErr);
       }
 
       await new Promise(r => setTimeout(r, 150));
       navigate('/assets');
     } catch (error) {
-      console.error('Error saving asset:', error);
+      logger.error('Error saving asset:', error);
       setErrors({ submit: error.message || 'Failed to save asset' });
     } finally {
       setSaving(false);

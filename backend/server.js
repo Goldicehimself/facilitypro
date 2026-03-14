@@ -8,6 +8,7 @@ const rateLimit = require('express-rate-limit');
 const connectDB = require('./DataBase/dbconnection.js');
 
 // Import configuration and middleware
+const logger = require('./src/utils/logger');
 const { requestLogger } = require('./src/middleware/logger');
 const { protect } = require('./src/middleware/auth');
 const { AuthorizationError } = require('./src/utils/errorHandler');
@@ -16,6 +17,7 @@ const { errorHandler } = require('./src/utils/errorHandler');
 const webhookService = require('./src/services/webhookService');
 const workOrderService = require('./src/services/workOrderService');
 const preventiveMaintenanceService = require('./src/services/preventiveMaintenanceService');
+const { initRedis, closeRedis } = require('./src/utils/redisClient');
 
 // Import routes
 const authRoutes = require('./src/routes/authRoutes');
@@ -110,44 +112,66 @@ app.use((req, res) => {
 app.use(errorHandler);
 
 
-//  Connect DB
-connectDB();
+const startServer = async () => {
+  // Connect DB first so background jobs don't run before Mongo is ready
+  await connectDB();
 
-// Leave reminder job (every 6 hours)
-const { sendLeaveReminderEmails } = require('./src/services/leaveService');
-setInterval(() => {
-  sendLeaveReminderEmails().catch((err) => console.error('[leave reminders] failed', err));
-}, 6 * 60 * 60 * 1000);
+  // Connect Redis (if REDIS_URL is configured)
+  await initRedis().catch((err) => {
+    logger.warn('[redis] init failed', err?.message || err);
+  });
 
-// Overdue work orders & PM due webhook jobs (every 60 minutes)
-const runWebhookJobs = async () => {
-  try {
-    const overdueWorkOrders = await workOrderService.getOverdueWorkOrders();
-    if (overdueWorkOrders.length) {
-      overdueWorkOrders.forEach((wo) => {
-        webhookService.emitWebhookEvent(wo.organization?.toString?.() || wo.organization, 'workorder.overdue', { workOrder: wo });
-      });
-      await workOrderService.markOverdueNotified(overdueWorkOrders.map((wo) => wo._id));
+  // Leave reminder job (every 6 hours)
+  const { sendLeaveReminderEmails } = require('./src/services/leaveService');
+  setInterval(() => {
+    sendLeaveReminderEmails().catch((err) => logger.error('[leave reminders] failed', err?.message || err));
+  }, 6 * 60 * 60 * 1000);
+
+  // Overdue work orders & PM due webhook jobs (every 60 minutes)
+  const runWebhookJobs = async () => {
+    try {
+      const overdueWorkOrders = await workOrderService.getOverdueWorkOrders();
+      if (overdueWorkOrders.length) {
+        overdueWorkOrders.forEach((wo) => {
+          webhookService.emitWebhookEvent(wo.organization?.toString?.() || wo.organization, 'workorder.overdue', { workOrder: wo });
+        });
+        await workOrderService.markOverdueNotified(overdueWorkOrders.map((wo) => wo._id));
+      }
+
+      const dueMaintenances = await preventiveMaintenanceService.getDueMaintenances();
+      if (dueMaintenances.length) {
+        dueMaintenances.forEach((pm) => {
+          webhookService.emitWebhookEvent(pm.organization?.toString?.() || pm.organization, 'pm.due', { maintenance: pm });
+        });
+        await preventiveMaintenanceService.markDueNotified(dueMaintenances.map((pm) => pm._id));
+      }
+    } catch (error) {
+      logger.error('[webhook jobs] failed', error?.message || error);
     }
+  };
 
-    const dueMaintenances = await preventiveMaintenanceService.getDueMaintenances();
-    if (dueMaintenances.length) {
-      dueMaintenances.forEach((pm) => {
-        webhookService.emitWebhookEvent(pm.organization?.toString?.() || pm.organization, 'pm.due', { maintenance: pm });
-      });
-      await preventiveMaintenanceService.markDueNotified(dueMaintenances.map((pm) => pm._id));
-    }
-  } catch (error) {
-    console.error('[webhook jobs] failed', error);
-  }
+  setInterval(runWebhookJobs, 60 * 60 * 1000);
+  runWebhookJobs();
+
+  const server = app.listen(EXPRESSPORT, () => {
+    logger.info(`Server is running on http://localhost:${EXPRESSPORT}`);
+    logger.info(`API Documentation: http://localhost:${EXPRESSPORT}/api/docs`);
+    logger.info(`EMAIL_BASE_URL: ${process.env.EMAIL_BASE_URL || '(not set)'}`);
+    logger.info(`FRONTEND_URL: ${process.env.FRONTEND_URL || '(not set)'}`);
+  });
+
+  const shutdown = (signal) => {
+    logger.info(`[shutdown] ${signal} received, closing resources`);
+    server.close(async () => {
+      await closeRedis();
+      process.exit(0);
+    });
+  };
+
+  process.on('SIGINT', () => shutdown('SIGINT'));
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
 };
 
-setInterval(runWebhookJobs, 60 * 60 * 1000);
-runWebhookJobs();
-
-app.listen(EXPRESSPORT, () => {
-  console.log(` Server is running on http://localhost:${EXPRESSPORT}`);
-  console.log(` API Documentation: http://localhost:${EXPRESSPORT}/api/docs`);
-  console.log(` EMAIL_BASE_URL: ${process.env.EMAIL_BASE_URL || '(not set)'}`);
-  console.log(` FRONTEND_URL: ${process.env.FRONTEND_URL || '(not set)'}`);
+startServer().catch((err) => {
+  logger.error('[startup] failed', err?.message || err);
 });

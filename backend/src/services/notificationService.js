@@ -5,6 +5,7 @@ const PreventiveMaintenance = require('../models/PreventiveMaintenance');
 const User = require('../models/User');
 const Organization = require('../models/Organization');
 const constants = require('../constants/constants');
+const logger = require('../utils/logger');
 
 // Helper function to check if in-app notification should be sent
 const shouldSendInAppNotification = async (organizationId, userId, notificationType) => {
@@ -49,7 +50,7 @@ const shouldSendInAppNotification = async (organizationId, userId, notificationT
     const user = await User.findById(userId).select('preferences.inAppNotifications');
     return user?.preferences?.inAppNotifications !== false;
   } catch (error) {
-    console.error('Error checking notification preferences:', error);
+    logger.error('Error checking notification preferences:', error?.message || error);
     return false; // Default to not sending on error
   }
 };

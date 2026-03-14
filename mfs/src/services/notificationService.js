@@ -1,4 +1,6 @@
+import logger from '../utils/logger';
+
 export function notify(message) {
   // placeholder: integrate with NotificationContext
-  console.log('Notify:', message);
+  logger.info('Notify:', message);
 }

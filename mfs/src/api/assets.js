@@ -1,4 +1,5 @@
 import axiosInstance from './axiosConfig';
+import logger from '../utils/logger';
 import * as assetService from '../services/assetService';
 
 const normalizeAsset = (asset) => {
@@ -164,7 +165,7 @@ export const uploadAssetImage = async (assetId, file) => {
       await assetService.updateAsset(assetId, updated);
       return { imageUrl: newUrl };
     } catch (fallbackErr) {
-      console.error('uploadAssetImage fallback failed', fallbackErr);
+      logger.error('uploadAssetImage fallback failed', fallbackErr);
       throw err;
     }
   }

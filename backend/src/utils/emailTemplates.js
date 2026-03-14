@@ -1,6 +1,7 @@
 // Email Template Loader
 const fs = require('fs');
 const path = require('path');
+const logger = require('./logger');
 
 const getTemplatesDir = () => {
   if (process.env.EMAIL_TEMPLATES_DIR) {
@@ -22,7 +23,7 @@ const renderTemplate = (filename, data = {}) => {
       return value === undefined || value === null ? '' : String(value);
     });
   } catch (error) {
-    console.warn(`[email] failed to render template "${filename}": ${error.message}`);
+    logger.warn(`[email] failed to render template "${filename}": ${error.message}`);
     return null;
   }
 };

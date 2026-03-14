@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import logger from '../../utils/logger';
 import { useNavigate } from 'react-router-dom';
 import {
   Typography,
@@ -64,7 +65,7 @@ const ServiceRequestForm = () => {
       }
 
       // In a real app, this would call an API to create the service request
-      console.log('Creating service request:', formData);
+      logger.info('Creating service request:', formData);
 
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));

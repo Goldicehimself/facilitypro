@@ -1,6 +1,7 @@
 require('dotenv').config();
 const mongoose = require('mongoose');
 const User = require('../src/models/User');
+const logger = require('../src/utils/logger');
 
 const run = async () => {
   const mongoUrl = process.env.DBSTRING;
@@ -17,13 +18,13 @@ const run = async () => {
     { $set: { avatar: null } }
   );
 
-  console.log(`Cleared legacy avatars: matched=${result.matchedCount} modified=${result.modifiedCount}`);
+  logger.info(`Cleared legacy avatars: matched=${result.matchedCount} modified=${result.modifiedCount}`);
 };
 
 run()
   .then(() => mongoose.disconnect())
   .catch((err) => {
-    console.error('[cleanupLegacyAvatars] failed', err);
+    logger.error('[cleanupLegacyAvatars] failed', err?.message || err);
     mongoose.disconnect().catch(() => {});
     process.exit(1);
   });

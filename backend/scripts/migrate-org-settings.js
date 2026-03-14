@@ -3,6 +3,7 @@ require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') }
 const connectDB = require('../DataBase/dbconnection');
 const Organization = require('../src/models/Organization');
 const { normalizeSettings } = require('../src/services/orgService');
+const logger = require('../src/utils/logger');
 
 const run = async () => {
   try {
@@ -18,10 +19,10 @@ const run = async () => {
       updated += 1;
     }
 
-    console.log(`[migrate-org-settings] Updated ${updated} organizations`);
+    logger.info(`[migrate-org-settings] Updated ${updated} organizations`);
     process.exit(0);
   } catch (error) {
-    console.error('[migrate-org-settings] Failed', error);
+    logger.error('[migrate-org-settings] Failed', error?.message || error);
     process.exit(1);
   }
 };

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react';
+import logger from '../utils/logger';
 import io from 'socket.io-client';
 
 export const useWebSocket = () => {
@@ -22,25 +23,25 @@ export const useWebSocket = () => {
         reconnectionDelay: 1000,
       });
     } catch (e) {
-      console.warn('Failed to create WebSocket:', e);
+      logger.warn('Failed to create WebSocket:', e);
       return;
     }
 
     socketRef.current.on('connect', () => {
-      console.log('WebSocket connected');
+      logger.info('WebSocket connected');
     });
 
     socketRef.current.on('disconnect', () => {
-      console.log('WebSocket disconnected');
+      logger.info('WebSocket disconnected');
     });
 
     socketRef.current.on('connect_error', (err) => {
       // Warn instead of spamming errors to console
-      console.warn('WebSocket connect error:', err?.message || err);
+      logger.warn('WebSocket connect error:', err?.message || err);
     });
 
     socketRef.current.on('error', (error) => {
-      console.error('WebSocket error:', error);
+      logger.error('WebSocket error:', error);
     });
 
     // Handle incoming messages

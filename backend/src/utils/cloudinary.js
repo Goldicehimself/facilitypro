@@ -1,4 +1,5 @@
 const cloudinary = require('cloudinary').v2;
+const logger = require('./logger');
 
 const {
   CLOUDINARY_CLOUD_NAME,
@@ -7,7 +8,7 @@ const {
 } = process.env;
 
 if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_API_KEY || !CLOUDINARY_API_SECRET) {
-  console.warn('[cloudinary] Missing CLOUDINARY_* environment variables');
+  logger.warn('[cloudinary] Missing CLOUDINARY_* environment variables');
 }
 
 cloudinary.config({

@@ -1,4 +1,5 @@
 import React, { createContext, useState, useContext } from 'react';
+import logger from '../utils/logger';
 
 const InvitationContext = createContext(null);
 
@@ -28,7 +29,7 @@ export const InvitationProvider = ({ children }) => {
     setInvitations(prev => [newInvitation, ...prev]);
     
     // Simulate sending email
-    console.log(`📧 Invitation email sent to ${email}`);
+    logger.info(`📧 Invitation email sent to ${email}`);
     
     return newInvitation;
   };

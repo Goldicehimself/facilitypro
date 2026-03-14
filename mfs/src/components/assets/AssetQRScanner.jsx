@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import logger from '../../utils/logger';
 import { X, Camera, Upload, AlertCircle, CheckCircle } from 'lucide-react';
 
 export default function AssetQRScanner({ open = false, onClose = () => {}, onScan = () => {}, onAssetScanned = () => {} }) {
@@ -23,7 +24,7 @@ export default function AssetQRScanner({ open = false, onClose = () => {}, onSca
     setError('');
     setResult(null);
     setIsLoading(true);
-    console.log('Scanner initializing...');
+    logger.info('Scanner initializing...');
 
     // Check BarcodeDetector support
     if ('BarcodeDetector' in window && window.BarcodeDetector.getSupportedFormats) {
@@ -31,13 +32,13 @@ export default function AssetQRScanner({ open = false, onClose = () => {}, onSca
         const supported = await window.BarcodeDetector.getSupportedFormats();
         const isQrSupported = supported.includes('qr_code');
         setDetectorAvailable(isQrSupported);
-        console.log('BarcodeDetector available:', isQrSupported);
+        logger.info('BarcodeDetector available:', isQrSupported);
       } catch (err) {
-        console.warn('BarcodeDetector check failed:', err);
+        logger.warn('BarcodeDetector check failed:', err);
         setDetectorAvailable(false);
       }
     } else {
-      console.warn('BarcodeDetector not available in this browser');
+      logger.warn('BarcodeDetector not available in this browser');
       setDetectorAvailable(false);
     }
 
@@ -50,7 +51,7 @@ export default function AssetQRScanner({ open = false, onClose = () => {}, onSca
         if (!selectedDeviceId && cams.length > 0) setSelectedDeviceId(cams[0].deviceId);
       }
     } catch (err) {
-      console.warn('Could not enumerate devices', err);
+      logger.warn('Could not enumerate devices', err);
     }
 
     // start camera
@@ -64,17 +65,17 @@ export default function AssetQRScanner({ open = false, onClose = () => {}, onSca
       const constraints = {
         video: selectedDeviceId ? { deviceId: { exact: selectedDeviceId } } : { facingMode: 'environment' }
       };
-      console.log('Starting camera with constraints:', constraints);
+      logger.info('Starting camera with constraints:', constraints);
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
-        console.log('Camera started successfully');
+        logger.info('Camera started successfully');
       }
       setScanning(true);
       tick();
     } catch (err) {
-      console.error('Camera error:', err);
+      logger.error('Camera error:', err);
       setError('Unable to access camera. Please allow camera access or try uploading an image.');
     }
   };
@@ -113,7 +114,7 @@ export default function AssetQRScanner({ open = false, onClose = () => {}, onSca
             const codes = await detector.detect(bitmap);
             if (codes && codes.length > 0) {
               const raw = codes[0].rawValue || codes[0].rawText || (codes[0].rawValue && String(codes[0].rawValue));
-              console.log('✓ QR Code detected:', raw);
+              logger.info('✓ QR Code detected:', raw);
               setResult(raw);
               onScan(raw);
               onAssetScanned(raw);
@@ -122,12 +123,12 @@ export default function AssetQRScanner({ open = false, onClose = () => {}, onSca
             }
           } catch (err) {
             // ignore detection errors and continue
-            console.warn('Detection error:', err);
+            logger.warn('Detection error:', err);
           }
         }
       }
     } catch (err) {
-      console.error('Scan tick error', err);
+      logger.error('Scan tick error', err);
     }
 
     setTimeout(() => requestAnimationFrame(tick), 500);
@@ -150,12 +151,12 @@ export default function AssetQRScanner({ open = false, onClose = () => {}, onSca
             return;
           }
         } catch (err) {
-          console.error('File detection error', err);
+          logger.error('File detection error', err);
         }
       }
       setError('Could not detect a QR code in the provided image.');
     } catch (err) {
-      console.error('File read error', err);
+      logger.error('File read error', err);
       setError('Failed to read file');
     }
   };

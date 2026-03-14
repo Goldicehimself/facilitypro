@@ -1,4 +1,5 @@
 import axiosInstance from './axiosConfig';
+import logger from '../utils/logger';
 
 const mockReportsData = {
   summary: {
@@ -100,6 +101,6 @@ export async function exportReport(format = 'pdf') {
     const response = await axiosInstance.post('/reports/export', { format });
     return response.data?.data;
   } catch (error) {
-    console.error('Error exporting report:', error);
+    logger.error('Error exporting report:', error);
   }
 }

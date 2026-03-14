@@ -2,10 +2,12 @@
 const fs = require('fs');
 const path = require('path');
 
+const isProduction = process.env.NODE_ENV === 'production';
+const enableConsole = process.env.ENABLE_CONSOLE_LOGS === 'true' || !isProduction;
+const enableFile = process.env.LOG_TO_FILE === 'true';
 const logDir = path.join(__dirname, '../../logs');
 
-// Create logs directory if it doesn't exist
-if (!fs.existsSync(logDir)) {
+if (enableFile && !fs.existsSync(logDir)) {
   fs.mkdirSync(logDir, { recursive: true });
 }
 
@@ -15,11 +17,15 @@ const log = (level, message, data = '') => {
   const timestamp = getTimestamp();
   const logMessage = `[${timestamp}] [${level.toUpperCase()}] ${message} ${data}`;
   
-  console.log(logMessage);
-  
-  // Optional: Write to file
-  const logFile = path.join(logDir, `${level}.log`);
-  // fs.appendFileSync(logFile, logMessage + '\n');
+  if (enableConsole) {
+    const method = console[level] || console.log;
+    method(logMessage);
+  }
+
+  if (enableFile) {
+    const logFile = path.join(logDir, `${level}.log`);
+    fs.appendFileSync(logFile, logMessage + '\n');
+  }
 };
 
 module.exports = {

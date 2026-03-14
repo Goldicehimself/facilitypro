@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import logger from '../../utils/logger';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   getAssets,
@@ -146,7 +147,7 @@ export default function AssetList() {
         importInputRef.current.value = '';
       }
     } catch (error) {
-      console.error('Import failed:', error);
+      logger.error('Import failed:', error);
       alert('Failed to import assets. Please check the file format.');
     } finally {
       setImporting(false);
