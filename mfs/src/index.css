@@ -177,3 +177,22 @@
   border: 1px solid #1f2937 !important;
   color: #e2e8f0 !important;
 }
+
+@keyframes logo-spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.logo-spin-slow {
+  animation: logo-spin-slow 12s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logo-spin-slow {
+    animation: none;
+  }
+}

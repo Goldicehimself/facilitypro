@@ -40,7 +40,7 @@ const Login = () => {
     <div className="auth-page">
       <div className="auth-card">
         <RouterLink className="auth-brand" to="/" aria-label="FacilityPro home">
-          <div className="auth-logo-mark" aria-hidden="true">
+          <div className="auth-logo-mark logo-spin-slow" aria-hidden="true">
             <Wrench size={28} />
           </div>
         </RouterLink>

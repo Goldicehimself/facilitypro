@@ -93,6 +93,21 @@ const LandingPage = () => {
     visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } },
   };
 
+  const sectionFade = {
+    hidden: { opacity: 0, y: 16 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } },
+  };
+
+  const cardStagger = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.12 } },
+  };
+
+  const cardItem = {
+    hidden: { opacity: 0, y: 14 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } },
+  };
+
   return (
     <div className="min-h-screen bg-white text-slate-900">
 
@@ -101,24 +116,18 @@ const LandingPage = () => {
         <div className="mx-auto max-w-7xl px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div
-              className="h-10 w-10 rounded-md flex items-center justify-center text-white"
+              className="h-10 w-10 rounded-md flex items-center justify-center text-white logo-spin-slow"
               style={{ backgroundColor: "var(--mp-brand)" }}
             >
               <Wrench size={18} />
             </div>
-            <span className="font-semibold text-slate-900">FacilityPro</span>
+            <div className="flex flex-col leading-tight">
+              <span className="font-semibold text-slate-900">FacilityPro</span>
+              <span className="text-xs text-slate-500">Management System</span>
+            </div>
           </div>
 
           <div className="hidden md:flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="rounded-full"
-              onClick={toggleTheme}
-              aria-label="Toggle theme"
-            >
-              {resolvedTheme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-            </Button>
             <Button variant="ghost" onClick={() => navigate("/login")}>Sign in</Button>
             <Button className="rounded-full px-5" style={{ backgroundColor: "var(--mp-brand)", color: "#fff" }} onClick={() => navigate("/register")}>
               Get Started
@@ -126,15 +135,6 @@ const LandingPage = () => {
           </div>
 
           <div className="md:hidden flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="rounded-full"
-              onClick={toggleTheme}
-              aria-label="Toggle theme"
-            >
-              {resolvedTheme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-            </Button>
             <button
               type="button"
               className="p-2 rounded-md hover:bg-slate-100"
@@ -177,7 +177,12 @@ const LandingPage = () => {
       </header>
 
       {/* ================= HERO ================= */}
-      <section className="relative overflow-hidden">
+      <motion.section
+        className="relative overflow-hidden"
+        variants={!reduceMotion ? sectionFade : undefined}
+        initial="hidden"
+        animate="visible"
+      >
         <div className="mx-auto max-w-7xl px-6 py-28 grid lg:grid-cols-2 gap-14 items-center">
 
           {/* Copy */}
@@ -270,7 +275,7 @@ const LandingPage = () => {
             </motion.div>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* ================= TRUST STRIP ================= */}
       <motion.section
@@ -294,7 +299,13 @@ const LandingPage = () => {
         </div>
       </motion.section>
       {/* ================= FEATURES ================= */}
-      <section className="py-24">
+      <motion.section
+        className="py-24"
+        variants={!reduceMotion ? sectionFade : undefined}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.2 }}
+      >
         <div className="mx-auto max-w-7xl px-6">
           <div className="text-center max-w-2xl mx-auto">
             <h2 className="text-3xl font-bold">
@@ -305,7 +316,13 @@ const LandingPage = () => {
             </p>
           </div>
 
-          <div className="mt-16 grid md:grid-cols-3 gap-8">
+          <motion.div
+            className="mt-16 grid md:grid-cols-3 gap-8"
+            variants={!reduceMotion ? cardStagger : undefined}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.2 }}
+          >
             {[
               "Work Order Management",
               "Preventive Maintenance",
@@ -314,23 +331,31 @@ const LandingPage = () => {
               "Role-Based Access",
               "Reporting & Analytics",
             ].map((feature) => (
-              <div
+              <motion.div
                 key={feature}
                 className="flex gap-3 rounded-xl border border-slate-200 p-6"
+                variants={!reduceMotion ? cardItem : undefined}
+                whileHover={!reduceMotion ? { y: -4, boxShadow: '0 14px 30px rgba(2,6,23,0.10)' } : undefined}
               >
                 <CheckCircle
                   className="h-5 w-5 mt-1"
                   style={{ color: "var(--mp-brand)" }}
                 />
                 <p className="text-slate-700">{feature}</p>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
-      </section>
+      </motion.section>
 
       {/* ================= HOW IT WORKS ================= */}
-      <section className="py-24 bg-slate-50">
+      <motion.section
+        className="py-24 bg-slate-50"
+        variants={!reduceMotion ? sectionFade : undefined}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.2 }}
+      >
         <div className="mx-auto max-w-7xl px-6">
           <div className="text-center max-w-2xl mx-auto">
             <h2 className="text-3xl font-bold">
@@ -341,7 +366,13 @@ const LandingPage = () => {
             </p>
           </div>
 
-          <div className="mt-16 grid md:grid-cols-4 gap-8">
+          <motion.div
+            className="mt-16 grid md:grid-cols-4 gap-8"
+            variants={!reduceMotion ? cardStagger : undefined}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.2 }}
+          >
             {[
               {
                 step: "1",
@@ -364,20 +395,31 @@ const LandingPage = () => {
                 description: "Generate reports and optimize operations"
               }
             ].map((item, index) => (
-              <div key={index} className="text-center">
+              <motion.div
+                key={index}
+                className="text-center"
+                variants={!reduceMotion ? cardItem : undefined}
+                whileHover={!reduceMotion ? { y: -4 } : undefined}
+              >
                 <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: "var(--mp-brand)", color: "#fff" }}>
                   <span className="font-bold">{item.step}</span>
                 </div>
                 <h3 className="text-lg font-semibold mb-2">{item.title}</h3>
                 <p className="text-slate-600">{item.description}</p>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
-      </section>
+      </motion.section>
 
       {/* ================= ROLE-BASED BENEFITS ================= */}
-      <section className="py-24">
+      <motion.section
+        className="py-24"
+        variants={!reduceMotion ? sectionFade : undefined}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.2 }}
+      >
         <div className="mx-auto max-w-7xl px-6">
           <div className="text-center max-w-2xl mx-auto">
             <h2 className="text-3xl font-bold">
@@ -388,7 +430,13 @@ const LandingPage = () => {
             </p>
           </div>
 
-          <div className="mt-16 grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <motion.div
+            className="mt-16 grid md:grid-cols-2 lg:grid-cols-3 gap-8"
+            variants={!reduceMotion ? cardStagger : undefined}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.2 }}
+          >
             {[
               {
                 role: "Facility Managers",
@@ -421,7 +469,12 @@ const LandingPage = () => {
                 solutions: ["Audit trails", "Compliance reports", "Automated logging"]
               }
             ].map((item, index) => (
-              <div key={index} className="rounded-xl border border-slate-200 bg-white p-6 hover:shadow-lg transition">
+              <motion.div
+                key={index}
+                className="rounded-xl border border-slate-200 bg-white p-6"
+                variants={!reduceMotion ? cardItem : undefined}
+                whileHover={!reduceMotion ? { y: -6, boxShadow: '0 18px 40px rgba(2,6,23,0.10)' } : undefined}
+              >
                 <h3 className="text-lg font-semibold mb-3" style={{ color: "var(--mp-brand)" }}>
                   {item.role}
                 </h3>
@@ -449,14 +502,20 @@ const LandingPage = () => {
                     </ul>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
-      </section>
+      </motion.section>
 
       {/* ================= PRODUCT PREVIEW ================= */}
-      <section className="py-24 bg-slate-50">
+      <motion.section
+        className="py-24 bg-slate-50"
+        variants={!reduceMotion ? sectionFade : undefined}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.2 }}
+      >
         <div className="mx-auto max-w-7xl px-6">
           <div className="text-center max-w-2xl mx-auto">
             <h2 className="text-3xl font-bold">
@@ -487,10 +546,16 @@ const LandingPage = () => {
             </motion.div>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* ================= TESTIMONIALS ================= */}
-      <section className="py-24">
+      <motion.section
+        className="py-24"
+        variants={!reduceMotion ? sectionFade : undefined}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.2 }}
+      >
         <div className="mx-auto max-w-7xl px-6">
           <div className="text-center max-w-2xl mx-auto">
             <h2 className="text-3xl font-bold">
@@ -501,7 +566,13 @@ const LandingPage = () => {
             </p>
           </div>
 
-          <div className="mt-16 grid md:grid-cols-3 gap-8">
+          <motion.div
+            className="mt-16 grid md:grid-cols-3 gap-8"
+            variants={!reduceMotion ? cardStagger : undefined}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.2 }}
+          >
             {[
               {
                 quote: "FacilityPro reduced our maintenance response time by 60% and saved us $200K in the first year.",
@@ -525,7 +596,12 @@ const LandingPage = () => {
                 avatar: "LR"
               }
             ].map((testimonial, index) => (
-              <div key={index} className="rounded-xl border border-slate-200 bg-white p-6">
+              <motion.div
+                key={index}
+                className="rounded-xl border border-slate-200 bg-white p-6"
+                variants={!reduceMotion ? cardItem : undefined}
+                whileHover={!reduceMotion ? { y: -4, boxShadow: '0 14px 30px rgba(2,6,23,0.10)' } : undefined}
+              >
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-12 rounded-full flex items-center justify-center bg-slate-100 text-slate-600 font-semibold">
                     {testimonial.avatar}
@@ -539,14 +615,20 @@ const LandingPage = () => {
                     </div>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
-      </section>
+      </motion.section>
 
       {/* ================= PRICING PREVIEW ================= */}
-      <section className="py-24 bg-slate-50">
+      <motion.section
+        className="py-24 bg-slate-50"
+        variants={!reduceMotion ? sectionFade : undefined}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.2 }}
+      >
         <div className="mx-auto max-w-7xl px-6">
           <div className="text-center max-w-2xl mx-auto">
             <h2 className="text-3xl font-bold">
@@ -557,7 +639,13 @@ const LandingPage = () => {
             </p>
           </div>
 
-          <div className="mt-16 grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <motion.div
+            className="mt-16 grid md:grid-cols-3 gap-8 max-w-5xl mx-auto"
+            variants={!reduceMotion ? cardStagger : undefined}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.2 }}
+          >
             {[
               {
                 name: "Starter",
@@ -604,7 +692,7 @@ const LandingPage = () => {
                 popular: false
               }
             ].map((plan, index) => (
-              <div
+              <motion.div
                 key={index}
                 role="button"
                 tabIndex={0}
@@ -615,7 +703,9 @@ const LandingPage = () => {
                     navigate("/pricing");
                   }
                 }}
-                className={`rounded-xl border bg-white p-8 cursor-pointer transition-shadow hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-slate-300 ${plan.popular ? 'border-blue-500 shadow-lg' : 'border-slate-200'}`}
+                className={`rounded-xl border bg-white p-8 cursor-pointer transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-slate-300 ${plan.popular ? 'border-blue-500 shadow-lg' : 'border-slate-200'}`}
+                variants={!reduceMotion ? cardItem : undefined}
+                whileHover={!reduceMotion ? { y: -6, boxShadow: '0 18px 40px rgba(2,6,23,0.12)' } : undefined}
               >
                 {plan.popular && (
                   <div className="text-center mb-4">
@@ -669,11 +759,11 @@ const LandingPage = () => {
                 {plan.name !== "Enterprise" && (
                   <p className="mt-3 text-xs text-slate-500 text-center">20% off annual billing</p>
                 )}
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
-      </section>
+      </motion.section>
 
       {/* ================= CTA ================= */}
       <section
