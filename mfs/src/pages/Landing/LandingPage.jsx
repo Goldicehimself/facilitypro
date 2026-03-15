@@ -31,10 +31,10 @@ const CalendarPngFallback = new URL('../../assets/screenshots/optimized/2-2-cale
 const CalendarLarge = new URL('../../assets/screenshots/optimized/2-2-calendar-png-image-1440.png', import.meta.url).href;
 
 const MainImageSrcSet = [640, 960, 1280, 1600]
-  .map((w) => `/assets/optimized/main-image-${w}.webp ${w}w`)
+  .map((w) => `/media/optimized/main-image-${w}.webp ${w}w`)
   .join(', ');
 const CenterImageSrcSet = [640, 960, 1280, 1600]
-  .map((w) => `/assets/optimized/center-image-${w}.webp ${w}w`)
+  .map((w) => `/media/optimized/center-image-${w}.webp ${w}w`)
   .join(', ');
 
 const LandingPage = () => {
@@ -265,7 +265,7 @@ const LandingPage = () => {
                 className="relative w-full max-w-[540px] aspect-[16/10] rounded-2xl border border-slate-200 bg-white p-4 shadow-md mx-auto"
               >
                 <img
-                  src="/assets/optimized/main-image-1280.webp"
+                  src="/media/optimized/main-image-1280.webp"
                   srcSet={MainImageSrcSet}
                   sizes="(max-width: 1024px) 90vw, 540px"
                   alt="Product demo"
@@ -577,7 +577,7 @@ const LandingPage = () => {
                 className="relative w-full aspect-[16/10] rounded-2xl border border-slate-200 bg-white p-4 shadow-lg mx-auto"
               >
                 <img
-                  src="/assets/optimized/center-image-1280.webp"
+                  src="/media/optimized/center-image-1280.webp"
                   srcSet={CenterImageSrcSet}
                   sizes="(max-width: 1024px) 90vw, 896px"
                   alt="Facility dashboard preview"

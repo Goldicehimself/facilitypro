@@ -2,16 +2,16 @@ const path = require("path");
 const fs = require("fs/promises");
 const sharp = require("sharp");
 
-const outputDir = path.resolve(__dirname, "../public/assets/optimized");
+const outputDir = path.resolve(__dirname, "../public/media/optimized");
 
 const targets = [
   {
-    input: path.resolve(__dirname, "../public/assets/main-image.webp"),
+    input: path.resolve(__dirname, "../public/media/main-image.webp"),
     name: "main-image",
     widths: [640, 960, 1280, 1600],
   },
   {
-    input: path.resolve(__dirname, "../public/assets/center-image.webp"),
+    input: path.resolve(__dirname, "../public/media/center-image.webp"),
     name: "center-image",
     widths: [640, 960, 1280, 1600],
   },
