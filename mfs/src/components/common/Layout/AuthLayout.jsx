@@ -8,6 +8,8 @@ const AuthLayout = ({ children }) => {
 
   return (
     <Box
+      component="main"
+      role="main"
       sx={{
         minHeight: '100vh',
         display: 'flex',

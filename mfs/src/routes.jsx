@@ -1,58 +1,58 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import { getHomeRoute } from './utils/roleHome';
 
 // Layout Components
-import MainLayout from './components/common/Layout/MainLayout';
-import AuthLayout from './components/common/Layout/AuthLayout';
+const MainLayout = lazy(() => import('./components/common/Layout/MainLayout'));
+const AuthLayout = lazy(() => import('./components/common/Layout/AuthLayout'));
 
 // Auth Pages
-import Login from './pages/Auth/Login';
-import Register from './pages/Auth/Register';
-import ForgotPassword from './pages/Auth/ForgotPassword';
-import VerifyOrgEmail from './pages/Auth/VerifyOrgEmail';
-import VerifyUserEmail from './pages/Auth/VerifyUserEmail';
-import ResetPassword from './pages/Auth/ResetPassword';
+const Login = lazy(() => import('./pages/Auth/Login'));
+const Register = lazy(() => import('./pages/Auth/Register'));
+const ForgotPassword = lazy(() => import('./pages/Auth/ForgotPassword'));
+const VerifyOrgEmail = lazy(() => import('./pages/Auth/VerifyOrgEmail'));
+const VerifyUserEmail = lazy(() => import('./pages/Auth/VerifyUserEmail'));
+const ResetPassword = lazy(() => import('./pages/Auth/ResetPassword'));
 
 // Landing / Public pages
-import LandingPage from './pages/Landing/LandingPage';
-import Pricing from './pages/Pricing/Pricing';
-import Demo from './pages/Demo/Demo';
+const LandingPage = lazy(() => import('./pages/Landing/LandingPage'));
+const Pricing = lazy(() => import('./pages/Pricing/Pricing'));
+const Demo = lazy(() => import('./pages/Demo/Demo'));
 
 // Main Pages
-import Dashboard from './pages/Dashboard';
-import Assets from './pages/Assets/Assets';
-import AssetDetail from './pages/Assets/AssetDetail';
-import AssetForm from './components/assets/AssetForm';
-import WorkOrders from './pages/WorkOrders/WorkOrders';
-import MyAssignments from './pages/WorkOrders/MyAssignments';
-import WorkOrderDetailView from './pages/WorkOrders/WorkOrderDetailView';
-import WorkOrderCreate from './pages/WorkOrders/WorkOrderCreate';
-import PreventiveMaintenance from './pages/PreventiveMaintenance/PreventiveMaintenance';
-import PMTaskCreate from './pages/PreventiveMaintenance/PMTaskCreate';
-import PMCompliance from './pages/PreventiveMaintenance/PMCompliance';
-import PMOverdue from './pages/PreventiveMaintenance/PMOverdue';
-import PMScheduleInspection from './pages/PreventiveMaintenance/PMScheduleInspection';
-import Vendors from './pages/Vendors/Vendors';
-import VendorForm from './pages/Vendors/VendorForm';
-import VendorImport from './pages/Vendors/VendorImport';
-import VendorPortal from './pages/Vendors/VendorPortal';
-import TechnicianPortal from './pages/Technicians/TechnicianPortal';
-import StaffPortal from './pages/Staff/StaffPortal';
-import StaffManagement from './pages/Staff/StaffManagement';
-import LeaveCenter from './pages/Staff/LeaveCenter';
-import FinancePortal from './pages/Finance/FinancePortal';
-import ServiceRequests from './pages/ServiceRequests/ServiceRequests';
-import ServiceRequestForm from './pages/ServiceRequests/ServiceRequestForm';
-import Inventory from './pages/Inventory/Inventory';
-import Reports from './pages/Reports/Reports';
-import Settings from './pages/Settings/Settings';
-import Profile from './pages/Settings/Profile';
-import Help from './pages/Help/Help';
-import PublicHelp from './pages/Help/PublicHelp';
-import Messages from './pages/Messages/Messages';
-import TechnicianMessages from './pages/Messages/TechnicianMessages';
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Assets = lazy(() => import('./pages/Assets/Assets'));
+const AssetDetail = lazy(() => import('./pages/Assets/AssetDetail'));
+const AssetForm = lazy(() => import('./components/assets/AssetForm'));
+const WorkOrders = lazy(() => import('./pages/WorkOrders/WorkOrders'));
+const MyAssignments = lazy(() => import('./pages/WorkOrders/MyAssignments'));
+const WorkOrderDetailView = lazy(() => import('./pages/WorkOrders/WorkOrderDetailView'));
+const WorkOrderCreate = lazy(() => import('./pages/WorkOrders/WorkOrderCreate'));
+const PreventiveMaintenance = lazy(() => import('./pages/PreventiveMaintenance/PreventiveMaintenance'));
+const PMTaskCreate = lazy(() => import('./pages/PreventiveMaintenance/PMTaskCreate'));
+const PMCompliance = lazy(() => import('./pages/PreventiveMaintenance/PMCompliance'));
+const PMOverdue = lazy(() => import('./pages/PreventiveMaintenance/PMOverdue'));
+const PMScheduleInspection = lazy(() => import('./pages/PreventiveMaintenance/PMScheduleInspection'));
+const Vendors = lazy(() => import('./pages/Vendors/Vendors'));
+const VendorForm = lazy(() => import('./pages/Vendors/VendorForm'));
+const VendorImport = lazy(() => import('./pages/Vendors/VendorImport'));
+const VendorPortal = lazy(() => import('./pages/Vendors/VendorPortal'));
+const TechnicianPortal = lazy(() => import('./pages/Technicians/TechnicianPortal'));
+const StaffPortal = lazy(() => import('./pages/Staff/StaffPortal'));
+const StaffManagement = lazy(() => import('./pages/Staff/StaffManagement'));
+const LeaveCenter = lazy(() => import('./pages/Staff/LeaveCenter'));
+const FinancePortal = lazy(() => import('./pages/Finance/FinancePortal'));
+const ServiceRequests = lazy(() => import('./pages/ServiceRequests/ServiceRequests'));
+const ServiceRequestForm = lazy(() => import('./pages/ServiceRequests/ServiceRequestForm'));
+const Inventory = lazy(() => import('./pages/Inventory/Inventory'));
+const Reports = lazy(() => import('./pages/Reports/Reports'));
+const Settings = lazy(() => import('./pages/Settings/Settings'));
+const Profile = lazy(() => import('./pages/Settings/Profile'));
+const Help = lazy(() => import('./pages/Help/Help'));
+const PublicHelp = lazy(() => import('./pages/Help/PublicHelp'));
+const Messages = lazy(() => import('./pages/Messages/Messages'));
+const TechnicianMessages = lazy(() => import('./pages/Messages/TechnicianMessages'));
 
 // Role-based route wrapper
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -97,30 +97,37 @@ const UnauthorizedPage = () => {
   );
 };
 
+const LoadingScreen = () => (
+  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+    <div>Loading...</div>
+  </div>
+);
+
 const AppRoutes = () => {
   return (
-    <Routes>
-      {/* Auth Routes */}
-      <Route path="/login" element={<AuthLayout><Login /></AuthLayout>} />
-      <Route path="/register" element={<AuthLayout><Register /></AuthLayout>} />
-      <Route path="/forgot-password" element={<AuthLayout><ForgotPassword /></AuthLayout>} />
-      <Route path="/verify-org-email" element={<VerifyOrgEmail />} />
-      <Route path="/verify-user-email" element={<VerifyUserEmail />} />
-      <Route path="/reset-password" element={<ResetPassword />} />
-      
-      {/* Public landing page */}
-      <Route path="/" element={<LandingPage />} />
-      <Route path="/pricing" element={<Pricing />} />
-      <Route path="/demo" element={<Demo />} />
-      <Route path="/help-center" element={<PublicHelp />} />
+    <Suspense fallback={<LoadingScreen />}>
+      <Routes>
+        {/* Auth Routes */}
+        <Route path="/login" element={<AuthLayout><Login /></AuthLayout>} />
+        <Route path="/register" element={<AuthLayout><Register /></AuthLayout>} />
+        <Route path="/forgot-password" element={<AuthLayout><ForgotPassword /></AuthLayout>} />
+        <Route path="/verify-org-email" element={<VerifyOrgEmail />} />
+        <Route path="/verify-user-email" element={<VerifyUserEmail />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        
+        {/* Public landing page */}
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/pricing" element={<Pricing />} />
+        <Route path="/demo" element={<Demo />} />
+        <Route path="/help-center" element={<PublicHelp />} />
 
-      {/* Protected Routes (dashboard accessible at /dashboard) */}
-      
-      <Route path="/dashboard" element={
-        <ProtectedRoute allowedRoles={["facility_manager", "admin"]}>
-          <MainLayout><Dashboard /></MainLayout>
-        </ProtectedRoute>
-      } />
+        {/* Protected Routes (dashboard accessible at /dashboard) */}
+        
+        <Route path="/dashboard" element={
+          <ProtectedRoute allowedRoles={["facility_manager", "admin"]}>
+            <MainLayout><Dashboard /></MainLayout>
+          </ProtectedRoute>
+        } />
       
       <Route path="/assets" element={
         <ProtectedRoute allowedRoles={["facility_manager", "admin", "technician"]}>
@@ -324,8 +331,9 @@ const AppRoutes = () => {
       <Route path="/unauthorized" element={<UnauthorizedPage />} />
       
       {/* Fallback */}
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Suspense>
   );
 };
 

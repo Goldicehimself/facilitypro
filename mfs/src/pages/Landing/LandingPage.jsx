@@ -138,6 +138,7 @@ const LandingPage = () => {
             <button
               type="button"
               className="p-2 rounded-md hover:bg-slate-100"
+              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
               aria-expanded={mobileMenuOpen}
               aria-controls="mobile-nav"
               onClick={() => setMobileMenuOpen((open) => !open)}
@@ -176,13 +177,14 @@ const LandingPage = () => {
         </div>
       </header>
 
-      {/* ================= HERO ================= */}
-      <motion.section
-        className="relative overflow-hidden"
-        variants={!reduceMotion ? sectionFade : undefined}
-        initial="hidden"
-        animate="visible"
-      >
+      <main>
+        {/* ================= HERO ================= */}
+        <motion.section
+          className="relative overflow-hidden"
+          variants={!reduceMotion ? sectionFade : undefined}
+          initial="hidden"
+          animate="visible"
+        >
         <div className="mx-auto max-w-7xl px-6 py-28 grid lg:grid-cols-2 gap-14 items-center">
 
           {/* Copy */}
@@ -237,7 +239,7 @@ const LandingPage = () => {
               >
                 <picture>
                   <source srcSet={CalendarWebpSrcSet} type="image/webp" />
-                  <img src={CalendarPngFallback} className="w-full h-full object-cover" />
+                  <img src={CalendarPngFallback} className="w-full h-full object-cover" loading="lazy" decoding="async" />
                 </picture>
               </motion.div>
 
@@ -247,7 +249,7 @@ const LandingPage = () => {
                 whileHover={!reduceMotion ? { y: -6, boxShadow: '0 18px 40px rgba(2,6,23,0.14)' } : undefined}
                 className="relative w-full max-w-[540px] aspect-[16/10] rounded-2xl border border-slate-200 bg-white p-4 shadow-md mx-auto"
               >
-                <img src="/assets/main-image.webp" alt="Product demo" className="w-full h-full object-cover rounded-md" />
+                <img src="/assets/main-image.webp" alt="Product demo" className="w-full h-full object-cover rounded-md" fetchpriority="high" decoding="async" />
               </motion.div>
 
               {/* Work order (hidden on small screens) */}
@@ -268,7 +270,7 @@ const LandingPage = () => {
 
                 <picture>
                   <source srcSet={WorkWebpSrcSet} type="image/webp" />
-                  <img src={WorkPngFallback} className="w-full h-full object-cover" />
+                  <img src={WorkPngFallback} className="w-full h-full object-cover" loading="lazy" decoding="async" />
                 </picture>
               </motion.div>
 
@@ -541,7 +543,7 @@ const LandingPage = () => {
                 whileHover={!reduceMotion ? { y: -6, boxShadow: '0 18px 40px rgba(2,6,23,0.14)' } : undefined}
                 className="relative w-full aspect-[16/10] rounded-2xl border border-slate-200 bg-white p-4 shadow-lg mx-auto"
               >
-                <img src="/assets/center-image.webp" alt="Facility dashboard preview" className="w-full h-full object-cover rounded-md" />
+                <img src="/assets/center-image.webp" alt="Facility dashboard preview" className="w-full h-full object-cover rounded-md" loading="lazy" decoding="async" />
               </motion.div>
             </motion.div>
           </div>
@@ -798,6 +800,7 @@ const LandingPage = () => {
           </div>
         </div>
       </section>
+      </main>
 
       {/* ================= FOOTER ================= */}
       <footer className="border-t border-slate-200 py-10">
@@ -819,7 +822,7 @@ const LandingPage = () => {
             </div>
 
             <div>
-              <h4 className="font-semibold text-slate-900 mb-4">Product</h4>
+              <h3 className="font-semibold text-slate-900 mb-4">Product</h3>
               <ul className="space-y-2 text-sm text-slate-600">
                 <li><a href="#" className="hover:text-slate-900">Features</a></li>
                 <li>
@@ -837,7 +840,7 @@ const LandingPage = () => {
             </div>
 
             <div>
-              <h4 className="font-semibold text-slate-900 mb-4">Company</h4>
+              <h3 className="font-semibold text-slate-900 mb-4">Company</h3>
               <ul className="space-y-2 text-sm text-slate-600">
                 <li><a href="#" className="hover:text-slate-900">About</a></li>
                 <li><a href="#" className="hover:text-slate-900">Blog</a></li>
@@ -847,7 +850,7 @@ const LandingPage = () => {
             </div>
 
             <div>
-              <h4 className="font-semibold text-slate-900 mb-4">Support</h4>
+              <h3 className="font-semibold text-slate-900 mb-4">Support</h3>
               <ul className="space-y-2 text-sm text-slate-600">
                 <li><button type="button" className="hover:text-slate-900" onClick={() => navigate("/help-center")}>Help Center</button></li>
                 <li><a href="#" className="hover:text-slate-900">Documentation</a></li>
