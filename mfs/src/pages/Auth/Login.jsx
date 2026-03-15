@@ -12,6 +12,7 @@ const Login = () => {
   const [showOrgCode, setShowOrgCode] = useState(false);
   const [error, setError] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
+  const [loading, setLoading] = useState(false);
   const { login } = useAuth();
 
   const handleSubmit = async (e) => {
@@ -19,11 +20,14 @@ const Login = () => {
     setError('');
     if (!orgCode) {
       setError('Organization code is required.');
+      setLoading(false);
       return;
     }
     try {
+      setLoading(true);
       await login(email, password, orgCode, rememberMe);
     } catch (err) {
+      setLoading(false);
       const message = err?.response?.data?.message || err?.message || '';
       const normalized = message.toLowerCase();
       if (normalized.includes('organization email is not verified')) {
@@ -40,7 +44,7 @@ const Login = () => {
     <div className="auth-page">
       <div className="auth-card">
         <RouterLink className="auth-brand" to="/" aria-label="FacilityPro home">
-          <div className="auth-logo-mark logo-spin-slow" aria-hidden="true">
+          <div className={`auth-logo-mark ${loading ? 'logo-spin-slow' : ''}`} aria-hidden="true">
             <Wrench size={28} />
           </div>
         </RouterLink>
@@ -130,8 +134,15 @@ const Login = () => {
             </RouterLink>
           </div>
 
-          <button className="auth-submit" type="submit">
-            Sign In
+          <button className="auth-submit" type="submit" disabled={loading}>
+            {loading ? (
+              <>
+                <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                Signing In...
+              </>
+            ) : (
+              'Sign In'
+            )}
           </button>
 
           <div className="auth-alt">

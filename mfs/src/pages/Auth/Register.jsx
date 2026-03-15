@@ -203,7 +203,7 @@ const Register = () => {
     <div className="auth-page">
       <div className="auth-card auth-card--tall">
         <RouterLink className="auth-brand" to="/" aria-label="FacilityPro home">
-          <div className="auth-logo-mark" aria-hidden="true">
+          <div className={`auth-logo-mark ${loading ? 'logo-spin-slow' : ''}`} aria-hidden="true">
             <Wrench size={28} />
           </div>
         </RouterLink>
@@ -556,7 +556,14 @@ const Register = () => {
           </label>
 
           <button className="auth-submit" type="submit" disabled={loading}>
-            {loading ? 'Creating Account...' : 'Create Account'}
+            {loading ? (
+              <>
+                <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                Creating Account...
+              </>
+            ) : (
+              'Create Account'
+            )}
           </button>
 
           <div className="auth-alt">

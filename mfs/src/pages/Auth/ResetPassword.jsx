@@ -11,6 +11,7 @@ const ResetPassword = () => {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [formErrors, setFormErrors] = useState({});
+  const [loading, setLoading] = useState(false);
 
   const token = searchParams.get('token') || '';
   const orgCode = (searchParams.get('orgCode') || '').toUpperCase();
@@ -23,6 +24,7 @@ const ResetPassword = () => {
 
     if (!token || !orgCode) {
       setError('Reset link is missing required information.');
+      setLoading(false);
       return;
     }
     const nextErrors = {};
@@ -34,15 +36,18 @@ const ResetPassword = () => {
     }
     if (Object.keys(nextErrors).length) {
       setFormErrors(nextErrors);
+      setLoading(false);
       return;
     }
 
     try {
+      setLoading(true);
       await resetPassword({ token, orgCode, password });
       setMessage('Password reset successful. You can now log in.');
       setTimeout(() => navigate('/login'), 1200);
     } catch (err) {
       setError(err?.message || 'Unable to reset password.');
+      setLoading(false);
     }
   };
 
@@ -82,6 +87,7 @@ const ResetPassword = () => {
               )}
               <button
                 type="submit"
+                disabled={loading}
                 style={{
                   padding: '0.75rem 1.5rem',
                   background: '#4f46e5',
@@ -89,10 +95,17 @@ const ResetPassword = () => {
                   borderRadius: 10,
                   border: 'none',
                   fontWeight: 600,
-                  cursor: 'pointer'
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
                 }}
               >
-                Reset Password
+                {loading && (
+                  <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                )}
+                {loading ? 'Resetting...' : 'Reset Password'}
               </button>
             </div>
           </form>

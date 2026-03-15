@@ -156,9 +156,16 @@ const VerifyOrgEmail = () => {
                 background: '#0f766e',
                 color: '#ffffff',
                 fontWeight: 600,
-                cursor: sendStatus === 'loading' ? 'not-allowed' : 'pointer'
+                cursor: sendStatus === 'loading' ? 'not-allowed' : 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                justifyContent: 'center'
               }}
             >
+              {sendStatus === 'loading' && (
+                <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              )}
               {sendStatus === 'loading' ? 'Sending...' : 'Send again'}
             </button>
             {sendStatus === 'success' && (

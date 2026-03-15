@@ -6,6 +6,7 @@ import {
   Box,
   Alert,
   Link,
+  CircularProgress,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { requestPasswordReset } from '@/api/auth';
@@ -17,6 +18,7 @@ const ForgotPassword = () => {
   const [orgCode, setOrgCode] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,10 +27,12 @@ const ForgotPassword = () => {
 
     if (!email.trim() || !orgCode.trim()) {
       setError('Please enter your email and organization code.');
+      setLoading(false);
       return;
     }
 
     try {
+      setLoading(true);
       const result = await requestPasswordReset(email.trim(), orgCode.trim().toUpperCase());
       if (result?.sent) {
         setMessage('If an account exists with this email, a password reset link has been sent.');
@@ -37,6 +41,8 @@ const ForgotPassword = () => {
       }
     } catch (err) {
       setError(err?.message || 'Unable to process password reset. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -101,9 +107,11 @@ const ForgotPassword = () => {
         type="submit"
         fullWidth
         variant="contained"
+        disabled={loading}
+        startIcon={loading ? <CircularProgress size={18} color="inherit" /> : null}
         sx={{ mt: 3, mb: 2, backgroundColor: 'var(--mp-brand)', color: '#ffffff', '&:hover': { backgroundColor: 'var(--mp-brand-dark)' } }}
       >
-        Send Reset Link
+        {loading ? 'Sending...' : 'Send Reset Link'}
       </Button>
       <Box textAlign="center">
         <Link href="/login" variant="body2" sx={{ color: 'var(--mp-brand)', '&:hover': { color: 'var(--mp-brand-dark)' } }}>
