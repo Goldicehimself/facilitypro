@@ -58,8 +58,8 @@ const ResetPassword = () => {
           <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: 8 }}>Reset Password</h1>
           <p style={{ color: '#475569', marginBottom: 20 }}>Enter a new password for your account.</p>
 
-          {error && <div style={{ color: '#dc2626', marginBottom: 12 }}>{error}</div>}
-          {message && <div style={{ color: '#16a34a', marginBottom: 12 }}>{message}</div>}
+          {error && <div style={{ color: '#dc2626', marginBottom: 12 }} role="alert">{error}</div>}
+          {message && <div style={{ color: '#16a34a', marginBottom: 12 }} role="status" aria-live="polite">{message}</div>}
 
           <form onSubmit={handleSubmit}>
             <input type="hidden" value={token} readOnly />
@@ -68,6 +68,7 @@ const ResetPassword = () => {
               <input
                 type="password"
                 placeholder="New password"
+                aria-label="New password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 style={{ padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0' }}
@@ -78,6 +79,7 @@ const ResetPassword = () => {
               <input
                 type="password"
                 placeholder="Confirm password"
+                aria-label="Confirm password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 style={{ padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0' }}

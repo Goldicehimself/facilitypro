@@ -23,5 +23,16 @@ export default defineConfig({
   },
   build: {
     sourcemap: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ["react", "react-dom", "react-router-dom"],
+          mui: ["@mui/material", "@emotion/react", "@emotion/styled"],
+          charts: ["recharts"],
+          pdf: ["react-pdf"],
+          motion: ["framer-motion"],
+        },
+      },
+    },
   },
 });

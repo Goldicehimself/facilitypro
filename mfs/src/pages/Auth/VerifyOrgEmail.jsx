@@ -121,7 +121,7 @@ const VerifyOrgEmail = () => {
                     : 'Verification Failed'}
             </h1>
           </div>
-          <p style={{ color: '#0f172a', lineHeight: 1.6 }}>{message}</p>
+          <p style={{ color: '#0f172a', lineHeight: 1.6 }} role="status" aria-live="polite">{message}</p>
           <div style={{ marginTop: 16 }}>
             {!orgCode.trim() || !email.trim() ? (
               <div style={{ display: 'grid', gap: 12, marginBottom: 12 }}>
@@ -130,6 +130,7 @@ const VerifyOrgEmail = () => {
                   value={orgCode}
                   onChange={(e) => setOrgCode(e.target.value)}
                   placeholder="Organization code"
+                  aria-label="Organization code"
                   style={{ padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0' }}
                 />
                 <input
@@ -137,6 +138,7 @@ const VerifyOrgEmail = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Organization email"
+                  aria-label="Organization email"
                   style={{ padding: '0.7rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0' }}
                 />
               </div>
