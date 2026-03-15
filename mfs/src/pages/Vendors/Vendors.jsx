@@ -19,6 +19,11 @@ const VendorsPage = () => {
   const [pageSize, setPageSize] = useState(5);
 
   const { data: vendorsResponse = [], isLoading } = useQuery('vendors', fetchVendors);
+  const [hasLoaded, setHasLoaded] = useState(false);
+
+  useEffect(() => {
+    if (!isLoading) setHasLoaded(true);
+  }, [isLoading]);
 
   const vendors = useMemo(() => {
     if (Array.isArray(vendorsResponse)) return vendorsResponse;
@@ -129,7 +134,7 @@ const VendorsPage = () => {
       </div>
 
       {/* KPI Cards */}
-      {isLoading ? (
+      {isLoading && !hasLoaded ? (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {Array.from({ length: 4 }).map((_, idx) => (
             <Card key={idx} className="border-0 shadow-md">
@@ -193,7 +198,7 @@ const VendorsPage = () => {
       </Card>
 
       {/* Vendors Table */}
-      {isLoading ? (
+      {isLoading && !hasLoaded ? (
         <Card className="border-0 shadow-md">
           <CardContent className="p-6 space-y-4">
             {Array.from({ length: 6 }).map((_, idx) => (

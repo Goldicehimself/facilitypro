@@ -53,6 +53,11 @@ export default function WorkOrders() {
     ['workOrders', { statusFilter, priorityFilter, search, categoryFilter, assigneeFilter, dateRange, locationFilter }],
     () => getWorkOrders({ status: statusFilter, priority: priorityFilter, search, category: categoryFilter, assignee: assigneeFilter, dateRange, location: locationFilter })
   );
+  const [hasLoaded, setHasLoaded] = useState(false);
+
+  useEffect(() => {
+    if (!isLoading) setHasLoaded(true);
+  }, [isLoading]);
 
   const workOrdersList = Array.isArray(workOrders)
     ? workOrders
@@ -319,7 +324,7 @@ export default function WorkOrders() {
 
       {/* Table Card */}
       <Card className="border-0 shadow-sm overflow-hidden dark:bg-zinc-900">
-        {isLoading ? (
+        {isLoading && !hasLoaded ? (
           <div className="p-6 space-y-4">
             <div className="flex items-center gap-3">
               <Skeleton className="h-9 w-24" />

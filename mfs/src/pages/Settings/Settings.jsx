@@ -3,7 +3,6 @@ import { Save, Clock, Calendar, Bell, Lock, Database, Download, Sun, Moon, Lapto
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'react-toastify';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -545,14 +544,8 @@ const Settings = () => {
 
         <CardContent className="p-8">
           {loadingSettings && (
-            <div className="space-y-6">
-              <Skeleton className="h-6 w-40" />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-10 w-full" />
-              </div>
-              <Skeleton className="h-32 w-full" />
-              <Skeleton className="h-10 w-32" />
+            <div className="text-sm text-gray-500 dark:text-gray-400">
+              Loading settings...
             </div>
           )}
 

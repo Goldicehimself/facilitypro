@@ -70,6 +70,7 @@ export default function AssetList() {
 
   const [assets, setAssets] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [hasLoaded, setHasLoaded] = useState(false);
 
   const [viewMode, setViewMode] = useState('grid');
   const [currentPage, setCurrentPage] = useState(1);
@@ -114,6 +115,7 @@ export default function AssetList() {
       setTotalAssets(res.total || 0);
     } finally {
       setLoading(false);
+      if (!hasLoaded) setHasLoaded(true);
     }
   }
 
@@ -376,7 +378,7 @@ export default function AssetList() {
           </CardContent>
         </Card>
         {/* ================= ASSET GRID ================= */}
-        {loading ? (
+        {loading && !hasLoaded ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">

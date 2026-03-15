@@ -32,6 +32,11 @@ const Dashboard = () => {
       }
     }
   );
+  const [hasLoaded, setHasLoaded] = useState(false);
+
+  useEffect(() => {
+    if (!isLoading) setHasLoaded(true);
+  }, [isLoading]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -84,7 +89,7 @@ const Dashboard = () => {
     };
   }, []);
 
-  if (isLoading) {
+  if (isLoading && !hasLoaded) {
     return (
       <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(59,130,246,0.12),_transparent_55%),radial-gradient(circle_at_85%_10%,_rgba(14,165,233,0.10),_transparent_45%),linear-gradient(180deg,#f8fafc_0%,#ffffff_65%)] dark:bg-[radial-gradient(circle_at_top_left,_rgba(59,130,246,0.18),_transparent_55%),radial-gradient(circle_at_85%_10%,_rgba(14,165,233,0.12),_transparent_45%),linear-gradient(180deg,#0b1220_0%,#0f172a_65%)]">
         <div className="mx-auto max-w-6xl px-4 py-8 space-y-6">
