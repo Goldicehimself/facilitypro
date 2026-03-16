@@ -62,6 +62,9 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// IMPORTANT for Render / proxies
+app.set("trust proxy", 1);
+
 //  Rate limiter
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
