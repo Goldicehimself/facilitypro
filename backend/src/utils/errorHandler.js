@@ -1,4 +1,5 @@
 // Custom Error Classes and Handler
+const logger = require('./logger');
 
 class AppError extends Error {
   constructor(message, statusCode) {
@@ -59,6 +60,23 @@ class RateLimitError extends AppError {
 
 // Global error handler middleware
 const errorHandler = (err, req, res, next) => {
+  try {
+    logger.error(
+      '[errorHandler]',
+      JSON.stringify({
+        message: err?.message,
+        name: err?.name,
+        statusCode: err?.statusCode,
+        path: req?.path,
+        method: req?.method
+      })
+    );
+    if (process.env.NODE_ENV === 'development' && err?.stack) {
+      logger.error('[errorHandler:stack]', err.stack);
+    }
+  } catch (e) {
+    // ignore logger failures
+  }
   err.statusCode = err.statusCode || 500;
   err.message = err.message || 'Internal server error';
 

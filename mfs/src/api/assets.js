@@ -91,8 +91,19 @@ export const getAssetCategories = async () => {
 };
 
 export const uploadAssetImage = async (assetId, file) => {
-  const formData = new FormData();
-  formData.append('image', file);
+  let formData;
+  if (file instanceof FormData) {
+    const directFile = file.get('imageCover') || file.get('image') || file.get('file');
+    if (directFile) {
+      formData = new FormData();
+      formData.append('imageCover', directFile);
+    } else {
+      formData = file;
+    }
+  } else {
+    formData = new FormData();
+    formData.append('imageCover', file);
+  }
 
   try {
     const response = await axiosInstance.put(`/assets/${assetId}`, formData, {

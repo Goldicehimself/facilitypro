@@ -44,7 +44,9 @@ const AssetDetail = () => {
     model: '',
     serial: '',
     propertyLocation: '',
-    status: 'active'
+    status: 'active',
+    lastMaintenanceDate: '',
+    nextMaintenanceDate: ''
   });
 
   // Schedule & Parts editing state
@@ -88,6 +90,24 @@ const AssetDetail = () => {
 
   const openEditModal = () => {
     if (asset) {
+      const scheduleItems = Array.isArray(asset.maintenanceSchedule) ? asset.maintenanceSchedule : [];
+      const scheduleLastDates = scheduleItems
+        .map((item) => item?.last)
+        .filter(Boolean)
+        .map((value) => new Date(value))
+        .filter((d) => !Number.isNaN(d.getTime()));
+      const scheduleNextDates = scheduleItems
+        .map((item) => item?.next)
+        .filter(Boolean)
+        .map((value) => new Date(value))
+        .filter((d) => !Number.isNaN(d.getTime()));
+      const derivedLast = scheduleLastDates.length
+        ? new Date(Math.max(...scheduleLastDates.map((d) => d.getTime()))).toISOString()
+        : '';
+      const derivedNext = scheduleNextDates.length
+        ? new Date(Math.min(...scheduleNextDates.map((d) => d.getTime()))).toISOString()
+        : '';
+
       setEditForm({
         name: asset.name || '',
         shortDescription: asset.shortDescription || '',
@@ -98,7 +118,9 @@ const AssetDetail = () => {
         model: asset.model || '',
         serial: asset.serial || '',
         propertyLocation: asset.propertyLocation || '',
-        status: asset.status || 'active'
+        status: asset.status || 'active',
+        lastMaintenanceDate: asset.lastMaintenance || asset.lastMaintenanceDate || derivedLast || '',
+        nextMaintenanceDate: asset.nextService || asset.nextMaintenanceDate || derivedNext || ''
       });
       setEditModalOpen(true);
     }
@@ -148,7 +170,9 @@ const AssetDetail = () => {
         model: editForm.model,
         serial: editForm.serial,
         propertyLocation: editForm.propertyLocation,
-        status: editForm.status
+        status: editForm.status,
+        lastMaintenance: editForm.lastMaintenanceDate || null,
+        nextService: editForm.nextMaintenanceDate || null
       };
       await updateAsset(asset.id, updated);
       setAsset(updated);
@@ -444,6 +468,14 @@ const AssetDetail = () => {
             borderRadius: 2
           }}>
             <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, color: isDark ? '#e2e8f0' : '#1e293b' }}>Specifications & Technical Details</Typography>
+            {(asset.specs?.notes || (typeof asset.specs === 'string' ? asset.specs : '') || asset.specifications) && (
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="caption" sx={{ fontWeight: 600, color: isDark ? '#94a3b8' : '#64748b' }}>SPECIFICATION NOTES</Typography>
+                <Typography sx={{ fontWeight: 500, whiteSpace: 'pre-line' }}>
+                  {asset.specs?.notes || (typeof asset.specs === 'string' ? asset.specs : '') || asset.specifications}
+                </Typography>
+              </Box>
+            )}
             <Grid container spacing={2}>
               <Grid item xs={6}><Typography variant="caption" sx={{ fontWeight: 600, color: isDark ? '#94a3b8' : '#64748b' }}>COOLING CAPACITY</Typography><Typography sx={{ fontWeight: 500 }}>{asset.specs?.coolingCapacity || '—'}</Typography></Grid>
               <Grid item xs={6}><Typography variant="caption" sx={{ fontWeight: 600, color: isDark ? '#94a3b8' : '#64748b' }}>REFRIGERANT TYPE</Typography><Typography sx={{ fontWeight: 500 }}>{asset.specs?.refrigerantType || '—'}</Typography></Grid>
@@ -805,6 +837,30 @@ const AssetDetail = () => {
                     <MenuItem value="maintenance">🟡 Under Maintenance</MenuItem>
                     <MenuItem value="retired">⚫ Retired</MenuItem>
                   </TextField>
+                </Grid>
+
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Last Maintenance Date"
+                    type="date"
+                    fullWidth
+                    value={editForm.lastMaintenanceDate ? String(editForm.lastMaintenanceDate).split('T')[0] : ''}
+                    onChange={(e) => setEditForm(f => ({ ...f, lastMaintenanceDate: e.target.value }))}
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </Grid>
+
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Next Service Date"
+                    type="date"
+                    fullWidth
+                    value={editForm.nextMaintenanceDate ? String(editForm.nextMaintenanceDate).split('T')[0] : ''}
+                    onChange={(e) => setEditForm(f => ({ ...f, nextMaintenanceDate: e.target.value }))}
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                  />
                 </Grid>
               </Grid>
             </Grid>

@@ -211,6 +211,14 @@ export default function AssetForm() {
 
     try {
       setSaving(true);
+      const isRealImageUrl = (value) => {
+        if (!value || typeof value !== 'string') return false;
+        const trimmed = value.trim();
+        if (!trimmed) return false;
+        if (trimmed.startsWith('blob:') || trimmed.startsWith('data:')) return false;
+        return trimmed.startsWith('http://') || trimmed.startsWith('https://');
+      };
+
       let saved;
       const payload = {
         name: formData.name,
@@ -240,7 +248,7 @@ export default function AssetForm() {
         depreciationRate: formData.depreciationRate ? Number(formData.depreciationRate) : undefined,
         status: formData.status,
         notes: formData.notes,
-        imageUrl: formData.imageUrl || imagePreview || undefined
+        imageUrl: isRealImageUrl(formData.imageUrl) ? formData.imageUrl : undefined
       };
 
       if (isEditMode) {

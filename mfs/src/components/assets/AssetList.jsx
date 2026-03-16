@@ -12,6 +12,7 @@ import {
   downloadAssetImportTemplate,
 } from '../../api/assets';
 import { useActivity } from '../../contexts/ActivityContext';
+import { formatDate } from '../../utils/formatters';
 
 import {
   AlertCircle,
@@ -239,6 +240,50 @@ export default function AssetList() {
   };
 
   const totalPages = Math.ceil(totalAssets / itemsPerPage);
+  const formatOptionalDate = (value) => {
+    if (!value) return '—';
+    return formatDate(value, 'medium');
+  };
+  const getMaintenanceMeta = (asset) => {
+    const scheduleItems = Array.isArray(asset.maintenanceSchedule) ? asset.maintenanceSchedule : [];
+    const scheduleLastDates = scheduleItems
+      .map((item) => item?.last)
+      .filter(Boolean)
+      .map((value) => new Date(value))
+      .filter((d) => !Number.isNaN(d.getTime()));
+    const scheduleNextDates = scheduleItems
+      .map((item) => item?.next)
+      .filter(Boolean)
+      .map((value) => new Date(value))
+      .filter((d) => !Number.isNaN(d.getTime()));
+    const derivedLast = scheduleLastDates.length
+      ? new Date(Math.max(...scheduleLastDates.map((d) => d.getTime()))).toISOString()
+      : null;
+    const derivedNext = scheduleNextDates.length
+      ? new Date(Math.min(...scheduleNextDates.map((d) => d.getTime()))).toISOString()
+      : null;
+
+    const last = asset.lastMaintenance || asset.lastMaintenanceDate || derivedLast;
+    const next = asset.nextService || asset.nextMaintenanceDate || derivedNext;
+    const nextDate = next ? new Date(next) : null;
+    const overdue = nextDate ? nextDate < new Date() : false;
+    return {
+      lastLabel: formatOptionalDate(last),
+      nextLabel: next ? formatOptionalDate(next) : '—',
+      overdue
+    };
+  };
+
+  const getWarrantyMeta = (asset) => {
+    const expires = asset.warranty?.expires;
+    if (!expires) return { status: null, label: null };
+    const expDate = new Date(expires);
+    const days = Math.ceil((expDate - new Date()) / (1000 * 60 * 60 * 24));
+    if (Number.isNaN(days)) return { status: null, label: null };
+    if (days < 0) return { status: 'EXPIRED', label: 'EXPIRED' };
+    if (days <= 30) return { status: 'EXPIRING_SOON', label: 'EXPIRING SOON' };
+    return { status: 'ACTIVE_WARRANTY', label: 'ACTIVE WARRANTY' };
+  };
 
   /* =========================
      KPI
@@ -400,7 +445,10 @@ export default function AssetList() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {assets.map(asset => (
+            {assets.map(asset => {
+              const maintenanceMeta = getMaintenanceMeta(asset);
+              const warrantyMeta = getWarrantyMeta(asset);
+              return (
               <div
                 key={asset.id}
                 onClick={() => navigate(`/assets/${asset.id}`)}
@@ -454,37 +502,38 @@ export default function AssetList() {
                   <div className="grid grid-cols-2 gap-3 text-xs border-t border-slate-200 dark:border-slate-700 pt-3">
                     <div>
                       <p className="text-slate-500 dark:text-slate-400">Last Maintenance</p>
-                      <p className="font-semibold text-slate-900 dark:text-white">{asset.lastMaintenance || '—'}</p>
+                      <p className="font-semibold text-slate-900 dark:text-white">{maintenanceMeta.lastLabel}</p>
                     </div>
                     <div>
                       <p className="text-slate-500 dark:text-slate-400">Next Service</p>
                       <p className={`font-semibold ${
-                        asset.maintenanceStatus === 'OVERDUE' 
+                        maintenanceMeta.overdue 
                           ? 'text-red-600 dark:text-red-400' 
                           : 'text-slate-900 dark:text-white'
                       }`}>
-                        {asset.nextService || '—'}
+                        {maintenanceMeta.overdue ? 'OVERDUE' : maintenanceMeta.nextLabel}
                       </p>
                     </div>
                   </div>
 
                   {/* Warranty Badge */}
-                  {asset.warrantyStatus && (
+                  {warrantyMeta.status && (
                     <div className="pt-2">
                       <span className={`inline-block px-2.5 py-1 text-xs rounded-full font-semibold ${
-                        asset.warrantyStatus === 'ACTIVE_WARRANTY'
+                        warrantyMeta.status === 'ACTIVE_WARRANTY'
                           ? 'bg-green-50 text-green-700 dark:bg-green-900 dark:text-green-200'
-                          : asset.warrantyStatus === 'EXPIRING_SOON'
+                          : warrantyMeta.status === 'EXPIRING_SOON'
                           ? 'bg-yellow-50 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-200'
                           : 'bg-red-50 text-red-700 dark:bg-red-900 dark:text-red-200'
                       }`}>
-                        {asset.warrantyStatus.replace(/_/g, ' ')}
+                        {warrantyMeta.label}
                       </span>
                     </div>
                   )}
                 </div>
               </div>
-            ))}
+            );
+            })}
           </div>
         )}
 
@@ -536,7 +585,7 @@ export default function AssetList() {
       </div>
 
       {/* ================= QUICK ACTIONS ================= */}
-      <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-8">
+      <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-8 mt-10">
         <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">Quick Actions</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <button 
@@ -753,5 +802,7 @@ function AssetImageUploader({ preview, onSelect, progress }) {
     </div>
   );
 }
+
+
 
 
