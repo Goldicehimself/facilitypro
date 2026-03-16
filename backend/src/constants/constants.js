@@ -73,7 +73,9 @@ module.exports = {
     'inventory:read',
     'inventory:write',
     'service-requests:read',
-    'service-requests:write'
+    'service-requests:write',
+    'finance:read',
+    'finance:write'
   ],
 
   DEFAULT_API_KEY_RATE_LIMIT: {

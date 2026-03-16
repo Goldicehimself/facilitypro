@@ -140,38 +140,23 @@ const Dashboard = () => {
     );
   }
 
-  const defaultDashboardData = {
-    openWorkOrders: 24,
-    overdueWorkOrders: 5,
-    pmCompliance: 87,
-    pendingRequests: 12,
-    activeAssets: 156,
-    vendorPerformance: 92,
-    complianceTrend: [
-      { month: 'Jan', compliance: 78, target: 85, completed: 45, pending: 12 },
-      { month: 'Feb', compliance: 82, target: 85, completed: 52, pending: 8 },
-      { month: 'Mar', compliance: 80, target: 85, completed: 48, pending: 10 },
-      { month: 'Apr', compliance: 85, target: 85, completed: 56, pending: 6 },
-      { month: 'May', compliance: 88, target: 85, completed: 62, pending: 5 },
-      { month: 'Jun', compliance: 87, target: 85, completed: 59, pending: 4 }
-    ],
-    costAnalysis: null,
-    serviceCategories: [
-      { name: 'HVAC', count: 45, trend: 'up' },
-      { name: 'Electrical', count: 32, trend: 'down' },
-      { name: 'Plumbing', count: 28, trend: 'up' },
-      { name: 'General', count: 51, trend: 'up' }
-    ]
-  };
-
-  const safeDashboardData = dashboardData && Object.keys(dashboardData).length
+  const safeDashboardData = dashboardData && typeof dashboardData === 'object'
     ? dashboardData
-    : defaultDashboardData;
+    : {};
+  const complianceTrend = Array.isArray(safeDashboardData.complianceTrend)
+    ? safeDashboardData.complianceTrend
+    : [];
+  const costAnalysis = Array.isArray(safeDashboardData.costAnalysis)
+    ? safeDashboardData.costAnalysis
+    : [];
+  const serviceCategories = Array.isArray(safeDashboardData.serviceCategories)
+    ? safeDashboardData.serviceCategories
+    : [];
 
   const kpis = [
     {
       title: 'Open Work Orders',
-      value: safeDashboardData.openWorkOrders || 0,
+      value: Number(safeDashboardData.openWorkOrders) || 0,
       change: '+12%',
       trend: 'up',
       icon: '??',
@@ -180,7 +165,7 @@ const Dashboard = () => {
     },
     {
       title: 'Overdue',
-      value: safeDashboardData.overdueWorkOrders || 0,
+      value: Number(safeDashboardData.overdueWorkOrders) || 0,
       change: '-5%',
       trend: 'down',
       icon: '??',
@@ -189,7 +174,7 @@ const Dashboard = () => {
     },
     {
       title: 'PM Compliance',
-      value: `${safeDashboardData.pmCompliance || 0}%`,
+      value: `${Number(safeDashboardData.pmCompliance) || 0}%`,
       change: '+8%',
       trend: 'up',
       icon: '?',
@@ -198,7 +183,7 @@ const Dashboard = () => {
     },
     {
       title: 'Pending Requests',
-      value: safeDashboardData.pendingRequests || 0,
+      value: Number(safeDashboardData.pendingRequests) || 0,
       change: '+3%',
       trend: 'up',
       icon: '??',
@@ -207,7 +192,7 @@ const Dashboard = () => {
     },
     {
       title: 'Active Assets',
-      value: safeDashboardData.activeAssets || 0,
+      value: Number(safeDashboardData.activeAssets) || 0,
       change: '+2%',
       trend: 'up',
       icon: '??',
@@ -216,7 +201,7 @@ const Dashboard = () => {
     },
     {
       title: 'Vendor Performance',
-      value: `${safeDashboardData.vendorPerformance || 0}%`,
+      value: `${Number(safeDashboardData.vendorPerformance) || 0}%`,
       change: '+4%',
       trend: 'up',
       icon: '??',
@@ -319,7 +304,7 @@ const Dashboard = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                <ComplianceChart data={safeDashboardData.complianceTrend} />
+                <ComplianceChart data={complianceTrend} />
               </CardContent>
             </Card>
 
@@ -340,7 +325,7 @@ const Dashboard = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                <CostAnalysisChart data={safeDashboardData.costAnalysis} />
+                <CostAnalysisChart data={costAnalysis} />
               </CardContent>
             </Card>
           </div>
@@ -377,25 +362,31 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              {safeDashboardData.serviceCategories?.map((category) => (
-                <div key={category.name} className="text-center p-4 rounded-lg bg-gray-50 dark:bg-zinc-800 hover:shadow-md transition-shadow">
-                  <div className="text-3xl font-bold text-indigo-600 dark:text-indigo-400 mb-2">
-                    {category.count}
+              {serviceCategories.length === 0 ? (
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  No service category data available yet.
+                </p>
+              ) : (
+                serviceCategories.map((category) => (
+                  <div key={category.name} className="text-center p-4 rounded-lg bg-gray-50 dark:bg-zinc-800 hover:shadow-md transition-shadow">
+                    <div className="text-3xl font-bold text-indigo-600 dark:text-indigo-400 mb-2">
+                      {category.count}
+                    </div>
+                    <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                      {category.name}
+                    </p>
+                    <Badge
+                      variant={category.trend === 'up' ? 'default' : 'secondary'}
+                      className={category.trend === 'up'
+                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-100'
+                        : 'bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-100'
+                      }
+                    >
+                      {category.trend === 'up' ? 'Up' : 'Down'} {category.trend === 'up' ? 'Increasing' : 'Decreasing'}
+                    </Badge>
                   </div>
-                  <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                    {category.name}
-                  </p>
-                  <Badge
-                    variant={category.trend === 'up' ? 'default' : 'secondary'}
-                    className={category.trend === 'up'
-                      ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-100'
-                      : 'bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-100'
-                    }
-                  >
-                    {category.trend === 'up' ? 'Up' : 'Down'} {category.trend === 'up' ? 'Increasing' : 'Decreasing'}
-                  </Badge>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </CardContent>
         </Card>

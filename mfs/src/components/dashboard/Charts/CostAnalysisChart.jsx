@@ -15,16 +15,8 @@ import {
 import { TrendingDown, DollarSign } from 'lucide-react';
 
 const CostAnalysisChart = ({ data = null }) => {
-  // Default mock cost data if none provided
   const chartData = useMemo(() => {
-    return data || [
-      { month: 'Jan', preventive: 4200, corrective: 1800, emergency: 900, total: 6900 },
-      { month: 'Feb', preventive: 3800, corrective: 2100, emergency: 1200, total: 7100 },
-      { month: 'Mar', preventive: 4500, corrective: 1600, emergency: 700, total: 6800 },
-      { month: 'Apr', preventive: 5100, corrective: 1400, emergency: 500, total: 7000 },
-      { month: 'May', preventive: 4800, corrective: 1300, emergency: 600, total: 6700 },
-      { month: 'Jun', preventive: 5200, corrective: 1200, emergency: 400, total: 6800 },
-    ];
+    return Array.isArray(data) ? data : [];
   }, [data]);
 
   // Calculate cost statistics
@@ -45,6 +37,20 @@ const CostAnalysisChart = ({ data = null }) => {
   }, [chartData]);
 
   const isSavings = stats.savingsVsLast > 0;
+  const distribution = useMemo(() => {
+    if (!chartData.length) return [];
+    const currentMonth = chartData[chartData.length - 1];
+    const preventive = Number(currentMonth.preventive || 0);
+    const corrective = Number(currentMonth.corrective || 0);
+    const emergency = Number(currentMonth.emergency || 0);
+    const total = Number(currentMonth.total || preventive + corrective + emergency);
+    if (!total) return [];
+    return [
+      { type: 'Preventive Maintenance', color: 'bg-emerald-500', amount: preventive, percentage: Math.round((preventive / total) * 100) },
+      { type: 'Corrective Maintenance', color: 'bg-amber-500', amount: corrective, percentage: Math.round((corrective / total) * 100) },
+      { type: 'Emergency Repairs', color: 'bg-red-500', amount: emergency, percentage: Math.round((emergency / total) * 100) },
+    ];
+  }, [chartData]);
 
   return (
     <div className="space-y-6">
@@ -103,38 +109,44 @@ const CostAnalysisChart = ({ data = null }) => {
         <h4 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-4">
           Monthly Cost Breakdown
         </h4>
-        <ResponsiveContainer width="100%" height={300}>
-          <ComposedChart data={chartData} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" className="stroke-zinc-200 dark:stroke-zinc-800" />
-            <XAxis 
-              dataKey="month" 
-              className="text-xs text-zinc-600 dark:text-zinc-400"
-            />
-            <YAxis 
-              className="text-xs text-zinc-600 dark:text-zinc-400"
-            />
-            <Tooltip 
-              contentStyle={{
-                backgroundColor: '#fff',
-                border: '1px solid #e5e7eb',
-                borderRadius: '0.5rem',
-              }}
-              formatter={(value) => `$${value.toLocaleString()}`}
-            />
-            <Legend />
-            <Bar dataKey="preventive" fill="#10b981" name="Preventive Maintenance" />
-            <Bar dataKey="corrective" fill="#f59e0b" name="Corrective Maintenance" />
-            <Bar dataKey="emergency" fill="#ef4444" name="Emergency Repairs" />
-            <Line
-              type="monotone"
-              dataKey="total"
-              stroke="#4f46e5"
-              strokeWidth={2}
-              dot={{ fill: '#4f46e5', r: 4 }}
-              name="Total Cost"
-            />
-          </ComposedChart>
-        </ResponsiveContainer>
+        {chartData.length === 0 ? (
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            No cost breakdown data available yet.
+          </p>
+        ) : (
+          <ResponsiveContainer width="100%" height={300}>
+            <ComposedChart data={chartData} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-zinc-200 dark:stroke-zinc-800" />
+              <XAxis 
+                dataKey="month" 
+                className="text-xs text-zinc-600 dark:text-zinc-400"
+              />
+              <YAxis 
+                className="text-xs text-zinc-600 dark:text-zinc-400"
+              />
+              <Tooltip 
+                contentStyle={{
+                  backgroundColor: '#fff',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '0.5rem',
+                }}
+                formatter={(value) => `$${value.toLocaleString()}`}
+              />
+              <Legend />
+              <Bar dataKey="preventive" fill="#10b981" name="Preventive Maintenance" />
+              <Bar dataKey="corrective" fill="#f59e0b" name="Corrective Maintenance" />
+              <Bar dataKey="emergency" fill="#ef4444" name="Emergency Repairs" />
+              <Line
+                type="monotone"
+                dataKey="total"
+                stroke="#4f46e5"
+                strokeWidth={2}
+                dot={{ fill: '#4f46e5', r: 4 }}
+                name="Total Cost"
+              />
+            </ComposedChart>
+          </ResponsiveContainer>
+        )}
       </div>
 
       {/* Cost by Type */}
@@ -142,33 +154,35 @@ const CostAnalysisChart = ({ data = null }) => {
         <h4 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-4">
           Cost Distribution
         </h4>
-        <div className="space-y-4">
-          {[
-            { type: 'Preventive Maintenance', color: 'bg-emerald-500', percentage: 65, amount: 4420 },
-            { type: 'Corrective Maintenance', color: 'bg-amber-500', percentage: 22, amount: 1496 },
-            { type: 'Emergency Repairs', color: 'bg-red-500', percentage: 13, amount: 884 },
-          ].map((item) => (
-            <div key={item.type}>
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                  {item.type}
+        {distribution.length === 0 ? (
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            No cost distribution data available yet.
+          </p>
+        ) : (
+          <div className="space-y-4">
+            {distribution.map((item) => (
+              <div key={item.type}>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                    {item.type}
+                  </p>
+                  <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                    ${item.amount.toLocaleString()}
+                  </span>
+                </div>
+                <div className="w-full bg-zinc-200 dark:bg-zinc-700 rounded-full h-3">
+                  <div
+                    className={`h-3 rounded-full transition-all ${item.color}`}
+                    style={{ width: `${item.percentage}%` }}
+                  />
+                </div>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                  {item.percentage}% of total
                 </p>
-                <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                  ${item.amount.toLocaleString()}
-                </span>
               </div>
-              <div className="w-full bg-zinc-200 dark:bg-zinc-700 rounded-full h-3">
-                <div
-                  className={`h-3 rounded-full transition-all ${item.color}`}
-                  style={{ width: `${item.percentage}%` }}
-                />
-              </div>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-                {item.percentage}% of total
-              </p>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

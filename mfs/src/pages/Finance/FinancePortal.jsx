@@ -36,115 +36,9 @@ import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/contexts/AuthContext';
 import { createFundRequest, fetchMyFundRequests, fetchFundRequests, approveFundRequest, rejectFundRequest } from '@/api/funds';
 import GreetingBanner from '@/components/common/GreetingBanner';
-
-// Mock data for finance
-const mockFinanceData = {
-  summary: {
-    totalRevenue: 125000,
-    totalExpenses: 42500,
-    netProfit: 82500,
-    pendingPayments: 18500,
-    budgetUtilization: 68
-  },
-  invoices: [
-    {
-      id: 'INV-2026-001',
-      clientName: 'Acme Corp',
-      amount: 5200,
-      status: 'paid',
-      date: '2026-01-15',
-      dueDate: '2026-01-25',
-      description: 'HVAC System Maintenance',
-      workOrderId: 'WO-001'
-    },
-    {
-      id: 'INV-2026-002',
-      clientName: 'Global Industries',
-      amount: 8500,
-      status: 'pending',
-      date: '2026-01-16',
-      dueDate: '2026-02-15',
-      description: 'Plumbing Repairs',
-      workOrderId: 'WO-002'
-    },
-    {
-      id: 'INV-2026-003',
-      clientName: 'Tech Solutions LLC',
-      amount: 3200,
-      status: 'overdue',
-      date: '2025-12-20',
-      dueDate: '2026-01-10',
-      description: 'Electrical Inspection',
-      workOrderId: 'WO-003'
-    },
-    {
-      id: 'INV-2026-004',
-      clientName: 'BuildRight Enterprises',
-      amount: 6800,
-      status: 'paid',
-      date: '2026-01-10',
-      dueDate: '2026-01-20',
-      description: 'Equipment Installation',
-      workOrderId: 'WO-004'
-    },
-    {
-      id: 'INV-2026-005',
-      clientName: 'Metro Manufacturing',
-      amount: 12300,
-      status: 'pending',
-      date: '2026-01-17',
-      dueDate: '2026-02-16',
-      description: 'Preventive Maintenance',
-      workOrderId: 'WO-005'
-    }
-  ],
-  expenses: [
-    {
-      id: 'EXP-001',
-      category: 'Parts & Materials',
-      amount: 12500,
-      date: '2026-01-15',
-      vendor: 'Industrial Supplies Inc',
-      status: 'approved',
-      submittedBy: 'Lisa Park',
-      notes: 'Replacement filters and belts for HVAC units.',
-      attachments: ['invoice-EXP-001.pdf']
-    },
-    {
-      id: 'EXP-002',
-      category: 'Labor',
-      amount: 18200,
-      date: '2026-01-18',
-      vendor: 'Internal',
-      status: 'approved',
-      submittedBy: 'Marcus Hill',
-      notes: 'Overtime labor for weekend shutdown.',
-      attachments: ['timesheet-EXP-002.pdf']
-    },
-    {
-      id: 'EXP-003',
-      category: 'Travel',
-      amount: 2100,
-      date: '2026-01-17',
-      vendor: 'Various',
-      status: 'pending',
-      submittedBy: 'Elena Cruz',
-      notes: 'Site visit mileage and lodging.',
-      attachments: []
-    },
-    {
-      id: 'EXP-004',
-      category: 'Equipment',
-      amount: 9700,
-      date: '2026-01-16',
-      vendor: 'Tech Equipment Co',
-      status: 'approved',
-      submittedBy: 'Daniel Foster',
-      notes: 'Replacement pump and control module.',
-      attachments: ['quote-EXP-004.pdf', 'receipt-EXP-004.pdf']
-    }
-  ]
-};
+import { useQuery, useQueryClient } from 'react-query';
+import { createExpense, createInvoice, getExpenses, getInvoices, updateInvoice, deleteInvoice } from '@/api/finance';
+import { fetchVendors } from '@/api/vendors';
 
 // StatCard Component
 const StatCard = ({ icon: Icon, label, value, trend, color = 'indigo' }) => (
@@ -168,7 +62,7 @@ const StatCard = ({ icon: Icon, label, value, trend, color = 'indigo' }) => (
 );
 
 // Invoice Card Component
-const InvoiceCard = ({ invoice, onSelect }) => {
+const InvoiceCard = ({ invoice, onSelect, onEdit, onDelete }) => {
   const getStatusColor = (status) => {
     switch (status) {
       case 'paid':
@@ -181,6 +75,8 @@ const InvoiceCard = ({ invoice, onSelect }) => {
         return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300';
     }
   };
+  const status = invoice.status || 'pending';
+  const dueDateLabel = invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'â€”';
 
   return (
     <motion.div
@@ -193,8 +89,8 @@ const InvoiceCard = ({ invoice, onSelect }) => {
           <h3 className="font-semibold text-gray-900 dark:text-white">{invoice.id}</h3>
           <p className="text-sm text-gray-600 dark:text-gray-400">{invoice.clientName}</p>
         </div>
-        <Badge className={getStatusColor(invoice.status)}>
-          {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
+        <Badge className={getStatusColor(status)}>
+          {status.charAt(0).toUpperCase() + status.slice(1)}
         </Badge>
       </div>
 
@@ -202,9 +98,31 @@ const InvoiceCard = ({ invoice, onSelect }) => {
 
       <div className="flex items-end justify-between">
         <div>
-          <p className="text-xs text-gray-500 dark:text-gray-500">Due: {new Date(invoice.dueDate).toLocaleDateString()}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-500">Due: {dueDateLabel}</p>
         </div>
         <p className="text-xl font-bold text-indigo-600">${invoice.amount.toLocaleString()}</p>
+      </div>
+      <div className="mt-3 flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit?.(invoice);
+          }}
+        >
+          Edit
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete?.(invoice);
+          }}
+        >
+          Delete
+        </Button>
       </div>
     </motion.div>
   );
@@ -219,6 +137,9 @@ export default function FinancePortal() {
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [selectedExpense, setSelectedExpense] = useState(null);
   const [selectedTab, setSelectedTab] = useState('invoices');
+  const [newInvoiceModalOpen, setNewInvoiceModalOpen] = useState(false);
+  const [editInvoiceModalOpen, setEditInvoiceModalOpen] = useState(false);
+  const [editingInvoiceId, setEditingInvoiceId] = useState(null);
   const [newPaymentModalOpen, setNewPaymentModalOpen] = useState(false);
   const [newExpenseModalOpen, setNewExpenseModalOpen] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState('');
@@ -227,6 +148,28 @@ export default function FinancePortal() {
   const [requestPurpose, setRequestPurpose] = useState('');
   const [requestNotes, setRequestNotes] = useState('');
   const [fundRequests, setFundRequests] = useState([]);
+  const [expenseForm, setExpenseForm] = useState({
+    category: '',
+    amount: '',
+    vendor: '',
+    notes: ''
+  });
+  const [invoiceForm, setInvoiceForm] = useState({
+    clientName: '',
+    vendor: '',
+    amount: '',
+    dueDate: '',
+    status: 'pending',
+    description: ''
+  });
+  const [editInvoiceForm, setEditInvoiceForm] = useState({
+    clientName: '',
+    vendor: '',
+    amount: '',
+    dueDate: '',
+    status: 'pending',
+    description: ''
+  });
   const [fundLoading, setFundLoading] = useState(false);
   const [fundFilters, setFundFilters] = useState({
     status: 'all',
@@ -238,6 +181,77 @@ export default function FinancePortal() {
   const canApproveFunds = user?.role === 'admin';
   const canViewExpenses = isFinance || canApproveFunds;
   const canViewFundRequests = canRequestFunds || canApproveFunds;
+  const queryClient = useQueryClient();
+
+  const invoiceQueryParams = useMemo(
+    () => ({
+      status: invoiceStatusFilter !== 'all' ? invoiceStatusFilter : undefined,
+      search: search || undefined
+    }),
+    [invoiceStatusFilter, search]
+  );
+
+  const expenseQueryParams = useMemo(
+    () => ({
+      status: expenseStatusFilter !== 'all' ? expenseStatusFilter : undefined,
+      search: search || undefined
+    }),
+    [expenseStatusFilter, search]
+  );
+
+  const { data: invoicesResponse = [], isLoading: invoicesLoading } = useQuery(
+    ['financeInvoices', invoiceQueryParams],
+    () => getInvoices(invoiceQueryParams),
+    { keepPreviousData: true, enabled: isFinance }
+  );
+
+  const { data: vendorsResponse = [] } = useQuery('vendors', fetchVendors, {
+    enabled: isFinance || canApproveFunds
+  });
+
+  const { data: expensesResponse = [], isLoading: expensesLoading } = useQuery(
+    ['financeExpenses', expenseQueryParams],
+    () => getExpenses(expenseQueryParams),
+    { keepPreviousData: true, enabled: canViewExpenses }
+  );
+
+  const invoices = useMemo(() => {
+    if (Array.isArray(invoicesResponse)) return invoicesResponse;
+    if (Array.isArray(invoicesResponse?.invoices)) return invoicesResponse.invoices;
+    if (Array.isArray(invoicesResponse?.data)) return invoicesResponse.data;
+    return [];
+  }, [invoicesResponse]);
+
+  const vendors = useMemo(() => {
+    if (Array.isArray(vendorsResponse)) return vendorsResponse;
+    if (Array.isArray(vendorsResponse?.vendors)) return vendorsResponse.vendors;
+    return [];
+  }, [vendorsResponse]);
+
+  const expenses = useMemo(() => {
+    if (Array.isArray(expensesResponse)) return expensesResponse;
+    if (Array.isArray(expensesResponse?.expenses)) return expensesResponse.expenses;
+    if (Array.isArray(expensesResponse?.data)) return expensesResponse.data;
+    return [];
+  }, [expensesResponse]);
+
+  const summary = useMemo(() => {
+    const totalRevenue = invoices.reduce((sum, invoice) => sum + Number(invoice.amount || 0), 0);
+    const totalExpenses = expenses.reduce((sum, expense) => sum + Number(expense.amount || 0), 0);
+    const pendingPayments = invoices
+      .filter((invoice) => invoice.status && invoice.status !== 'paid')
+      .reduce((sum, invoice) => sum + Number(invoice.amount || 0), 0);
+    const netProfit = totalRevenue - totalExpenses;
+    const budgetUtilization = totalRevenue ? Math.round((totalExpenses / totalRevenue) * 100) : 0;
+
+    return {
+      totalRevenue,
+      totalExpenses,
+      netProfit,
+      pendingPayments,
+      budgetUtilization
+    };
+  }, [invoices, expenses]);
 
   useEffect(() => {
     if (isFinance) {
@@ -258,36 +272,135 @@ export default function FinancePortal() {
   }, [canViewExpenses, canViewFundRequests, isFinance, selectedTab]);
 
   const filteredInvoices = useMemo(() => {
-    return mockFinanceData.invoices.filter((invoice) => {
+    return invoices.filter((invoice) => {
       if (invoiceStatusFilter !== 'all' && invoice.status !== invoiceStatusFilter) return false;
-      if (search && !invoice.clientName.toLowerCase().includes(search.toLowerCase())) return false;
+      if (search && !(invoice.clientName || '').toLowerCase().includes(search.toLowerCase())) return false;
       return true;
     });
-  }, [search, invoiceStatusFilter]);
+  }, [invoices, search, invoiceStatusFilter]);
 
   const filteredExpenses = useMemo(() => {
-    return mockFinanceData.expenses.filter((expense) => {
+    return expenses.filter((expense) => {
       if (expenseStatusFilter !== 'all' && expense.status !== expenseStatusFilter) return false;
-      if (search && !expense.vendor.toLowerCase().includes(search.toLowerCase())) return false;
+      if (search && !(expense.vendor || '').toLowerCase().includes(search.toLowerCase())) return false;
       return true;
     });
-  }, [search, expenseStatusFilter]);
+  }, [expenses, search, expenseStatusFilter]);
 
-  const handleProcessPayment = () => {
+  const handleProcessPayment = async () => {
+    if (!selectedInvoice) return;
     if (paymentAmount && paymentAmount > 0) {
-      alert(`âœ“ Payment of $${paymentAmount} processed for ${selectedInvoice.id}`);
-      setNewPaymentModalOpen(false);
-      setPaymentAmount('');
-      setPaymentNote('');
-      setSelectedInvoice(null);
+      try {
+        await updateInvoice(selectedInvoice.id, { status: 'paid' });
+        await queryClient.invalidateQueries(['financeInvoices']);
+      } catch (error) {
+        // handled by interceptor
+      } finally {
+        setNewPaymentModalOpen(false);
+        setPaymentAmount('');
+        setPaymentNote('');
+        setSelectedInvoice(null);
+      }
     } else {
-      alert('âš  Please enter a valid payment amount');
+      alert('Please enter a valid payment amount');
     }
   };
 
-  const handleAddExpense = () => {
-    alert(`âœ“ Expense added successfully`);
-    setNewExpenseModalOpen(false);
+  const handleAddExpense = async () => {
+    if (!expenseForm.category || !expenseForm.amount) {
+      alert('Please provide a category and amount.');
+      return;
+    }
+    try {
+      await createExpense({
+        category: expenseForm.category,
+        amount: Number(expenseForm.amount),
+        vendor: expenseForm.vendor,
+        notes: expenseForm.notes
+      });
+      await queryClient.invalidateQueries(['financeExpenses']);
+      setExpenseForm({ category: '', amount: '', vendor: '', notes: '' });
+      setNewExpenseModalOpen(false);
+    } catch (error) {
+      // handled by interceptor
+    }
+  };
+
+  const handleCreateInvoice = async () => {
+    if (!invoiceForm.clientName || !invoiceForm.amount) {
+      alert('Please provide a client name and amount.');
+      return;
+    }
+    try {
+      await createInvoice({
+        clientName: invoiceForm.clientName,
+        vendor: invoiceForm.vendor || undefined,
+        amount: Number(invoiceForm.amount),
+        dueDate: invoiceForm.dueDate || undefined,
+        status: invoiceForm.status,
+        description: invoiceForm.description
+      });
+      await queryClient.invalidateQueries(['financeInvoices']);
+      setInvoiceForm({
+        clientName: '',
+        vendor: '',
+        amount: '',
+        dueDate: '',
+        status: 'pending',
+        description: ''
+      });
+      setNewInvoiceModalOpen(false);
+    } catch (error) {
+      // handled by interceptor
+    }
+  };
+
+  const openEditInvoice = (invoice) => {
+    if (!invoice) return;
+    setEditingInvoiceId(invoice.id);
+    setEditInvoiceForm({
+      clientName: invoice.clientName || '',
+      vendor: invoice.vendor || '',
+      amount: invoice.amount || '',
+      dueDate: invoice.dueDate ? new Date(invoice.dueDate).toISOString().slice(0, 10) : '',
+      status: invoice.status || 'pending',
+      description: invoice.description || ''
+    });
+    setEditInvoiceModalOpen(true);
+  };
+
+  const handleUpdateInvoice = async () => {
+    if (!editingInvoiceId) return;
+    if (!editInvoiceForm.clientName || !editInvoiceForm.amount) {
+      alert('Please provide a client name and amount.');
+      return;
+    }
+    try {
+      await updateInvoice(editingInvoiceId, {
+        clientName: editInvoiceForm.clientName,
+        vendor: editInvoiceForm.vendor || undefined,
+        amount: Number(editInvoiceForm.amount),
+        dueDate: editInvoiceForm.dueDate || undefined,
+        status: editInvoiceForm.status,
+        description: editInvoiceForm.description
+      });
+      await queryClient.invalidateQueries(['financeInvoices']);
+      setEditInvoiceModalOpen(false);
+      setEditingInvoiceId(null);
+    } catch (error) {
+      // handled by interceptor
+    }
+  };
+
+  const handleDeleteInvoice = async (invoice) => {
+    if (!invoice?.id) return;
+    if (!window.confirm('Delete this invoice?')) return;
+    try {
+      await deleteInvoice(invoice.id);
+      await queryClient.invalidateQueries(['financeInvoices']);
+    } catch (error) {
+      // handled by interceptor
+    }
   };
 
   const loadFundRequests = async () => {
@@ -376,34 +489,31 @@ export default function FinancePortal() {
         <StatCard
           icon={TrendingUp}
           label="Total Revenue"
-          value={`$${mockFinanceData.summary.totalRevenue.toLocaleString()}`}
-          trend={12}
+          value={`$${summary.totalRevenue.toLocaleString()}`}
           color="emerald"
         />
         <StatCard
           icon={TrendingDown}
           label="Total Expenses"
-          value={`$${mockFinanceData.summary.totalExpenses.toLocaleString()}`}
-          trend={-5}
+          value={`$${summary.totalExpenses.toLocaleString()}`}
           color="red"
         />
         <StatCard
           icon={DollarSign}
           label="Net Profit"
-          value={`$${mockFinanceData.summary.netProfit.toLocaleString()}`}
-          trend={18}
+          value={`$${summary.netProfit.toLocaleString()}`}
           color="indigo"
         />
         <StatCard
           icon={Clock}
           label="Pending Payments"
-          value={`$${mockFinanceData.summary.pendingPayments.toLocaleString()}`}
+          value={`$${summary.pendingPayments.toLocaleString()}`}
           color="blue"
         />
         <StatCard
           icon={PieChart}
           label="Budget Used"
-          value={`${mockFinanceData.summary.budgetUtilization}%`}
+          value={`${summary.budgetUtilization}%`}
           color="amber"
         />
       </div>
@@ -642,13 +752,22 @@ export default function FinancePortal() {
                   </SelectContent>
                 </Select>
 
-                <Button 
-                  className="bg-blue-700 hover:bg-blue-800 text-white h-10"
-                  onClick={() => alert(`Exporting invoice report...`)}
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Export Report
-                </Button>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Button 
+                    className="bg-blue-700 hover:bg-blue-800 text-white h-10"
+                    onClick={() => alert(`Exporting invoice report...`)}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Export Report
+                  </Button>
+                  <Button
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white h-10"
+                    onClick={() => setNewInvoiceModalOpen(true)}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    New Invoice
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -658,15 +777,27 @@ export default function FinancePortal() {
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
               Invoices ({filteredInvoices.length})
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredInvoices.map((invoice) => (
-                <InvoiceCard
-                  key={invoice.id}
-                  invoice={invoice}
-                  onSelect={() => setSelectedInvoice(invoice)}
-                />
-              ))}
-            </div>
+            {invoicesLoading ? (
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Loading invoices...
+              </p>
+            ) : filteredInvoices.length === 0 ? (
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                No invoices available yet.
+              </p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredInvoices.map((invoice) => (
+                  <InvoiceCard
+                    key={invoice.id}
+                    invoice={invoice}
+                    onSelect={() => setSelectedInvoice(invoice)}
+                    onEdit={openEditInvoice}
+                    onDelete={handleDeleteInvoice}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -731,29 +862,49 @@ export default function FinancePortal() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredExpenses.map((expense) => (
-                    <tr
-                      key={expense.id}
-                      className="border-b border-gray-200 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-700/50 cursor-pointer"
-                      onClick={() => setSelectedExpense(expense)}
-                    >
-                      <td className="px-6 py-3 text-sm text-gray-900 dark:text-white font-medium">{expense.category}</td>
-                      <td className="px-6 py-3 text-sm text-gray-600 dark:text-gray-400">{expense.vendor}</td>
-                      <td className="px-6 py-3 text-sm font-semibold text-amber-600">${expense.amount.toLocaleString()}</td>
-                      <td className="px-6 py-3 text-sm text-gray-600 dark:text-gray-400">
-                        {new Date(expense.date).toLocaleDateString()}
-                      </td>
-                      <td className="px-6 py-3 text-sm">
-                        <Badge className={
-                          expense.status === 'approved'
-                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300'
-                            : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
-                        }>
-                          {expense.status === 'approved' ? 'Approved' : 'Pending'}
-                        </Badge>
+                  {expensesLoading ? (
+                    <tr>
+                      <td
+                        colSpan={5}
+                        className="px-6 py-6 text-sm text-gray-600 dark:text-gray-400"
+                      >
+                        Loading expenses...
                       </td>
                     </tr>
-                  ))}
+                  ) : filteredExpenses.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={5}
+                        className="px-6 py-6 text-sm text-gray-600 dark:text-gray-400"
+                      >
+                        No expenses available yet.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredExpenses.map((expense) => (
+                      <tr
+                        key={expense.id}
+                        className="border-b border-gray-200 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-700/50 cursor-pointer"
+                        onClick={() => setSelectedExpense(expense)}
+                      >
+                        <td className="px-6 py-3 text-sm text-gray-900 dark:text-white font-medium">{expense.category}</td>
+                        <td className="px-6 py-3 text-sm text-gray-600 dark:text-gray-400">{expense.vendor}</td>
+                        <td className="px-6 py-3 text-sm font-semibold text-amber-600">${expense.amount.toLocaleString()}</td>
+                        <td className="px-6 py-3 text-sm text-gray-600 dark:text-gray-400">
+                          {new Date(expense.date).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-3 text-sm">
+                          <Badge className={
+                            expense.status === 'approved'
+                              ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300'
+                              : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+                          }>
+                            {expense.status === 'approved' ? 'Approved' : 'Pending'}
+                          </Badge>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
@@ -835,13 +986,13 @@ export default function FinancePortal() {
                   <div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Invoice Date</p>
                     <p className="font-medium text-gray-900 dark:text-white">
-                      {new Date(selectedInvoice.date).toLocaleDateString()}
+                    {selectedInvoice.date ? new Date(selectedInvoice.date).toLocaleDateString() : 'â€”'}
                     </p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Due Date</p>
                     <p className="font-medium text-gray-900 dark:text-white">
-                      {new Date(selectedInvoice.dueDate).toLocaleDateString()}
+                    {selectedInvoice.dueDate ? new Date(selectedInvoice.dueDate).toLocaleDateString() : 'â€”'}
                     </p>
                   </div>
                 </div>
@@ -862,6 +1013,18 @@ export default function FinancePortal() {
                       Manager approval is required before releasing funds.
                     </p>
                   )
+                )}
+                {isFinance && (
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => {
+                      setSelectedInvoice(null);
+                      openEditInvoice(selectedInvoice);
+                    }}
+                  >
+                    Edit Invoice
+                  </Button>
                 )}
               </CardContent>
             </motion.div>
@@ -931,6 +1094,276 @@ export default function FinancePortal() {
                   onClick={() => handleProcessPayment()}
                 >
                   Process Payment
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* New Invoice Modal */}
+      <AnimatePresence>
+        {newInvoiceModalOpen && isFinance && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            onClick={() => setNewInvoiceModalOpen(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white dark:bg-zinc-900 rounded-lg w-full max-w-md"
+            >
+              <div className="p-6 border-b border-gray-200 dark:border-zinc-800">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Create Invoice
+                </h3>
+              </div>
+              <div className="p-6 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Client Name
+                  </label>
+                  <Input
+                    value={invoiceForm.clientName}
+                    onChange={(e) => setInvoiceForm((prev) => ({ ...prev, clientName: e.target.value }))}
+                    placeholder="Client or vendor name"
+                    className="bg-white dark:bg-zinc-800 border-gray-300 dark:border-zinc-700 text-gray-900 dark:text-gray-100"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Vendor (optional)
+                  </label>
+                  <Select
+                    value={invoiceForm.vendor}
+                    onValueChange={(value) => setInvoiceForm((prev) => ({ ...prev, vendor: value }))}
+                  >
+                    <SelectTrigger className="bg-white dark:bg-zinc-800 border-gray-300 dark:border-zinc-700 text-gray-900 dark:text-gray-100">
+                      <SelectValue placeholder="Select vendor" />
+                    </SelectTrigger>
+                    <SelectContent className="dark:bg-zinc-900 dark:text-gray-100">
+                      <SelectItem value="">No vendor</SelectItem>
+                      {vendors.map((vendor) => (
+                        <SelectItem key={vendor.id} value={vendor.id}>
+                          {vendor.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Amount ($)
+                    </label>
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={invoiceForm.amount}
+                      onChange={(e) => setInvoiceForm((prev) => ({ ...prev, amount: e.target.value }))}
+                      placeholder="0.00"
+                      className="bg-white dark:bg-zinc-800 border-gray-300 dark:border-zinc-700 text-gray-900 dark:text-gray-100"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Due Date
+                    </label>
+                    <Input
+                      type="date"
+                      value={invoiceForm.dueDate}
+                      onChange={(e) => setInvoiceForm((prev) => ({ ...prev, dueDate: e.target.value }))}
+                      className="bg-white dark:bg-zinc-800 border-gray-300 dark:border-zinc-700 text-gray-900 dark:text-gray-100"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Status
+                  </label>
+                  <Select
+                    value={invoiceForm.status}
+                    onValueChange={(value) => setInvoiceForm((prev) => ({ ...prev, status: value }))}
+                  >
+                    <SelectTrigger className="bg-white dark:bg-zinc-800 border-gray-300 dark:border-zinc-700 text-gray-900 dark:text-gray-100">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent className="dark:bg-zinc-900 dark:text-gray-100">
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="paid">Paid</SelectItem>
+                      <SelectItem value="overdue">Overdue</SelectItem>
+                      <SelectItem value="draft">Draft</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Description
+                  </label>
+                  <textarea
+                    value={invoiceForm.description}
+                    onChange={(e) => setInvoiceForm((prev) => ({ ...prev, description: e.target.value }))}
+                    rows={3}
+                    className="w-full rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    placeholder="Optional notes"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-3 p-6 border-t border-gray-200 dark:border-zinc-800">
+                <Button
+                  variant="outline"
+                  className="flex-1 text-gray-700 dark:text-gray-200"
+                  onClick={() => setNewInvoiceModalOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                  onClick={handleCreateInvoice}
+                >
+                  Create Invoice
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Edit Invoice Modal */}
+      <AnimatePresence>
+        {editInvoiceModalOpen && isFinance && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            onClick={() => setEditInvoiceModalOpen(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white dark:bg-zinc-900 rounded-lg w-full max-w-md"
+            >
+              <div className="p-6 border-b border-gray-200 dark:border-zinc-800">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Edit Invoice
+                </h3>
+              </div>
+              <div className="p-6 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Client Name
+                  </label>
+                  <Input
+                    value={editInvoiceForm.clientName}
+                    onChange={(e) => setEditInvoiceForm((prev) => ({ ...prev, clientName: e.target.value }))}
+                    placeholder="Client or vendor name"
+                    className="bg-white dark:bg-zinc-800 border-gray-300 dark:border-zinc-700 text-gray-900 dark:text-gray-100"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Vendor (optional)
+                  </label>
+                  <Select
+                    value={editInvoiceForm.vendor}
+                    onValueChange={(value) => setEditInvoiceForm((prev) => ({ ...prev, vendor: value }))}
+                  >
+                    <SelectTrigger className="bg-white dark:bg-zinc-800 border-gray-300 dark:border-zinc-700 text-gray-900 dark:text-gray-100">
+                      <SelectValue placeholder="Select vendor" />
+                    </SelectTrigger>
+                    <SelectContent className="dark:bg-zinc-900 dark:text-gray-100">
+                      <SelectItem value="">No vendor</SelectItem>
+                      {vendors.map((vendor) => (
+                        <SelectItem key={vendor.id} value={vendor.id}>
+                          {vendor.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Amount ($)
+                    </label>
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={editInvoiceForm.amount}
+                      onChange={(e) => setEditInvoiceForm((prev) => ({ ...prev, amount: e.target.value }))}
+                      placeholder="0.00"
+                      className="bg-white dark:bg-zinc-800 border-gray-300 dark:border-zinc-700 text-gray-900 dark:text-gray-100"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Due Date
+                    </label>
+                    <Input
+                      type="date"
+                      value={editInvoiceForm.dueDate}
+                      onChange={(e) => setEditInvoiceForm((prev) => ({ ...prev, dueDate: e.target.value }))}
+                      className="bg-white dark:bg-zinc-800 border-gray-300 dark:border-zinc-700 text-gray-900 dark:text-gray-100"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Status
+                  </label>
+                  <Select
+                    value={editInvoiceForm.status}
+                    onValueChange={(value) => setEditInvoiceForm((prev) => ({ ...prev, status: value }))}
+                  >
+                    <SelectTrigger className="bg-white dark:bg-zinc-800 border-gray-300 dark:border-zinc-700 text-gray-900 dark:text-gray-100">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent className="dark:bg-zinc-900 dark:text-gray-100">
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="paid">Paid</SelectItem>
+                      <SelectItem value="overdue">Overdue</SelectItem>
+                      <SelectItem value="draft">Draft</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Description
+                  </label>
+                  <textarea
+                    value={editInvoiceForm.description}
+                    onChange={(e) => setEditInvoiceForm((prev) => ({ ...prev, description: e.target.value }))}
+                    rows={3}
+                    className="w-full rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    placeholder="Optional notes"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-3 p-6 border-t border-gray-200 dark:border-zinc-800">
+                <Button
+                  variant="outline"
+                  className="flex-1 text-gray-700 dark:text-gray-200"
+                  onClick={() => setEditInvoiceModalOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                  onClick={handleUpdateInvoice}
+                >
+                  Save Changes
                 </Button>
               </div>
             </motion.div>
@@ -1054,7 +1487,10 @@ export default function FinancePortal() {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Category
                   </label>
-                  <Select>
+                  <Select
+                    value={expenseForm.category}
+                    onValueChange={(value) => setExpenseForm((prev) => ({ ...prev, category: value }))}
+                  >
                     <SelectTrigger className="bg-white dark:bg-zinc-800 border-gray-300 dark:border-zinc-700 text-gray-900 dark:text-gray-100">
                       <SelectValue placeholder="Select category..." />
                     </SelectTrigger>
@@ -1074,6 +1510,8 @@ export default function FinancePortal() {
                     type="number"
                     min="0"
                     step="0.01"
+                    value={expenseForm.amount}
+                    onChange={(e) => setExpenseForm((prev) => ({ ...prev, amount: e.target.value }))}
                     placeholder="0.00"
                     className="bg-white dark:bg-zinc-800 border-gray-300 dark:border-zinc-700 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500"
                   />
@@ -1084,7 +1522,21 @@ export default function FinancePortal() {
                   </label>
                   <Input
                     placeholder="Vendor name..."
+                    value={expenseForm.vendor}
+                    onChange={(e) => setExpenseForm((prev) => ({ ...prev, vendor: e.target.value }))}
                     className="bg-white dark:bg-zinc-800 border-gray-300 dark:border-zinc-700 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Notes
+                  </label>
+                  <textarea
+                    value={expenseForm.notes}
+                    onChange={(e) => setExpenseForm((prev) => ({ ...prev, notes: e.target.value }))}
+                    rows={3}
+                    className="w-full rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    placeholder="Optional notes..."
                   />
                 </div>
               </div>
@@ -1110,3 +1562,4 @@ export default function FinancePortal() {
     </div>
   );
 }
+

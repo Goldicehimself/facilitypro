@@ -12,26 +12,18 @@ import {
   ResponsiveContainer,
   ComposedChart,
 } from 'recharts';
-import { TrendingUp, AlertCircle, CheckCircle } from 'lucide-react';
+import { AlertCircle, CheckCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 const ComplianceChart = ({ data = null }) => {
-  // Default mock compliance data if none provided
   const chartData = useMemo(() => {
-    return data || [
-      { month: 'Jan', compliance: 78, target: 85, completed: 45, pending: 12 },
-      { month: 'Feb', compliance: 82, target: 85, completed: 52, pending: 8 },
-      { month: 'Mar', compliance: 80, target: 85, completed: 48, pending: 10 },
-      { month: 'Apr', compliance: 85, target: 85, completed: 56, pending: 6 },
-      { month: 'May', compliance: 88, target: 85, completed: 62, pending: 5 },
-      { month: 'Jun', compliance: 87, target: 85, completed: 59, pending: 4 },
-    ];
+    return Array.isArray(data) ? data : [];
   }, [data]);
 
   // Calculate statistics
   const stats = useMemo(() => {
     if (!chartData || chartData.length === 0) {
-      return { current: 0, average: 0, target: 85, trend: 0 };
+      return { current: 0, average: 0, target: 0, trend: 0 };
     }
 
     const current = chartData[chartData.length - 1].compliance;
@@ -39,7 +31,7 @@ const ComplianceChart = ({ data = null }) => {
     const average = Math.round(
       chartData.reduce((sum, item) => sum + item.compliance, 0) / chartData.length
     );
-    const target = chartData[0]?.target || 85;
+    const target = chartData[0]?.target || 0;
     const trend = current - previous;
 
     return { current, average, target, trend };
@@ -118,43 +110,49 @@ const ComplianceChart = ({ data = null }) => {
         <h4 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-4">
           Compliance Trend (Last 6 Months)
         </h4>
-        <ResponsiveContainer width="100%" height={300}>
-          <ComposedChart data={chartData} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" className="stroke-zinc-200 dark:stroke-zinc-800" />
-            <XAxis 
-              dataKey="month" 
-              className="text-xs text-zinc-600 dark:text-zinc-400"
-            />
-            <YAxis 
-              domain={[0, 100]}
-              className="text-xs text-zinc-600 dark:text-zinc-400"
-            />
-            <Tooltip 
-              contentStyle={{
-                backgroundColor: '#fff',
-                border: '1px solid #e5e7eb',
-                borderRadius: '0.5rem',
-              }}
-              formatter={(value) => `${value}%`}
-            />
-            <Legend />
-            <Line
-              type="monotone"
-              dataKey="compliance"
-              stroke="#4f46e5"
-              strokeWidth={3}
-              dot={{ fill: '#4f46e5', r: 5 }}
-              activeDot={{ r: 7 }}
-              name="Compliance %"
-            />
-            <Bar
-              dataKey="target"
-              fill="#93c5fd"
-              opacity={0.3}
-              name="Target %"
-            />
-          </ComposedChart>
-        </ResponsiveContainer>
+        {chartData.length === 0 ? (
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            No compliance trend data available yet.
+          </p>
+        ) : (
+          <ResponsiveContainer width="100%" height={300}>
+            <ComposedChart data={chartData} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-zinc-200 dark:stroke-zinc-800" />
+              <XAxis 
+                dataKey="month" 
+                className="text-xs text-zinc-600 dark:text-zinc-400"
+              />
+              <YAxis 
+                domain={[0, 100]}
+                className="text-xs text-zinc-600 dark:text-zinc-400"
+              />
+              <Tooltip 
+                contentStyle={{
+                  backgroundColor: '#fff',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '0.5rem',
+                }}
+                formatter={(value) => `${value}%`}
+              />
+              <Legend />
+              <Line
+                type="monotone"
+                dataKey="compliance"
+                stroke="#4f46e5"
+                strokeWidth={3}
+                dot={{ fill: '#4f46e5', r: 5 }}
+                activeDot={{ r: 7 }}
+                name="Compliance %"
+              />
+              <Bar
+                dataKey="target"
+                fill="#93c5fd"
+                opacity={0.3}
+                name="Target %"
+              />
+            </ComposedChart>
+          </ResponsiveContainer>
+        )}
       </div>
 
       {/* Tasks Breakdown */}
@@ -162,28 +160,34 @@ const ComplianceChart = ({ data = null }) => {
         <h4 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-4">
           Tasks Breakdown
         </h4>
-        <ResponsiveContainer width="100%" height={250}>
-          <BarChart data={chartData} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" className="stroke-zinc-200 dark:stroke-zinc-800" />
-            <XAxis 
-              dataKey="month" 
-              className="text-xs text-zinc-600 dark:text-zinc-400"
-            />
-            <YAxis 
-              className="text-xs text-zinc-600 dark:text-zinc-400"
-            />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: '#fff',
-                border: '1px solid #e5e7eb',
-                borderRadius: '0.5rem',
-              }}
-            />
-            <Legend />
-            <Bar dataKey="completed" fill="#10b981" name="Completed" />
-            <Bar dataKey="pending" fill="#f59e0b" name="Pending" />
-          </BarChart>
-        </ResponsiveContainer>
+        {chartData.length === 0 ? (
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            No task breakdown data available yet.
+          </p>
+        ) : (
+          <ResponsiveContainer width="100%" height={250}>
+            <BarChart data={chartData} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-zinc-200 dark:stroke-zinc-800" />
+              <XAxis 
+                dataKey="month" 
+                className="text-xs text-zinc-600 dark:text-zinc-400"
+              />
+              <YAxis 
+                className="text-xs text-zinc-600 dark:text-zinc-400"
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: '#fff',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '0.5rem',
+                }}
+              />
+              <Legend />
+              <Bar dataKey="completed" fill="#10b981" name="Completed" />
+              <Bar dataKey="pending" fill="#f59e0b" name="Pending" />
+            </BarChart>
+          </ResponsiveContainer>
+        )}
       </div>
 
       {/* Compliance Details */}
@@ -193,41 +197,8 @@ const ComplianceChart = ({ data = null }) => {
           <h4 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-4">
             Compliance by Equipment
           </h4>
-          <div className="space-y-3">
-            {[
-              { name: 'HVAC Systems', compliance: 92, count: 24 },
-              { name: 'Electrical', compliance: 85, count: 18 },
-              { name: 'Plumbing', compliance: 88, count: 16 },
-              { name: 'Fire Safety', compliance: 95, count: 12 },
-            ].map((item) => (
-              <div key={item.name} className="flex items-center justify-between">
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                    {item.name}
-                  </p>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                    {item.count} assets
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-24 bg-zinc-200 dark:bg-zinc-700 rounded-full h-2">
-                    <div
-                      className={`h-2 rounded-full transition-all ${
-                        item.compliance >= 90
-                          ? 'bg-emerald-500'
-                          : item.compliance >= 80
-                          ? 'bg-blue-500'
-                          : 'bg-amber-500'
-                      }`}
-                      style={{ width: `${item.compliance}%` }}
-                    />
-                  </div>
-                  <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 w-10 text-right">
-                    {item.compliance}%
-                  </span>
-                </div>
-              </div>
-            ))}
+          <div className="space-y-3 text-sm text-zinc-500 dark:text-zinc-400">
+            No equipment compliance data available yet.
           </div>
         </div>
 
@@ -237,45 +208,8 @@ const ComplianceChart = ({ data = null }) => {
             <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
             Overdue Tasks
           </h4>
-          <div className="space-y-3">
-            {[
-              { name: 'HVAC Unit #5', daysOverdue: 3, priority: 'high' },
-              { name: 'Fire Ext. Check #12', daysOverdue: 1, priority: 'critical' },
-              { name: 'Electrical Panel #2', daysOverdue: 7, priority: 'critical' },
-            ].map((item, idx) => (
-              <div
-                key={idx}
-                className={`p-3 rounded-lg border ${
-                  item.priority === 'critical'
-                    ? 'bg-rose-50 dark:bg-rose-950 border-rose-200 dark:border-rose-800'
-                    : 'bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800'
-                }`}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                      {item.name}
-                    </p>
-                    <p className={`text-xs mt-1 ${
-                      item.priority === 'critical'
-                        ? 'text-rose-600 dark:text-rose-400'
-                        : 'text-amber-600 dark:text-amber-400'
-                    }`}>
-                      {item.daysOverdue} day{item.daysOverdue > 1 ? 's' : ''} overdue
-                    </p>
-                  </div>
-                  <Badge
-                    className={
-                      item.priority === 'critical'
-                        ? 'bg-rose-600 text-white'
-                        : 'bg-amber-600 text-white'
-                    }
-                  >
-                    {item.priority}
-                  </Badge>
-                </div>
-              </div>
-            ))}
+          <div className="space-y-3 text-sm text-zinc-500 dark:text-zinc-400">
+            No overdue task data available yet.
           </div>
         </div>
       </div>

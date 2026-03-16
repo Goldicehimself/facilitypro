@@ -36,6 +36,7 @@ const dashboardRoutes = require('./src/routes/dashboardRoutes');
 const auditRoutes = require('./src/routes/auditRoutes');
 const inventoryRoutes = require('./src/routes/inventoryRoutes');
 const serviceRequestRoutes = require('./src/routes/serviceRequestRoutes');
+const financeRoutes = require('./src/routes/financeRoutes');
 
 const EXPRESSPORT = constants.PORT;
 const app = express();
@@ -99,6 +100,7 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/audit', auditRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/service-requests', serviceRequestRoutes);
+app.use('/api/finance', financeRoutes);
 
 // 404 handler
 app.use((req, res) => {

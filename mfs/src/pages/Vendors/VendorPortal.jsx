@@ -1,60 +1,33 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { TrendingUp, DollarSign, CheckCircle2, Clock, AlertCircle, FileText, MessageSquare, Download, Eye, Calendar, Plus, LogOut, Star, X } from 'lucide-react';
+import { TrendingUp, DollarSign, CheckCircle2, Clock, AlertCircle, FileText, MessageSquare, Download, Eye, Calendar, Plus, LogOut, Star, X, Trash2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import GreetingBanner from '@/components/common/GreetingBanner';
-import { useQuery } from 'react-query';
-import { fetchVendors } from '@/api/vendors';
-import { getWorkOrders } from '@/api/workOrders';
-
-const mockServiceRequests = [
-  {
-    id: 'SR-2024-001',
-    title: 'Emergency HVAC Expansion',
-    description: 'Need additional HVAC capacity for new server room. Urgent installation required within 2 weeks.',
-    status: 'pending',
-    priority: 'high',
-    requestDate: '2026-02-20',
-    estimatedCost: 8000,
-    attachments: 1
-  },
-  {
-    id: 'SR-2024-002',
-    title: 'Preventive Maintenance Contract',
-    description: 'Request for monthly preventive maintenance contract for Building A systems. Current reactive service is becoming cost-prohibitive.',
-    status: 'approved',
-    priority: 'medium',
-    requestDate: '2026-02-15',
-    approvedDate: '2026-02-18',
-    estimatedCost: 2000
-  },
-  {
-    id: 'SR-2024-003',
-    title: 'System Upgrade Assessment',
-    description: 'Request for comprehensive assessment of existing HVAC systems for upgrade recommendations.',
-    status: 'submitted',
-    priority: 'low',
-    requestDate: '2026-02-10',
-    estimatedCost: 500
-  }
-];
-
-const mockInvoices = [];
-
-const mockDocuments = [];
+import { useQuery, useQueryClient } from 'react-query';
+import { fetchVendors, getVendorDocuments, getVendorPerformance, uploadVendorDocument, deleteVendorDocument, updateVendorDocument } from '@/api/vendors';
+import { getWorkOrders, updateWorkOrderStatus } from '@/api/workOrders';
+import { createServiceRequest, getServiceRequests } from '@/api/serviceRequests';
+import { getInvoices } from '@/api/finance';
 
 const VendorPortal = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [workOrders, setWorkOrders] = useState([]);
-  const [serviceRequests, setServiceRequests] = useState(mockServiceRequests);
   const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);
   const [statusValue, setStatusValue] = useState('open');
   const [requestOpen, setRequestOpen] = useState(false);
+  const [docUploadOpen, setDocUploadOpen] = useState(false);
+  const [docUploading, setDocUploading] = useState(false);
+  const [docFile, setDocFile] = useState(null);
+  const [docName, setDocName] = useState('');
+  const [docDeletingId, setDocDeletingId] = useState(null);
+  const [docEditOpen, setDocEditOpen] = useState(false);
+  const [editingDocId, setEditingDocId] = useState(null);
+  const [docEditForm, setDocEditForm] = useState({ name: '', type: '' });
   const [requestForm, setRequestForm] = useState({
     title: '',
     description: '',
@@ -62,12 +35,8 @@ const VendorPortal = () => {
     estimatedCost: '',
   });
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { data: vendorsResponse = [] } = useQuery('vendors', fetchVendors);
-  const { data: workOrdersResponse = [] } = useQuery(
-    ['vendorWorkOrders', vendorProfile?.id],
-    () => getWorkOrders(vendorProfile?.id ? { vendor: vendorProfile.id } : {}),
-    { enabled: !!vendorProfile?.id }
-  );
   
   const auth = useAuth();
   const logout = auth?.logout;
@@ -84,6 +53,32 @@ const VendorPortal = () => {
     return vendors.find((v) => (v.email || '').toLowerCase() === email) || vendors[0];
   }, [vendors, auth?.user?.email]);
 
+  const { data: workOrdersResponse = [] } = useQuery(
+    ['vendorWorkOrders', vendorProfile?.id],
+    () => getWorkOrders(vendorProfile?.id ? { vendor: vendorProfile.id } : {}),
+    { enabled: !!vendorProfile?.id }
+  );
+  const { data: serviceRequestsResponse = [], isLoading: serviceRequestsLoading } = useQuery(
+    ['vendorServiceRequests', vendorProfile?.id],
+    () => getServiceRequests(vendorProfile?.id ? { vendor: vendorProfile.id } : {}),
+    { enabled: !!vendorProfile?.id }
+  );
+  const { data: invoicesResponse = [], isLoading: invoicesLoading } = useQuery(
+    ['vendorInvoices', vendorProfile?.id],
+    () => getInvoices(vendorProfile?.id ? { vendor: vendorProfile.id } : {}),
+    { enabled: !!vendorProfile?.id }
+  );
+  const { data: documentsResponse = [], isLoading: documentsLoading } = useQuery(
+    ['vendorDocuments', vendorProfile?.id],
+    () => getVendorDocuments(vendorProfile?.id),
+    { enabled: !!vendorProfile?.id }
+  );
+  const { data: performanceData, isLoading: performanceLoading } = useQuery(
+    ['vendorPerformance', vendorProfile?.id],
+    () => getVendorPerformance(vendorProfile?.id),
+    { enabled: !!vendorProfile?.id }
+  );
+
   const normalizedWorkOrders = useMemo(() => {
     const list = Array.isArray(workOrdersResponse)
       ? workOrdersResponse
@@ -92,11 +87,12 @@ const VendorPortal = () => {
     return list
       .filter((wo) => (vendorId ? wo.vendor?.id === vendorId || wo.vendor === vendorId : true))
       .map((wo) => ({
-        id: wo.woNumber || wo.id,
+        id: wo.id,
+        displayId: wo.woNumber || wo.id,
         title: wo.title,
         location: wo.location || '—',
-        status: wo.status,
-        priority: wo.priority,
+        status: wo.status || 'open',
+        priority: wo.priority || 'medium',
         scheduledDate: wo.dueDate || wo.createdAt,
         assignedTech: wo.assignedTo?.name || 'Unassigned',
         description: wo.description || '',
@@ -105,22 +101,84 @@ const VendorPortal = () => {
         attachmentsCount: Array.isArray(wo.attachments) ? wo.attachments.length : 0,
         completedDate: wo.completionDate || null
       }));
-  }, [workOrdersResponse, auth?.user?.id]);
+  }, [workOrdersResponse, vendorProfile?.id]);
+
+  const serviceRequests = useMemo(() => {
+    const list = Array.isArray(serviceRequestsResponse)
+      ? serviceRequestsResponse
+      : (serviceRequestsResponse?.requests || serviceRequestsResponse?.data || []);
+    return list.map((request) => ({
+      id: request.id,
+      title: request.title,
+      description: request.description,
+      status: request.status || 'pending',
+      priority: request.priority || 'medium',
+      requestDate: request.requestDate || request.createdAt,
+      approvedDate: request.approvedDate,
+      estimatedCost: request.estimatedCost ?? request.amount ?? null,
+      attachments: Array.isArray(request.attachments) ? request.attachments.length : 0
+    }));
+  }, [serviceRequestsResponse]);
+
+  const invoices = useMemo(() => {
+    const list = Array.isArray(invoicesResponse)
+      ? invoicesResponse
+      : (invoicesResponse?.invoices || invoicesResponse?.data || []);
+    return list.map((invoice) => ({
+      id: invoice.id || invoice._id,
+      description: invoice.description,
+      status: invoice.status || 'pending',
+      date: invoice.date || invoice.issueDate || invoice.createdAt,
+      dueDate: invoice.dueDate,
+      amount: invoice.amount || 0
+    }));
+  }, [invoicesResponse]);
+
+  const documents = useMemo(() => {
+    const list = Array.isArray(documentsResponse)
+      ? documentsResponse
+      : (documentsResponse?.documents || documentsResponse?.data || []);
+    return list.map((doc) => ({
+      id: doc.id || doc._id,
+      name: doc.name,
+      type: doc.type || 'Document',
+      uploadDate: doc.uploadDate || doc.uploadedAt || doc.createdAt,
+      size: doc.size || '—',
+      url: doc.url
+    }));
+  }, [documentsResponse]);
+
+  const vendorPerformance = performanceData || null;
 
   const derivedVendorData = useMemo(() => {
     const active = normalizedWorkOrders.filter((wo) => wo.status !== 'completed').length;
     const completed = normalizedWorkOrders.filter((wo) => wo.status === 'completed').length;
+    const totalSpend = invoices.reduce((sum, invoice) => sum + Number(invoice.amount || 0), 0);
+    const now = new Date();
+    const monthlySpend = invoices.reduce((sum, invoice) => {
+      if (!invoice.date) return sum;
+      const date = new Date(invoice.date);
+      if (date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear()) {
+        return sum + Number(invoice.amount || 0);
+      }
+      return sum;
+    }, 0);
+    const nextPaymentDate = invoices
+      .filter((invoice) => invoice.status !== 'paid' && invoice.dueDate)
+      .map((invoice) => new Date(invoice.dueDate))
+      .sort((a, b) => a - b)[0];
     return {
       id: vendorProfile?.id || 'vendor',
       name: vendorProfile?.name || 'Vendor',
       rating: vendorProfile?.rating || 0,
-      totalSpend: 0,
-      monthlySpend: 0,
+      totalSpend,
+      monthlySpend,
       activeWorkOrders: active,
       completedOrders: completed,
-      nextPaymentDate: '—'
+      nextPaymentDate: nextPaymentDate ? nextPaymentDate.toLocaleDateString() : '—'
     };
-  }, [normalizedWorkOrders, vendorProfile]);
+  }, [normalizedWorkOrders, vendorProfile, invoices]);
+
 
   useEffect(() => {
     setWorkOrders(normalizedWorkOrders);
@@ -166,50 +224,99 @@ const VendorPortal = () => {
     setStatusOpen(true);
   };
 
-  const handleSaveStatus = () => {
+  const handleSaveStatus = async () => {
     if (!selectedWorkOrder) return;
-    setWorkOrders((prev) =>
-      prev.map((wo) =>
-        wo.id === selectedWorkOrder.id
-          ? {
-              ...wo,
-              status: statusValue,
-              completedDate: statusValue === 'completed'
-                ? new Date().toISOString().slice(0, 10)
-                : wo.completedDate,
-            }
-          : wo
-      )
-    );
-    setStatusOpen(false);
-    setSelectedWorkOrder(null);
+    try {
+      await updateWorkOrderStatus(selectedWorkOrder.id, statusValue);
+      await queryClient.invalidateQueries(['vendorWorkOrders', vendorProfile?.id]);
+    } catch (error) {
+      // handled by interceptor
+    } finally {
+      setStatusOpen(false);
+      setSelectedWorkOrder(null);
+    }
   };
 
   const handleRequestChange = (field, value) => {
     setRequestForm((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmitRequest = (e) => {
+  const handleUploadDocument = async (e) => {
+    e.preventDefault();
+    if (!docFile || !vendorProfile?.id) return;
+    setDocUploading(true);
+    try {
+      await uploadVendorDocument(vendorProfile.id, docFile, {
+        name: docName || docFile.name,
+        type: docFile.type,
+        size: `${Math.round(docFile.size / 1024)} KB`
+      });
+      await queryClient.invalidateQueries(['vendorDocuments', vendorProfile.id]);
+      setDocFile(null);
+      setDocName('');
+      setDocUploadOpen(false);
+    } catch (error) {
+      // handled by interceptor
+    } finally {
+      setDocUploading(false);
+    }
+  };
+
+  const handleDeleteDocument = async (docId) => {
+    if (!vendorProfile?.id || !docId) return;
+    if (!window.confirm('Delete this document?')) return;
+    setDocDeletingId(docId);
+    try {
+      await deleteVendorDocument(vendorProfile.id, docId);
+      await queryClient.invalidateQueries(['vendorDocuments', vendorProfile.id]);
+    } catch (error) {
+      // handled by interceptor
+    } finally {
+      setDocDeletingId(null);
+    }
+  };
+
+  const openEditDocument = (doc) => {
+    setEditingDocId(doc.id);
+    setDocEditForm({ name: doc.name || '', type: doc.type || '' });
+    setDocEditOpen(true);
+  };
+
+  const handleUpdateDocument = async (e) => {
+    e.preventDefault();
+    if (!vendorProfile?.id || !editingDocId) return;
+    try {
+      await updateVendorDocument(vendorProfile.id, editingDocId, {
+        name: docEditForm.name,
+        type: docEditForm.type
+      });
+      await queryClient.invalidateQueries(['vendorDocuments', vendorProfile.id]);
+      setDocEditOpen(false);
+      setEditingDocId(null);
+    } catch (error) {
+      // handled by interceptor
+    }
+  };
+
+  const handleSubmitRequest = async (e) => {
     e.preventDefault();
     if (!requestForm.title.trim() || !requestForm.description.trim()) {
       return;
     }
 
-    const nextId = `SR-${new Date().getFullYear()}-${String(serviceRequests.length + 1).padStart(3, '0')}`;
-    const newRequest = {
-      id: nextId,
-      title: requestForm.title.trim(),
-      description: requestForm.description.trim(),
-      status: 'submitted',
-      priority: requestForm.priority,
-      requestDate: new Date().toISOString().slice(0, 10),
-      estimatedCost: requestForm.estimatedCost ? Number(requestForm.estimatedCost) : null,
-      attachments: 0,
-    };
-
-    setServiceRequests((prev) => [newRequest, ...prev]);
-    setRequestForm({ title: '', description: '', priority: 'medium', estimatedCost: '' });
-    setRequestOpen(false);
+    try {
+      await createServiceRequest({
+        title: requestForm.title.trim(),
+        description: requestForm.description.trim(),
+        priority: requestForm.priority,
+        estimatedCost: requestForm.estimatedCost ? Number(requestForm.estimatedCost) : null,
+      });
+      await queryClient.invalidateQueries(['vendorServiceRequests', vendorProfile?.id]);
+      setRequestForm({ title: '', description: '', priority: 'medium', estimatedCost: '' });
+      setRequestOpen(false);
+    } catch (error) {
+      // handled by interceptor
+    }
   };
 
   const buildInvoicePdf = (lines) => {
@@ -263,8 +370,8 @@ const VendorPortal = () => {
     const lines = [
       `Invoice: ${invoice.id}`,
       `Vendor: ${derivedVendorData.name}`,
-      `Issue Date: ${invoice.date}`,
-      `Due Date: ${invoice.dueDate}`,
+      `Issue Date: ${invoice.date || 'â€”'}`,
+      `Due Date: ${invoice.dueDate || 'â€”'}`,
       `Amount: $${invoice.amount}`,
       `Status: ${getStatusLabel(invoice.status)}`,
       `Description: ${invoice.description}`,
@@ -431,7 +538,7 @@ const VendorPortal = () => {
                           </div>
                           <div>
                             <p className="text-xs text-gray-500 dark:text-gray-500">Work Order ID</p>
-                            <p className="font-medium text-gray-900 dark:text-white">{wo.id}</p>
+                            <p className="font-medium text-gray-900 dark:text-white">{wo.displayId}</p>
                           </div>
                         </div>
                         <div className="flex gap-2 text-xs text-gray-500 dark:text-gray-400">
@@ -486,239 +593,289 @@ const VendorPortal = () => {
                   </Button>
                 </div>
 
-                {serviceRequests.map((req) => (
-                  <div
-                    key={req.id}
-                    className={`p-4 border rounded-lg transition-colors ${
-                      req.status === 'pending' || req.status === 'submitted'
-                        ? 'border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20'
-                        : req.status === 'approved'
-                        ? 'border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/20'
-                        : 'border-gray-200 dark:border-gray-700'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-4 mb-3">
-                      <div>
-                        <h3 className="font-semibold text-gray-900 dark:text-white">{req.title}</h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{req.description}</p>
+                {serviceRequestsLoading ? (
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Loading service requests...
+                  </p>
+                ) : serviceRequests.length === 0 ? (
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    No service requests yet.
+                  </p>
+                ) : (
+                  serviceRequests.map((req) => (
+                    <div
+                      key={req.id}
+                      className={`p-4 border rounded-lg transition-colors ${
+                        req.status === 'pending' || req.status === 'submitted'
+                          ? 'border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20'
+                          : req.status === 'approved'
+                          ? 'border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/20'
+                          : 'border-gray-200 dark:border-gray-700'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-4 mb-3">
+                        <div>
+                          <h3 className="font-semibold text-gray-900 dark:text-white">{req.title}</h3>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{req.description}</p>
+                        </div>
+                        <Badge
+                          className={
+                            req.status === 'pending' || req.status === 'submitted'
+                              ? 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-100'
+                              : req.status === 'approved'
+                              ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-100'
+                              : 'bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-100'
+                          }
+                        >
+                          {getStatusLabel(req.status)}
+                        </Badge>
                       </div>
-                      <Badge
-                        className={
-                          req.status === 'pending' || req.status === 'submitted'
-                            ? 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-100'
-                            : req.status === 'approved'
-                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-100'
-                            : 'bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-100'
-                        }
-                      >
-                        {req.status.charAt(0).toUpperCase() + req.status.slice(1)}
-                      </Badge>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600 dark:text-gray-400 mb-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                        <div>
+                          <p className="text-xs text-gray-500 dark:text-gray-500">Request Date</p>
+                          <p className="font-medium text-gray-900 dark:text-white">
+                            {req.requestDate ? new Date(req.requestDate).toLocaleDateString() : 'â€”'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 dark:text-gray-500">Estimated Cost</p>
+                          <p className="font-medium text-gray-900 dark:text-white">
+                            {req.estimatedCost ? `$${req.estimatedCost.toLocaleString()}` : 'TBD'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 dark:text-gray-500">Priority</p>
+                          <p className="font-medium text-gray-900 dark:text-white">
+                            {req.priority.charAt(0).toUpperCase() + req.priority.slice(1)}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 dark:text-gray-500">Request ID</p>
+                          <p className="font-medium text-gray-900 dark:text-white">{req.id}</p>
+                        </div>
+                      </div>
+                      {req.status === 'rejected' && req.rejectionReason && (
+                        <div className="p-3 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 rounded text-sm text-rose-800 dark:text-rose-200 mt-3">
+                          <p className="font-medium mb-1">Rejection Reason:</p>
+                          <p>{req.rejectionReason}</p>
+                        </div>
+                      )}
+                      {req.status === 'approved' && req.approvedDate && (
+                        <p className="text-xs text-emerald-700 dark:text-emerald-400 mt-3">
+                          Approved on {new Date(req.approvedDate).toLocaleDateString()} - Work order will be created
+                        </p>
+                      )}
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600 dark:text-gray-400 mb-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-                      <div>
-                        <p className="text-xs text-gray-500 dark:text-gray-500">Request Date</p>
-                        <p className="font-medium text-gray-900 dark:text-white">
-                          {new Date(req.requestDate).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500 dark:text-gray-500">Estimated Cost</p>
-                        <p className="font-medium text-gray-900 dark:text-white">
-                          ${req.estimatedCost ? req.estimatedCost.toLocaleString() : 'TBD'}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500 dark:text-gray-500">Priority</p>
-                        <p className="font-medium text-gray-900 dark:text-white">
-                          {req.priority.charAt(0).toUpperCase() + req.priority.slice(1)}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500 dark:text-gray-500">Request ID</p>
-                        <p className="font-medium text-gray-900 dark:text-white">{req.id}</p>
-                      </div>
-                    </div>
-                    {req.status === 'rejected' && req.rejectionReason && (
-                      <div className="p-3 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 rounded text-sm text-rose-800 dark:text-rose-200 mt-3">
-                        <p className="font-medium mb-1">Rejection Reason:</p>
-                        <p>{req.rejectionReason}</p>
-                      </div>
-                    )}
-                    {req.status === 'approved' && (
-                      <p className="text-xs text-emerald-700 dark:text-emerald-400 mt-3">
-                        Approved on {new Date(req.approvedDate).toLocaleDateString()} - Work order will be created
-                      </p>
-                    )}
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             )}
 
             {/* Invoices Tab */}
             {activeTab === 'invoices' && (
               <div className="space-y-3">
-                {mockInvoices.map((invoice) => (
-                  <div
-                    key={invoice.id}
-                    className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-indigo-400 dark:hover:border-indigo-600 transition-colors"
-                  >
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="font-semibold text-gray-900 dark:text-white">{invoice.id}</h3>
-                          <Badge className={getStatusColor(invoice.status)}>
-                            {getStatusLabel(invoice.status)}
-                          </Badge>
+                {invoicesLoading ? (
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Loading invoices...
+                  </p>
+                ) : invoices.length === 0 ? (
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    No invoices available yet.
+                  </p>
+                ) : (
+                  invoices.map((invoice) => (
+                    <div
+                      key={invoice.id}
+                      className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-indigo-400 dark:hover:border-indigo-600 transition-colors"
+                    >
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h3 className="font-semibold text-gray-900 dark:text-white">{invoice.id}</h3>
+                            <Badge className={getStatusColor(invoice.status)}>
+                              {getStatusLabel(invoice.status)}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{invoice.description}</p>
+                          <div className="grid grid-cols-3 gap-4 text-sm text-gray-600 dark:text-gray-400">
+                            <div>
+                              <p className="text-xs text-gray-500 dark:text-gray-500">Issue Date</p>
+                              <p className="font-medium text-gray-900 dark:text-white">
+                              {invoice.date ? new Date(invoice.date).toLocaleDateString() : 'â€”'}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500 dark:text-gray-500">Due Date</p>
+                              <p className="font-medium text-gray-900 dark:text-white">
+                              {invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'â€”'}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500 dark:text-gray-500">Amount</p>
+                              <p className="font-medium text-gray-900 dark:text-white text-lg">
+                                ${invoice.amount.toLocaleString()}
+                              </p>
+                            </div>
+                          </div>
                         </div>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{invoice.description}</p>
-                        <div className="grid grid-cols-3 gap-4 text-sm text-gray-600 dark:text-gray-400">
-                          <div>
-                            <p className="text-xs text-gray-500 dark:text-gray-500">Issue Date</p>
-                            <p className="font-medium text-gray-900 dark:text-white">
-                              {new Date(invoice.date).toLocaleDateString()}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-gray-500 dark:text-gray-500">Due Date</p>
-                            <p className="font-medium text-gray-900 dark:text-white">
-                              {new Date(invoice.dueDate).toLocaleDateString()}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-gray-500 dark:text-gray-500">Amount</p>
-                            <p className="font-medium text-gray-900 dark:text-white text-lg">
-                              ${invoice.amount.toLocaleString()}
-                            </p>
-                          </div>
-                        </div>
+                        <Button variant="outline" size="sm" onClick={() => downloadInvoice(invoice)}>
+                          <Download className="h-4 w-4 mr-2" />
+                          Download
+                        </Button>
                       </div>
-                      <Button variant="outline" size="sm" onClick={() => downloadInvoice(invoice)}>
-                        <Download className="h-4 w-4 mr-2" />
-                        Download
-                      </Button>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             )}
 
             {/* Documents Tab */}
             {activeTab === 'documents' && (
               <div className="space-y-3">
-                {mockDocuments.map((doc) => (
-                  <div
-                    key={doc.id}
-                    className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-indigo-400 dark:hover:border-indigo-600 transition-colors flex items-center justify-between"
+                <div className="flex justify-end">
+                  <Button
+                    className="bg-blue-700 hover:bg-blue-800 text-white"
+                    size="sm"
+                    onClick={() => setDocUploadOpen(true)}
                   >
-                    <div className="flex items-center gap-4 flex-1">
-                      <div className="h-12 w-12 bg-indigo-100 dark:bg-indigo-900 rounded-lg flex items-center justify-center">
-                        <FileText className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-gray-900 dark:text-white">{doc.name}</h3>
-                        <div className="flex gap-4 text-sm text-gray-600 dark:text-gray-400 mt-1">
-                          <span>{doc.type}</span>
-                          <span>|</span>
-                          <span>{new Date(doc.uploadDate).toLocaleDateString()}</span>
-                          <span>|</span>
-                          <span>{doc.size}</span>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Upload Document
+                  </Button>
+                </div>
+                {documentsLoading ? (
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Loading documents...
+                  </p>
+                ) : documents.length === 0 ? (
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    No documents available yet.
+                  </p>
+                ) : (
+                  documents.map((doc) => (
+                    <div
+                      key={doc.id}
+                      className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-indigo-400 dark:hover:border-indigo-600 transition-colors flex items-center justify-between"
+                    >
+                      <div className="flex items-center gap-4 flex-1">
+                        <div className="h-12 w-12 bg-indigo-100 dark:bg-indigo-900 rounded-lg flex items-center justify-center">
+                          <FileText className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-gray-900 dark:text-white">{doc.name}</h3>
+                          <div className="flex gap-4 text-sm text-gray-600 dark:text-gray-400 mt-1">
+                            <span>{doc.type}</span>
+                            <span>|</span>
+                            <span>{doc.uploadDate ? new Date(doc.uploadDate).toLocaleDateString() : 'â€”'}</span>
+                            <span>|</span>
+                            <span>{doc.size}</span>
+                          </div>
                         </div>
                       </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={!doc.url}
+                        onClick={() => doc.url && window.open(doc.url, '_blank')}
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openEditDocument(doc)}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={docDeletingId === doc.id}
+                        onClick={() => handleDeleteDocument(doc.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
-                    <Button variant="outline" size="sm">
-                      <Download className="h-4 w-4" />
-                    </Button>
                   </div>
-                ))}
+                ))
+                )}
               </div>
             )}
 
             {/* Performance Tab */}
             {activeTab === 'performance' && (
               <div className="space-y-6">
-                {/* On-Time Completion */}
-                <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-                  <h3 className="font-semibold text-gray-900 dark:text-white mb-4">On-Time Completion</h3>
-                  <div className="space-y-3">
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm text-gray-600 dark:text-gray-400">This Month</span>
-                        <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">92%</span>
-                      </div>
-                      <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                        <div className="h-full bg-emerald-600 dark:bg-emerald-500" style={{ width: '92%' }}></div>
+                {performanceLoading ? (
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Loading performance metrics...
+                  </p>
+                ) : !vendorPerformance ? (
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    No performance metrics available yet.
+                  </p>
+                ) : (
+                  <>
+                    <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                      <h3 className="font-semibold text-gray-900 dark:text-white mb-4">On-Time Completion</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">This Month</p>
+                          <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
+                            {vendorPerformance.onTimeCompletion?.current ?? 'â€”'}%
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">Last Month</p>
+                          <p className="text-lg font-bold text-indigo-600 dark:text-indigo-400">
+                            {vendorPerformance.onTimeCompletion?.previous ?? 'â€”'}%
+                          </p>
+                        </div>
                       </div>
                     </div>
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm text-gray-600 dark:text-gray-400">Last Month</span>
-                        <span className="text-lg font-bold text-indigo-600 dark:text-indigo-400">87%</span>
-                      </div>
-                      <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                        <div className="h-full bg-blue-700 dark:bg-indigo-500" style={{ width: '87%' }}></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
 
-                {/* Quality Rating */}
-                <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-                  <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Quality Rating</h3>
-                  <div className="space-y-3">
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm text-gray-600 dark:text-gray-400">Customer Satisfaction</span>
-                        <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">4.8/5</span>
-                      </div>
-                      <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                        <div className="h-full bg-emerald-600 dark:bg-emerald-500" style={{ width: '96%' }}></div>
-                      </div>
-                    </div>
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm text-gray-600 dark:text-gray-400">Work Quality</span>
-                        <span className="text-lg font-bold text-indigo-600 dark:text-indigo-400">4.6/5</span>
-                      </div>
-                      <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                        <div className="h-full bg-blue-700 dark:bg-indigo-500" style={{ width: '92%' }}></div>
+                    <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                      <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Completion Time</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">Average</p>
+                          <p className="text-lg font-bold text-indigo-600 dark:text-indigo-400">
+                            {vendorPerformance.completionTime?.averageHours ?? 'â€”'} hours
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">Fastest</p>
+                          <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
+                            {vendorPerformance.completionTime?.fastestMinutes ?? 'â€”'} minutes
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </div>
 
-                {/* Response Time */}
-                <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-                  <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Response Time</h3>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Average Response</span>
-                      <span className="text-lg font-bold text-indigo-600 dark:text-indigo-400">2.3 hours</span>
+                    <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                      <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Work Order Totals</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">Total</p>
+                          <p className="text-lg font-bold text-gray-900 dark:text-white">
+                            {vendorPerformance.totals?.total ?? 0}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">Completed</p>
+                          <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
+                            {vendorPerformance.totals?.completed ?? 0}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">Open</p>
+                          <p className="text-lg font-bold text-amber-600 dark:text-amber-400">
+                            {vendorPerformance.totals?.open ?? 0}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Fastest Response</span>
-                      <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">15 minutes</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Compliance */}
-                <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-                  <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Compliance</h3>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Safety Standards</span>
-                      <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-100">
-                        Compliant
-                      </Badge>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">License Status</span>
-                      <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-100">
-                        Active
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
+                  </>
+                )}
               </div>
             )}
 
@@ -939,6 +1096,85 @@ const VendorPortal = () => {
         </ModalShell>
       )}
 
+      {docUploadOpen && (
+        <ModalShell title="Upload Document" onClose={() => setDocUploadOpen(false)}>
+          <form className="space-y-4" onSubmit={handleUploadDocument}>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Document Name
+              </label>
+              <input
+                value={docName}
+                onChange={(e) => setDocName(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="Optional"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                File
+              </label>
+              <input
+                type="file"
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.csv"
+                onChange={(e) => setDocFile(e.target.files?.[0] || null)}
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
+                required
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setDocUploadOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                className="bg-blue-700 hover:bg-blue-800 text-white"
+                disabled={!docFile || docUploading}
+              >
+                {docUploading ? 'Uploading...' : 'Upload'}
+              </Button>
+            </div>
+          </form>
+        </ModalShell>
+      )}
+
+      {docEditOpen && (
+        <ModalShell title="Edit Document" onClose={() => setDocEditOpen(false)}>
+          <form className="space-y-4" onSubmit={handleUpdateDocument}>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Name
+              </label>
+              <input
+                value={docEditForm.name}
+                onChange={(e) => setDocEditForm((prev) => ({ ...prev, name: e.target.value }))}
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Type
+              </label>
+              <input
+                value={docEditForm.type}
+                onChange={(e) => setDocEditForm((prev) => ({ ...prev, type: e.target.value }))}
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="Optional"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setDocEditOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" className="bg-blue-700 hover:bg-blue-800 text-white">
+                Save
+              </Button>
+            </div>
+          </form>
+        </ModalShell>
+      )}
+
       {/* Logout Button */}
       <div className="flex justify-end">
         <Button
@@ -1007,6 +1243,8 @@ const ModalShell = ({ title, onClose, children }) => (
 );
 
 export default VendorPortal;
+
+
 
 
 

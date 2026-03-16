@@ -33,7 +33,8 @@ import {
   subMonths,
   addMonths,
 } from 'date-fns';
-import mockWorkOrders from '../../mocks/mockWorkOrders';
+import { useQuery } from 'react-query';
+import { getWorkOrders } from '../../api/workOrders';
 
 /* =========================
    Constants
@@ -55,12 +56,24 @@ export default function PMCalendar() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [popover, setPopover] = useState({ anchor: null, event: null });
+  const { data: workOrdersResponse = [], isLoading } = useQuery(
+    ['pm-work-orders'],
+    () => getWorkOrders({}),
+    { staleTime: 60000 }
+  );
+
+  const workOrders = useMemo(() => {
+    if (Array.isArray(workOrdersResponse)) return workOrdersResponse;
+    if (Array.isArray(workOrdersResponse?.workOrders)) return workOrdersResponse.workOrders;
+    if (Array.isArray(workOrdersResponse?.data)) return workOrdersResponse.data;
+    return [];
+  }, [workOrdersResponse]);
 
   /* =========================
      Events
   ========================= */
   const events = useMemo(() => {
-    return mockWorkOrders
+    return workOrders
       .filter(
         (w) =>
           ['Maintenance', 'Inspection', 'Calibration'].includes(
@@ -72,7 +85,7 @@ export default function PMCalendar() {
         date: w.dueDate ? parseISO(w.dueDate) : null,
       }))
       .filter((w) => w.date);
-  }, []);
+  }, [workOrders]);
 
   /* =========================
      Memoized events by day (PERFORMANCE)
@@ -195,12 +208,12 @@ export default function PMCalendar() {
           {format(selectedDate, 'EEE, MMM d')}
         </Typography>
         <Typography variant="caption" color="#9ca3af">
-          {eventsForDay(selectedDate).length} tasks
+          {isLoading ? 'Loading tasks…' : `${eventsForDay(selectedDate).length} tasks`}
         </Typography>
         <Divider sx={{ my: 1 }} />
 
         <Box sx={{ maxHeight: 420, overflowY: 'auto' }}>
-          {eventsForDay(selectedDate).length === 0 && (
+          {!isLoading && eventsForDay(selectedDate).length === 0 && (
             <Typography
               variant="body2"
               color="text.secondary"
@@ -208,6 +221,17 @@ export default function PMCalendar() {
               p={2}
             >
               No scheduled preventive tasks
+            </Typography>
+          )}
+
+          {isLoading && (
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              align="center"
+              p={2}
+            >
+              Loading scheduled tasks…
             </Typography>
           )}
 
