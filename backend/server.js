@@ -77,6 +77,14 @@ app.use(limiter);
 //  Request logging
 app.use(requestLogger);
 
+// Dynamic APIs → never cache
+app.use('/api', (req, res, next) => {
+  res.set('Cache-Control', 'no-store');
+  next();
+});
+
+// Static files → normal caching, 304 is fine
+app.use(express.static('public'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
