@@ -84,6 +84,18 @@ const serviceRequestStatusColorMap = {
   completed: 'bg-emerald-100 text-emerald-800 border-emerald-300',
 };
 
+const formatStatusLabel = (status) => {
+  const map = {
+    pending: 'Pending',
+    scheduled: 'Scheduled',
+    in_progress: 'In Progress',
+    completed: 'Completed',
+    cancelled: 'Cancelled',
+    overdue: 'Overdue',
+  };
+  return map[status] || status;
+};
+
 // Stat Card Component
 const StatCard = ({ icon, title, value, subtext, color = 'indigo' }) => {
   const bgColors = {
@@ -643,18 +655,6 @@ export default function TechnicianPortal() {
     if (status === 'open') return 'pending';
     if (!status && dueDate && new Date(dueDate) < new Date()) return 'overdue';
     return status || 'pending';
-  };
-
-  const formatStatusLabel = (status) => {
-    const map = {
-      pending: 'Pending',
-      scheduled: 'Scheduled',
-      in_progress: 'In Progress',
-      completed: 'Completed',
-      cancelled: 'Cancelled',
-      overdue: 'Overdue',
-    };
-    return map[status] || status;
   };
 
   const normalizedOrders = useMemo(() => {
