@@ -130,7 +130,9 @@ const createPreventiveMaintenance = async (req, res, next) => {
       entityType: 'PreventiveMaintenance',
       entityId: maintenance._id,
       link: `/preventive-maintenance/${maintenance._id}`,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      organization: req.user.organization,
+      user: req.user.email
     });
     response.created(res, 'Preventive maintenance created successfully', maintenance);
   } catch (error) {

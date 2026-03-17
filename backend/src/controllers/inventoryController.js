@@ -50,7 +50,9 @@ const createInventoryItem = async (req, res, next) => {
       entityType: 'InventoryItem',
       entityId: item._id,
       link: `/inventory`,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      organization: req.user.organization,
+      user: req.user.email
     });
     response.created(res, 'Inventory item created successfully', item);
   } catch (error) {
@@ -67,7 +69,9 @@ const updateInventoryItem = async (req, res, next) => {
       entityType: 'InventoryItem',
       entityId: item._id,
       link: `/inventory`,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      organization: req.user.organization,
+      user: req.user.email
     });
     response.success(res, 'Inventory item updated successfully', item);
   } catch (error) {
@@ -84,7 +88,9 @@ const deleteInventoryItem = async (req, res, next) => {
       entityType: 'InventoryItem',
       entityId: req.params.id,
       link: `/inventory`,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      organization: req.user.organization,
+      user: req.user.email
     });
     response.success(res, 'Inventory item deleted successfully', null);
   } catch (error) {

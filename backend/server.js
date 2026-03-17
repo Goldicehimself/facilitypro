@@ -48,12 +48,23 @@ app.use(helmet());
 // CORS
 const allowedOrigins = [
   process.env.FRONTEND_URL,
-  process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null
-].filter(Boolean);
+  process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null,
+  ...(process.env.FRONTEND_URLS ? process.env.FRONTEND_URLS.split(',') : [])
+]
+  .map((origin) => String(origin || '').trim())
+  .filter(Boolean);
 
 app.use(
   cors({
-    origin: allowedOrigins.length ? allowedOrigins : true,
+    origin: (origin, callback) => {
+      if (!origin || !allowedOrigins.length) {
+        return callback(null, true);
+      }
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error('Not allowed by CORS'));
+    },
     credentials: true
   })
 );

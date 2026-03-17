@@ -24,6 +24,11 @@ const ensureAssetInOrg = async (organizationId, assetId) => {
   }
 };
 
+const resolveUserId = (user) => {
+  if (!user) return null;
+  return user._id || user.id || user;
+};
+
 const getServiceRequests = async (req, res, next) => {
   try {
     const { page = 1, limit = 20, search, status, priority, category, location } = req.query;
@@ -75,8 +80,9 @@ const createServiceRequest = async (req, res, next) => {
       constants.ROLES.FACILITY_MANAGER
     ], organizationId);
     const recipients = new Set(adminManagerIds.map((id) => id.toString()));
-    if (request.assignee) {
-      recipients.add(request.assignee.toString());
+    const assigneeId = resolveUserId(request.assignee);
+    if (assigneeId) {
+      recipients.add(assigneeId.toString());
     }
     await notificationService.createNotificationsForUsers([...recipients], {
       organization: organizationId,
@@ -93,7 +99,9 @@ const createServiceRequest = async (req, res, next) => {
       entityType: 'ServiceRequest',
       entityId: request._id,
       link: `/service-requests`,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      organization: req.user.organization,
+      user: req.user.email
     });
     response.created(res, 'Service request created successfully', request);
   } catch (error) {
@@ -127,24 +135,32 @@ const assignServiceRequest = async (req, res, next) => {
       req.body.assigneeId,
       req.body.note
     );
-    if (request.assignee) {
-      await notificationService.createNotificationsForUsers([request.assignee.toString()], {
-        organization: organizationId,
-        title: 'Service request assigned',
-        message: request.title,
-        type: 'service_request_assigned',
-        entityType: 'ServiceRequest',
-        entityId: request._id,
-        link: `/service-requests`
-      });
-    }
+    const assigneeId = resolveUserId(request.assignee);
+    if (assigneeId) {
+        const note = request.assignmentNote ? String(request.assignmentNote).trim() : '';
+        const dedupeKey = `service-request-assigned-${request._id}-${assigneeId}-${request.assignedAt ? new Date(request.assignedAt).getTime() : Date.now()}`;
+        await notificationService.createNotificationsForUsers([assigneeId.toString()], {
+          organization: organizationId,
+          title: 'Service request assigned',
+          message: note ? `${request.title} — ${note}` : request.title,
+          type: 'service_request_assigned',
+          entityType: 'ServiceRequest',
+          entityId: request._id,
+          link: `/service-requests`,
+          metadata: note ? { assignmentNote: note } : undefined,
+          read: false,
+          dedupeKey
+        }, { force: true });
+      }
     activityService.broadcast({
       type: 'service_request_assigned',
       message: request.title,
       entityType: 'ServiceRequest',
       entityId: request._id,
       link: `/service-requests`,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      organization: req.user.organization,
+      user: req.user.email
     });
     response.success(res, 'Service request assigned successfully', request);
   } catch (error) {

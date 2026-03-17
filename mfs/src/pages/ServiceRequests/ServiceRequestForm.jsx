@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import logger from '../../utils/logger';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -30,12 +30,16 @@ import {
   Person,
 } from '@mui/icons-material';
 import { toast } from 'react-toastify';
+import { createServiceRequest } from '../../api/serviceRequests';
+import { getAssets } from '../../api/assets';
 
 const ServiceRequestForm = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [assetsLoading, setAssetsLoading] = useState(false);
+  const [assets, setAssets] = useState([]);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -43,8 +47,29 @@ const ServiceRequestForm = () => {
     category: '',
     location: '',
     asset: '',
-    urgency: 'normal',
   });
+
+  useEffect(() => {
+    let active = true;
+    const loadAssets = async () => {
+      setAssetsLoading(true);
+      try {
+        const result = await getAssets({ page: 1, limit: 200 });
+        if (!active) return;
+        const list = Array.isArray(result?.data) ? result.data : [];
+        setAssets(list);
+      } catch (error) {
+        if (!active) return;
+        logger.warn('Failed to load assets for service request form', error);
+      } finally {
+        if (active) setAssetsLoading(false);
+      }
+    };
+    loadAssets();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -64,11 +89,17 @@ const ServiceRequestForm = () => {
         return;
       }
 
-      // In a real app, this would call an API to create the service request
-      logger.info('Creating service request:', formData);
+      const payload = {
+        title: formData.title.trim(),
+        description: formData.description.trim(),
+        category: formData.category,
+        priority: formData.priority,
+        location: formData.location || undefined,
+        asset: formData.asset || undefined,
+      };
 
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      logger.info('Creating service request:', payload);
+      await createServiceRequest(payload);
 
       toast.success('Service request submitted successfully!');
       navigate('/service-requests');
@@ -282,23 +313,32 @@ const ServiceRequestForm = () => {
 
                   {/* Asset (Optional) */}
                   <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label="Asset/Equipment (Optional)"
-                      placeholder="Specific asset or equipment involved"
-                      value={formData.asset}
-                      onChange={(e) => handleInputChange('asset', e.target.value)}
-                      InputProps={{
-                        startAdornment: (
-                          <Person sx={{ color: '#94a3b8', mr: 1 }} />
-                        ),
-                      }}
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
+                    <FormControl fullWidth>
+                      <InputLabel>Asset/Equipment (Optional)</InputLabel>
+                      <Select
+                        value={formData.asset}
+                        onChange={(e) => handleInputChange('asset', e.target.value)}
+                        label="Asset/Equipment (Optional)"
+                        sx={{
                           borderRadius: '8px',
-                        }
-                      }}
-                    />
+                        }}
+                      >
+                        <MenuItem value="">
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Person sx={{ fontSize: 18, color: '#94a3b8' }} />
+                            None
+                          </Box>
+                        </MenuItem>
+                        {assets.map((asset) => (
+                          <MenuItem key={asset.id} value={asset.id}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Person sx={{ fontSize: 18, color: '#94a3b8' }} />
+                              {asset.name}{asset.code ? ` (${asset.code})` : ''}
+                            </Box>
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
                   </Grid>
 
                   {/* Submit Button */}
@@ -308,7 +348,7 @@ const ServiceRequestForm = () => {
                         type="submit"
                         variant="contained"
                         startIcon={<Save />}
-                        disabled={loading}
+                        disabled={loading || assetsLoading}
                         sx={{
                           background: '#3b82f6',
                           color: '#fff',

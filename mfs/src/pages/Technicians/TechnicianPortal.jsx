@@ -37,9 +37,10 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import GreetingBanner from '@/components/common/GreetingBanner';
-import { useQuery, useQueryClient } from 'react-query';
+import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { useAuth } from '../../contexts/AuthContext';
 import { getWorkOrders } from '../../api/workOrders';
+import { getServiceRequests, updateServiceRequestStatus } from '../../api/serviceRequests';
 import { getProfile, deleteCertificate } from '../../api/profile';
 import ProtectedImage from '@/components/common/ProtectedImage';
 
@@ -74,6 +75,13 @@ const statusColorMap = {
   completed: 'bg-emerald-100 text-emerald-800 border-emerald-300',
   cancelled: 'bg-red-100 text-red-800 border-red-300',
   overdue: 'bg-rose-100 text-rose-800 border-rose-300',
+};
+
+const serviceRequestStatusColorMap = {
+  pending: 'bg-slate-100 text-slate-800 border-slate-300',
+  assigned: 'bg-blue-100 text-blue-800 border-blue-300',
+  'in-progress': 'bg-amber-100 text-amber-800 border-amber-300',
+  completed: 'bg-emerald-100 text-emerald-800 border-emerald-300',
 };
 
 // Stat Card Component
@@ -200,6 +208,85 @@ const WorkOrderCard = ({ order, onViewDetails }) => {
               <Eye className="h-4 w-4 mr-2" />
               View Details
             </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+};
+
+const ServiceRequestCard = ({ request, onStart, onComplete, updating }) => {
+  const statusColor = serviceRequestStatusColorMap[request.status] || serviceRequestStatusColorMap.pending;
+  const priorityColor = priorityColorMap[request.priority] || priorityColorMap.low;
+  const createdAt = request.createdAt ? new Date(request.createdAt).toLocaleDateString() : '';
+  const canStart = request.status === 'assigned' || request.status === 'pending';
+  const canComplete = request.status === 'in-progress';
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+    >
+      <Card className="hover:shadow-lg transition-shadow border-l-4 border-l-emerald-500">
+        <CardContent className="p-5 space-y-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1">
+              <h3 className="font-semibold text-gray-900 dark:text-white line-clamp-2">
+                {request.title}
+              </h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mt-1">
+                {request.description}
+              </p>
+            </div>
+            <Badge className={`${priorityColor} border`}>
+              {request.priority?.charAt(0).toUpperCase() + request.priority?.slice(1)}
+            </Badge>
+          </div>
+
+          <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+              <MapPin className="h-4 w-4" />
+              {request.location || 'No location'}
+            </div>
+            <Badge className={`${statusColor} border`}>
+              {request.status ? request.status.replace('-', ' ') : 'Pending'}
+            </Badge>
+          </div>
+
+          {createdAt && (
+            <div className="text-xs text-gray-500 dark:text-gray-400">
+              Created {createdAt}
+            </div>
+          )}
+
+          {request.assignmentNote && (
+            <div className="text-xs text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-1 rounded border border-indigo-200 dark:border-indigo-800">
+              Note: {request.assignmentNote}
+            </div>
+          )}
+
+          <div className="flex gap-2 pt-2">
+            {canStart && (
+              <Button
+                size="sm"
+                onClick={() => onStart(request)}
+                disabled={updating}
+                className="bg-amber-600 hover:bg-amber-700 text-white"
+              >
+                Start
+              </Button>
+            )}
+            {canComplete && (
+              <Button
+                size="sm"
+                onClick={() => onComplete(request)}
+                disabled={updating}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+              >
+                Mark Completed
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -470,6 +557,22 @@ export default function TechnicianPortal() {
     ['workOrders', { scope: 'technician' }],
     () => getWorkOrders()
   );
+  const { data: serviceRequestsData = {}, isLoading: isServiceRequestsLoading } = useQuery(
+    ['serviceRequests', { scope: 'technician' }],
+    () => getServiceRequests({ page: 1, limit: 50 })
+  );
+  const serviceRequestMutation = useMutation(
+    ({ id, status }) => updateServiceRequestStatus(id, status),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(['serviceRequests']);
+        toast.success('Service request updated');
+      },
+      onError: () => {
+        toast.error('Failed to update service request');
+      }
+    }
+  );
   const { data: profileData } = useQuery(['profile'], () => getProfile(), {
     refetchInterval: 60000,
     refetchOnWindowFocus: true,
@@ -498,7 +601,16 @@ export default function TechnicianPortal() {
     ? workOrders
     : (workOrders?.workOrders || workOrders?.data || []);
 
-  const currentUserId = user?.id || null;
+  const resolveId = (value) => {
+    if (!value) return null;
+    return value.id || value._id || value;
+  };
+
+  const serviceRequestsList = Array.isArray(serviceRequestsData)
+    ? serviceRequestsData
+    : (serviceRequestsData?.requests || serviceRequestsData?.data || []);
+
+  const currentUserId = user?.id || user?._id || null;
   const currentUserName = user?.name || profileData?.name || 'Technician';
 
   const assignedOrders = useMemo(() => {
@@ -507,6 +619,24 @@ export default function TechnicianPortal() {
       return order.assignedTo?.name === currentUserName;
     });
   }, [workOrdersList, currentUserId, currentUserName]);
+
+  const assignedServiceRequests = useMemo(() => {
+    return serviceRequestsList.filter((request) => {
+      const assigneeId = resolveId(request.assignee);
+      const requesterId = resolveId(request.requester);
+      if (currentUserId) {
+        return assigneeId === currentUserId || requesterId === currentUserId;
+      }
+      return request.assignee?.name === currentUserName || request.requester?.name === currentUserName;
+    });
+  }, [serviceRequestsList, currentUserId, currentUserName]);
+
+  const serviceRequestStats = useMemo(() => {
+    const pending = assignedServiceRequests.filter((req) => ['assigned', 'pending'].includes(req.status)).length;
+    const inProgress = assignedServiceRequests.filter((req) => req.status === 'in-progress').length;
+    const completed = assignedServiceRequests.filter((req) => req.status === 'completed').length;
+    return { pending, inProgress, completed };
+  }, [assignedServiceRequests]);
 
   const normalizeStatus = (status, dueDate) => {
     if (status === 'overdue') return 'overdue';
@@ -660,15 +790,15 @@ export default function TechnicianPortal() {
   }, [search, statusFilter, priorityFilter, normalizedOrders]);
 
   const stats = useMemo(() => {
-    const pending = normalizedOrders.filter(wo => wo.status === 'pending').length;
-    const inProgress = normalizedOrders.filter(wo => wo.status === 'in_progress').length;
-    const completed = normalizedOrders.filter(wo => wo.status === 'completed').length;
+    const pending = normalizedOrders.filter(wo => wo.status === 'pending').length + serviceRequestStats.pending;
+    const inProgress = normalizedOrders.filter(wo => wo.status === 'in_progress').length + serviceRequestStats.inProgress;
+    const completed = normalizedOrders.filter(wo => wo.status === 'completed').length + serviceRequestStats.completed;
     return {
       pending,
       inProgress,
       completed,
     };
-  }, [normalizedOrders]);
+  }, [normalizedOrders, serviceRequestStats]);
 
   const technicianProfile = useMemo(() => {
     const profile = profileData || user || {};
@@ -822,6 +952,37 @@ export default function TechnicianPortal() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Service Requests Section */}
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+            Service Requests ({assignedServiceRequests.length})
+          </h2>
+
+          {isServiceRequestsLoading ? (
+            <Card className="text-center p-8">
+              <p className="text-gray-500 dark:text-gray-400">Loading service requests...</p>
+            </Card>
+          ) : assignedServiceRequests.length > 0 ? (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+              <AnimatePresence>
+                {assignedServiceRequests.map((request) => (
+                  <ServiceRequestCard
+                    key={request.id || request._id}
+                    request={request}
+                    updating={serviceRequestMutation.isLoading}
+                    onStart={(req) => serviceRequestMutation.mutate({ id: req.id || req._id, status: 'in-progress' })}
+                    onComplete={(req) => serviceRequestMutation.mutate({ id: req.id || req._id, status: 'completed' })}
+                  />
+                ))}
+              </AnimatePresence>
+            </div>
+          ) : (
+            <Card className="text-center p-8">
+              <p className="text-gray-500 dark:text-gray-400">No assigned service requests yet</p>
+            </Card>
+          )}
+        </div>
 
         {/* Work Orders Grid */}
         <div>

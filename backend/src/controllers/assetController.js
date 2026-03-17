@@ -239,7 +239,9 @@ const createAsset = async (req, res, next) => {
       entityType: 'Asset',
       entityId: asset._id,
       link: `/assets/${asset._id}`,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      organization: req.user.organization,
+      user: req.user.email
     });
     response.created(res, 'Asset created successfully', asset);
   } catch (error) {
@@ -263,7 +265,9 @@ const updateAsset = async (req, res, next) => {
       entityType: 'Asset',
       entityId: asset._id,
       link: `/assets/${asset._id}`,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      organization: req.user.organization,
+      user: req.user.email
     });
     response.success(res, 'Asset updated successfully', asset);
   } catch (error) {
@@ -280,7 +284,9 @@ const deleteAsset = async (req, res, next) => {
       entityType: 'Asset',
       entityId: deleted._id,
       link: `/assets/${deleted._id}`,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      organization: req.user.organization,
+      user: req.user.email
     });
     response.success(res, 'Asset deleted successfully', null);
   } catch (error) {
@@ -383,7 +389,9 @@ const bulkUpdateAssetStatus = async (req, res, next) => {
       message: `Updated ${result.updatedCount} assets to ${status}`,
       entityType: 'Asset',
       link: `/assets`,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      organization: req.user.organization,
+      user: req.user.email
     });
     response.success(res, 'Asset status updated successfully', result);
   } catch (error) {

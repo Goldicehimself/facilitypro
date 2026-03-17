@@ -7,21 +7,39 @@ const Organization = require('../models/Organization');
 const constants = require('../constants/constants');
 const logger = require('../utils/logger');
 
+const DEFAULT_NOTIFICATION_SETTINGS = {
+  notifyWoCreated: true,
+  notifyWoAssigned: true,
+  notifyWoOverdue: true,
+  notifyPmDue: true,
+  notifyEmail: true,
+  notifyInApp: true,
+  quietHoursEnabled: false,
+  quietHoursStart: '22:00',
+  quietHoursEnd: '06:00'
+};
+
+const resolveNotificationSettings = (org) => ({
+  ...DEFAULT_NOTIFICATION_SETTINGS,
+  ...(org?.settings?.notifications || {})
+});
+
 // Helper function to check if in-app notification should be sent
 const shouldSendInAppNotification = async (organizationId, userId, notificationType) => {
   try {
     // Check org-level in-app setting
     const org = await Organization.findById(organizationId).select('settings.notifications');
-    if (!org?.settings?.notifications?.notifyInApp) return false;
+    const settings = resolveNotificationSettings(org);
+    if (!settings.notifyInApp) return false;
 
     // Check type-specific org settings
     const typeSettings = {
-      'workorder_created': org.settings.notifications.notifyWoCreated,
-      'workorder_assigned': org.settings.notifications.notifyWoAssigned,
-      'workorder_overdue': org.settings.notifications.notifyWoOverdue,
-      'workorder_due_soon': org.settings.notifications.notifyWoOverdue, // Map due soon to overdue setting
-      'maintenance_due_soon': org.settings.notifications.notifyPmDue,
-      'service_request_created': org.settings.notifications.notifyWoCreated, // Map to work order created for now
+      'workorder_created': settings.notifyWoCreated,
+      'workorder_assigned': settings.notifyWoAssigned,
+      'workorder_overdue': settings.notifyWoOverdue,
+      'workorder_due_soon': settings.notifyWoOverdue, // Map due soon to overdue setting
+      'maintenance_due_soon': settings.notifyPmDue,
+      'service_request_created': settings.notifyWoCreated, // Map to work order created for now
       'technician_message': true, // Always allow admin messages
       'admin_reply': true // Always allow admin replies
     };
@@ -29,11 +47,11 @@ const shouldSendInAppNotification = async (organizationId, userId, notificationT
     if (typeSettings[notificationType] === false) return false;
 
     // Check quiet hours
-    if (org.settings.notifications.quietHoursEnabled) {
+    if (settings.quietHoursEnabled) {
       const now = new Date();
       const currentTime = now.getHours() * 100 + now.getMinutes();
-      const startTime = parseInt(org.settings.notifications.quietHoursStart.replace(':', ''), 10);
-      const endTime = parseInt(org.settings.notifications.quietHoursEnd.replace(':', ''), 10);
+      const startTime = parseInt(settings.quietHoursStart.replace(':', ''), 10);
+      const endTime = parseInt(settings.quietHoursEnd.replace(':', ''), 10);
 
       if (!Number.isNaN(startTime) && !Number.isNaN(endTime)) {
         const inQuietHours = startTime === endTime
@@ -66,11 +84,13 @@ const filterUsersByPreferences = async (organizationId, userIds, notificationTyp
   return filtered;
 };
 
-const createNotification = async (payload) => {
+const createNotification = async (payload, options = {}) => {
   try {
     // Check if user should receive this notification
-    const shouldSend = await shouldSendInAppNotification(payload.organization, payload.user, payload.type);
-    if (!shouldSend) return null;
+    if (!options.force) {
+      const shouldSend = await shouldSendInAppNotification(payload.organization, payload.user, payload.type);
+      if (!shouldSend) return null;
+    }
 
     return await Notification.create(payload);
   } catch (error) {
@@ -81,12 +101,14 @@ const createNotification = async (payload) => {
   }
 };
 
-const createNotificationsForUsers = async (userIds, payload) => {
+const createNotificationsForUsers = async (userIds, payload, options = {}) => {
   if (!userIds || userIds.length === 0) return [];
 
   // Filter users based on preferences
-  const allowedUserIds = await filterUsersByPreferences(payload.organization, userIds, payload.type);
-  if (allowedUserIds.length === 0) return [];
+  const allowedUserIds = options.force
+    ? userIds
+    : await filterUsersByPreferences(payload.organization, userIds, payload.type);
+  if (!options.force && allowedUserIds.length === 0) return [];
 
   const docs = allowedUserIds.map((userId) => ({ ...payload, user: userId }));
   try {

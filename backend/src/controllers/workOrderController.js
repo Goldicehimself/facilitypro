@@ -212,7 +212,9 @@ const createWorkOrder = async (req, res, next) => {
       entityType: 'WorkOrder',
       entityId: workOrder._id,
       link: `/work-orders/${workOrder._id}`,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      organization: req.user.organization,
+      user: req.user.email
     });
     const adminManagerIds = await notificationService.getRoleUserIds(
       [constants.ROLES.ADMIN, constants.ROLES.FACILITY_MANAGER],
@@ -300,7 +302,9 @@ const updateWorkOrder = async (req, res, next) => {
       entityType: 'WorkOrder',
       entityId: workOrder._id,
       link: `/work-orders/${workOrder._id}`,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      organization: req.user.organization,
+      user: req.user.email
     });
     response.success(res, 'Work order updated successfully', workOrder);
     if (previousAssignee && previousAssignee.toString() !== String(workOrder.assignedTo?._id || workOrder.assignedTo)) {
@@ -360,7 +364,9 @@ const updateWorkOrderStatus = async (req, res, next) => {
       entityType: 'WorkOrder',
       entityId: workOrder._id,
       link: `/work-orders/${workOrder._id}`,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      organization: req.user.organization,
+      user: req.user.email
     });
     response.success(res, 'Work order status updated successfully', workOrder);
     if (workOrder?.assignedTo?._id || workOrder?.assignedTo) {
@@ -408,7 +414,9 @@ const assignWorkOrder = async (req, res, next) => {
       entityType: 'WorkOrder',
       entityId: workOrder._id,
       link: `/work-orders/${workOrder._id}`,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      organization: req.user.organization,
+      user: req.user.email
     });
     response.success(res, 'Work order assigned successfully', workOrder);
     if (assigneeId) {
@@ -478,7 +486,9 @@ const bulkAssignWorkOrders = async (req, res, next) => {
         entityType: 'WorkOrder',
         entityId: null,
         link: '/work-orders',
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        organization: req.user.organization,
+        user: req.user.email
       });
 
       await auditService.createAuditLog({
@@ -517,7 +527,9 @@ const deleteWorkOrder = async (req, res, next) => {
       entityType: 'WorkOrder',
       entityId: deleted._id,
       link: `/work-orders/${deleted._id}`,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      organization: req.user.organization,
+      user: req.user.email
     });
     response.success(res, 'Work order deleted successfully', null);
   } catch (error) {
@@ -551,7 +563,9 @@ const addComment = async (req, res, next) => {
       entityType: 'WorkOrder',
       entityId: workOrder._id,
       link: `/work-orders/${workOrder._id}`,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      organization: req.user.organization,
+      user: req.user.email
     });
     response.created(res, 'Comment added successfully', workOrder);
   } catch (error) {

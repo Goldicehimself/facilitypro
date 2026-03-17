@@ -18,10 +18,13 @@ import { Badge } from '@/components/ui/badge';
 import { useActivity } from '../contexts/ActivityContext';
 import GreetingBanner from '@/components/common/GreetingBanner';
 import { Skeleton } from '@/components/ui/skeleton';
+import { getRecentActivities, clearRecentActivities } from '../api/activities';
+import { useAuth } from '../contexts/AuthContext';
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { activities, addActivity } = useActivity();
+  const { activities, addActivity, setActivities } = useActivity();
+  const { user } = useAuth();
   const { data: dashboardData, isLoading } = useQuery(
     'dashboard',
     getDashboardData,
@@ -38,20 +41,55 @@ const Dashboard = () => {
     if (!isLoading) setHasLoaded(true);
   }, [isLoading]);
 
+  const iconForType = (type) => {
+    if (!type) return 'EV';
+    if (type.startsWith('workorder')) return 'WO';
+    if (type.startsWith('asset')) return 'AS';
+    if (type.startsWith('maintenance')) return 'PM';
+    if (type.startsWith('inventory')) return 'IN';
+    if (type.startsWith('service_request')) return 'SR';
+    return 'EV';
+  };
+
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (!token || token.startsWith('local-')) return;
+
+    getRecentActivities(10)
+      .then((items) => {
+        const mapped = (items || []).map((item) => ({
+          id: item._id || `${item.type}-${item.createdAt || Date.now()}`,
+          type: item.type || 'event',
+          action: item.action || '',
+          title: item.title || item.message || 'Activity',
+          description: item.description || item.entityType || '',
+          timestamp: item.createdAt || new Date().toISOString(),
+          icon: iconForType(item.type || ''),
+          status: item.status || null,
+          user: item.user || null
+        }));
+        setActivities(mapped);
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleClearActivity = async () => {
+    try {
+      await clearRecentActivities();
+      setActivities([]);
+      toast.success('Activity history cleared');
+    } catch (error) {
+      toast.error('Failed to clear activity history');
+    }
+  };
+
+  useEffect(() => {
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
     if (!token || token.startsWith('local-')) return;
 
     const apiBase = import.meta.env.VITE_API_URL || '/api';
     const streamUrl = `${apiBase.replace(/\/$/, '')}/activities/stream?token=${encodeURIComponent(token)}`;
     const stream = new EventSource(streamUrl);
-
-    const iconForType = (type) => {
-      if (type.startsWith('workorder')) return 'WO';
-      if (type.startsWith('asset')) return 'AS';
-      if (type.startsWith('maintenance')) return 'PM';
-      return 'EV';
-    };
 
     stream.addEventListener('activity', (event) => {
       try {
@@ -241,22 +279,24 @@ const Dashboard = () => {
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Button
-                className="bg-blue-700 text-white hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-500"
-                onClick={() => {
-                  addActivity({
-                    type: 'user_action',
-                    action: 'created',
-                    title: 'New Service Request Initiated',
-                    description: 'User started creating a new maintenance request',
-                    user: 'Current User',
-                    status: 'pending'
-                  });
-                  navigate('/service-requests/new');
-                }}
-              >
-                ?? New Request
-              </Button>
+              {!(user?.role === 'admin' || user?.role === 'facility_manager') && (
+                <Button
+                  className="bg-blue-700 text-white hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-500"
+                  onClick={() => {
+                    addActivity({
+                      type: 'user_action',
+                      action: 'created',
+                      title: 'New Service Request Initiated',
+                      description: 'User started creating a new maintenance request',
+                      user: 'Current User',
+                      status: 'pending'
+                    });
+                    navigate('/service-requests/new');
+                  }}
+                >
+                  ?? New Request
+                </Button>
+              )}
               <Button
                 variant="outline"
                 className="border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
@@ -337,8 +377,20 @@ const Dashboard = () => {
                   <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
                     Recent Activity
                   </h3>
-                  <div className="p-2 bg-amber-50 dark:bg-amber-950 rounded-lg">
-                    <Clock className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                  <div className="flex items-center gap-2">
+                    {user?.role === 'admin' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200"
+                        onClick={handleClearActivity}
+                      >
+                        Clear
+                      </Button>
+                    )}
+                    <div className="p-2 bg-amber-50 dark:bg-amber-950 rounded-lg">
+                      <Clock className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                    </div>
                   </div>
                 </div>
               </CardHeader>

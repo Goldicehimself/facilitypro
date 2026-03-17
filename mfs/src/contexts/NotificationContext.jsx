@@ -29,6 +29,7 @@ export const NotificationProvider = ({ children }) => {
       timestamp: n.createdAt || n.timestamp,
       read: !!n.read,
       actionUrl: n.link || n.actionUrl,
+      metadata: n.metadata || {}
     }));
 
   const refreshNotifications = useCallback(async () => {
@@ -38,8 +39,11 @@ export const NotificationProvider = ({ children }) => {
     try {
       const data = await fetchNotifications({ page: 1, limit: 20, unread: false, dueSoonDays: 7 });
       const list = normalizeNotifications(data?.notifications || []);
+      const computedUnread = list.filter((item) => !item.read).length;
+      const apiUnread = typeof data?.unreadCount === 'number' ? data.unreadCount : null;
+      const nextUnread = apiUnread === null ? computedUnread : (apiUnread || computedUnread);
       setNotifications(list);
-      setUnreadCount(data?.unreadCount || 0);
+      setUnreadCount(nextUnread);
     } catch (error) {
       // Silently ignore to avoid noise
     }

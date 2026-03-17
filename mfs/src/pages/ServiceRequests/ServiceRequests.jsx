@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Typography,
   Box,
@@ -25,8 +25,6 @@ import {
   FormControl,
   InputLabel,
   Select,
-  Alert,
-  IconButton,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import {
@@ -38,13 +36,16 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
-import { getServiceRequests, getServiceRequestSummary, createServiceRequest, assignServiceRequest } from '../../api/serviceRequests';
-import { getAssets } from '../../api/assets';
+import { getServiceRequests, getServiceRequestSummary, assignServiceRequest } from '../../api/serviceRequests';
 import { fetchMembers } from '../../api/org';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
 const ServiceRequests = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [currentTab, setCurrentTab] = useState('all');
   const [sortBy, setSortBy] = useState('date');
   const [searchQuery, setSearchQuery] = useState('');
@@ -52,25 +53,12 @@ const ServiceRequests = () => {
   const itemsPerPage = 5;
   const queryClient = useQueryClient();
 
-  // Modal state
-  const [modalOpen, setModalOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    category: '',
-    location: '',
-    priority: 'medium',
-    asset: '',
-  });
-
   const [requests, setRequests] = useState([]);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [viewOpen, setViewOpen] = useState(false);
   const [assignOpen, setAssignOpen] = useState(false);
   const [assignee, setAssignee] = useState('');
   const [assignNote, setAssignNote] = useState('');
-  const [assets, setAssets] = useState([]);
   const [members, setMembers] = useState([]);
 
   useEffect(() => {
@@ -97,11 +85,10 @@ const ServiceRequests = () => {
   useEffect(() => {
     let active = true;
     const load = async () => {
-      try {
-        const assetRes = await getAssets({ page: 1, limit: 200 });
-        if (active) setAssets(assetRes?.data || []);
-      } catch (error) {
-        if (active) setAssets([]);
+      const canManage = user?.role === 'admin' || user?.role === 'facility_manager';
+      if (!canManage) {
+        if (active) setMembers([]);
+        return;
       }
       try {
         const memberRes = await fetchMembers();
@@ -115,14 +102,28 @@ const ServiceRequests = () => {
     return () => {
       active = false;
     };
-  }, []);
+  }, [user?.role]);
 
   const { data: summaryData } = useQuery(['serviceRequestSummary'], () => getServiceRequestSummary());
-  const summary = summaryData?.summary || requestData?.summary || {};
+
+  const summaryFromList = useMemo(() => {
+    return (requests || []).reduce((acc, req) => {
+      const key = req?.status || 'pending';
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {});
+  }, [requests]);
+
+  const summaryHasData = summaryData?.summary && Object.keys(summaryData.summary).length > 0;
+  const requestSummaryHasData = requestData?.summary && Object.keys(requestData.summary).length > 0;
+  const summary = summaryHasData
+    ? summaryData.summary
+    : (requestSummaryHasData ? requestData.summary : (summaryFromList || {}));
+  const totalCount = summaryData?.total ?? requestData?.pagination?.total ?? requests.length ?? 0;
   const kpiData = [
     {
       label: 'Total Requests',
-      value: String(summaryData?.total || requestData?.pagination?.total || 0),
+      value: String(totalCount),
       trend: '',
       icon: Clock,
       color: '#4f46e5',
@@ -176,7 +177,7 @@ const ServiceRequests = () => {
   const displayedRequests = sortedRequests;
 
   const tabs = [
-    { label: 'All', value: 'all', count: summaryData?.total || requestData?.pagination?.total || 0 },
+    { label: 'All', value: 'all', count: totalCount },
     { label: 'Pending', value: 'pending', count: summary.pending || 0 },
     { label: 'Assigned', value: 'assigned', count: summary.assigned || 0 },
     { label: 'In Progress', value: 'in-progress', count: summary['in-progress'] || 0 },
@@ -202,70 +203,11 @@ const ServiceRequests = () => {
     return colors[status] || { bg: '#f3f4f6', text: '#6b7280', border: '#e5e7eb' };
   };
 
-  // Modal handlers
-  const handleModalOpen = () => {
-    setModalOpen(true);
-  };
-
-  const handleModalClose = () => {
-    setModalOpen(false);
-    setFormData({
-      title: '',
-      description: '',
-      category: '',
-      location: '',
-      priority: 'medium',
-      asset: '',
-    });
-  };
-
-  const handleFormInputChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const createMutation = useMutation((payload) => createServiceRequest(payload), {
-    onSuccess: () => {
-      queryClient.invalidateQueries('serviceRequests');
-    }
-  });
   const assignMutation = useMutation(({ id, assigneeId, note }) => assignServiceRequest(id, assigneeId, note), {
     onSuccess: () => {
       queryClient.invalidateQueries('serviceRequests');
     }
   });
-
-  const handleFormSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      // Validate required fields
-      if (!formData.title || !formData.description || !formData.category) {
-        toast.error('Please fill in all required fields');
-        setLoading(false);
-        return;
-      }
-
-      await createMutation.mutateAsync({
-        title: formData.title,
-        description: formData.description,
-        category: formData.category,
-        location: formData.location,
-        priority: formData.priority,
-        asset: formData.asset || undefined
-      });
-
-      toast.success('Service request submitted successfully!');
-      handleModalClose();
-    } catch (error) {
-      toast.error('Failed to submit service request');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleOpenView = (request) => {
     setSelectedRequest(request);
@@ -502,24 +444,26 @@ const ServiceRequests = () => {
                 <MenuItem value="priority">Sort by Priority</MenuItem>
                 <MenuItem value="status">Sort by Status</MenuItem>
               </TextField>
-              <Button
-                variant="contained"
-                startIcon={<Plus size={18} />}
-                onClick={handleModalOpen}
-                sx={{
-                  background: '#3b82f6',
-                  color: '#fff',
-                  borderRadius: '8px',
-                  fontWeight: 600,
-                  textTransform: 'none',
-                  px: 3,
-                  '&:hover': {
-                    background: '#2563eb',
-                  },
-                }}
-              >
-                New Request
-              </Button>
+              {!(user?.role === 'admin' || user?.role === 'facility_manager') && (
+                <Button
+                  variant="contained"
+                  startIcon={<Plus size={18} />}
+                  onClick={() => navigate('/service-requests/new')}
+                  sx={{
+                    background: '#3b82f6',
+                    color: '#fff',
+                    borderRadius: '8px',
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    px: 3,
+                    '&:hover': {
+                      background: '#2563eb',
+                    },
+                  }}
+                >
+                  New Request
+                </Button>
+              )}
             </Stack>
           </Box>
         </Box>
@@ -653,11 +597,14 @@ const ServiceRequests = () => {
                       <Button
                         size="small"
                         variant="outlined"
-                        onClick={() =>
-                          request.status === 'pending'
-                            ? handleOpenAssign(request)
-                            : handleOpenView(request)
-                        }
+                        onClick={() => {
+                          const canAssign = user?.role === 'admin' || user?.role === 'facility_manager';
+                          if (canAssign) {
+                            handleOpenAssign(request);
+                          } else {
+                            handleOpenView(request);
+                          }
+                        }}
                         sx={{
                           color: '#3b82f6',
                           borderColor: '#bfdbfe',
@@ -671,7 +618,9 @@ const ServiceRequests = () => {
                           },
                         }}
                       >
-                        {request.status === 'pending' ? 'Assign' : 'View'}
+                        {(user?.role === 'admin' || user?.role === 'facility_manager')
+                          ? (request.assignee ? 'Reassign' : 'Assign')
+                          : 'View'}
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -712,176 +661,6 @@ const ServiceRequests = () => {
           />
         </Box>
       </Paper>
-
-      {/* New Request Modal */}
-      <Dialog
-        open={modalOpen}
-        onClose={handleModalClose}
-        maxWidth="md"
-        fullWidth
-        sx={{
-          '& .MuiDialog-paper': {
-            borderRadius: '16px',
-            p: 0,
-          },
-        }}
-      >
-        <DialogTitle
-          sx={{
-            fontWeight: 700,
-            fontSize: '20px',
-            color: isDark ? '#e2e8f0' : '#0f172a',
-            pb: 1,
-          }}
-        >
-          Create New Service Request
-        </DialogTitle>
-        <DialogContent sx={{ p: 3 }}>
-          <form onSubmit={handleFormSubmit}>
-            <Grid container spacing={3}>
-              {/* Title */}
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Request Title"
-                  placeholder="Brief description of the issue"
-                  value={formData.title}
-                  onChange={(e) => handleFormInputChange('title', e.target.value)}
-                  required
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: '8px',
-                    }
-                  }}
-                />
-              </Grid>
-
-              {/* Description */}
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Detailed Description"
-                  placeholder="Provide more details about the issue"
-                  value={formData.description}
-                  onChange={(e) => handleFormInputChange('description', e.target.value)}
-                  required
-                  multiline
-                  rows={4}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: '8px',
-                    }
-                  }}
-                />
-              </Grid>
-
-              {/* Category and Priority */}
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth required>
-                  <InputLabel>Category</InputLabel>
-                  <Select
-                    value={formData.category}
-                    onChange={(e) => handleFormInputChange('category', e.target.value)}
-                    label="Category"
-                    sx={{
-                      borderRadius: '8px',
-                    }}
-                  >
-                    <MenuItem value="HVAC">HVAC</MenuItem>
-                    <MenuItem value="Electrical">Electrical</MenuItem>
-                    <MenuItem value="Plumbing">Plumbing</MenuItem>
-                    <MenuItem value="Other">Other</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth>
-                  <InputLabel>Priority</InputLabel>
-                  <Select
-                    value={formData.priority}
-                    onChange={(e) => handleFormInputChange('priority', e.target.value)}
-                    label="Priority"
-                    sx={{
-                      borderRadius: '8px',
-                    }}
-                  >
-                    <MenuItem value="low">Low</MenuItem>
-                    <MenuItem value="medium">Medium</MenuItem>
-                    <MenuItem value="high">High</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-
-              {/* Location */}
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Location"
-                  placeholder="Where is the issue located?"
-                  value={formData.location}
-                  onChange={(e) => handleFormInputChange('location', e.target.value)}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: '8px',
-                    }
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <FormControl fullWidth>
-                  <InputLabel>Asset (optional)</InputLabel>
-                  <Select
-                    value={formData.asset}
-                    onChange={(e) => handleFormInputChange('asset', e.target.value)}
-                    label="Asset (optional)"
-                    sx={{
-                      borderRadius: '8px',
-                    }}
-                  >
-                    <MenuItem value="">None</MenuItem>
-                    {assets.map((asset) => (
-                      <MenuItem key={asset.id} value={asset.id}>
-                        {asset.name} {asset.assetNumber ? `(${asset.assetNumber})` : ''}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-            </Grid>
-          </form>
-        </DialogContent>
-        <DialogActions sx={{ p: 3, pt: 0 }}>
-          <Button
-            onClick={handleModalClose}
-            sx={{
-              color: isDark ? '#cbd5f5' : '#64748b',
-              fontWeight: 600,
-              textTransform: 'none',
-            }}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleFormSubmit}
-            variant="contained"
-            disabled={loading}
-            sx={{
-              background: '#3b82f6',
-              color: '#fff',
-              borderRadius: '8px',
-              fontWeight: 600,
-              textTransform: 'none',
-              px: 3,
-              '&:hover': {
-                background: '#2563eb',
-              },
-            }}
-          >
-            {loading ? 'Submitting...' : 'Submit Request'}
-          </Button>
-        </DialogActions>
-      </Dialog>
 
       {/* View Request Dialog */}
       <Dialog

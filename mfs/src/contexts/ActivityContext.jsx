@@ -11,52 +11,7 @@ export const useActivity = () => {
 };
 
 export const ActivityProvider = ({ children }) => {
-  const [activities, setActivities] = useState([
-    {
-      id: 1,
-      type: 'work_order',
-      action: 'created',
-      title: 'Work Order WO-2024-001 Created',
-      description: 'HVAC System Maintenance',
-      timestamp: new Date(Date.now() - 5 * 60000),
-      icon: '📋',
-      user: 'John Doe',
-      status: 'pending',
-    },
-    {
-      id: 2,
-      type: 'task_completed',
-      action: 'completed',
-      title: 'PM Task Completed',
-      description: 'Filter Replacement - Building A',
-      timestamp: new Date(Date.now() - 15 * 60000),
-      icon: '✅',
-      user: 'Sarah Smith',
-      status: 'completed',
-    },
-    {
-      id: 3,
-      type: 'inspection',
-      action: 'updated',
-      title: 'Inspection Report Updated',
-      description: 'Electrical Panel Inspection',
-      timestamp: new Date(Date.now() - 30 * 60000),
-      icon: '🔍',
-      user: 'Mike Johnson',
-      status: 'in_progress',
-    },
-    {
-      id: 4,
-      type: 'asset',
-      action: 'created',
-      title: 'New Asset Added',
-      description: 'Boiler Unit - Building C',
-      timestamp: new Date(Date.now() - 45 * 60000),
-      icon: '⚙️',
-      user: 'Emma Wilson',
-      status: 'active',
-    },
-  ]);
+  const [activities, setActivities] = useState([]);
 
   const addActivity = (activityData) => {
     const newActivity = {
@@ -90,6 +45,7 @@ export const ActivityProvider = ({ children }) => {
 
   const value = {
     activities,
+    setActivities,
     addActivity,
     clearActivities,
   };
@@ -100,3 +56,4 @@ export const ActivityProvider = ({ children }) => {
     </ActivityContext.Provider>
   );
 };
+

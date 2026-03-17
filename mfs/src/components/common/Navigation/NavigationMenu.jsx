@@ -158,7 +158,7 @@ const NavigationMenu = ({ onCloseMobile = () => {}, collapsed = false, onToggleC
       title: 'Service Requests',
       icon: <PlusCircle />,
       path: '/service-requests',
-      roles: ['facility_manager', 'admin', 'staff'],
+      roles: ['facility_manager', 'admin', 'staff', 'technician'],
     },
     {
       title: 'Vendors',
