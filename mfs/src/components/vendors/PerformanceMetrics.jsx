@@ -1,6 +1,7 @@
 import React from 'react';
 import { TrendingDown, TrendingUp } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import { formatCurrency } from '@/utils/formatters';
 
 const MetricCard = ({ label, value, trend, trendLabel, trendTone }) => {
   const trendStyles = {
@@ -62,7 +63,7 @@ const PerformanceMetrics = ({ stats }) => {
       />
       <MetricCard
         label="Monthly Spend"
-        value={`$${(monthlySpend / 1000).toFixed(0)}K`}
+        value={formatCurrency(monthlySpend)}
         trend="down"
         trendLabel="-3%"
         trendTone="down"

@@ -11,6 +11,7 @@ import { fetchVendors, getVendorDocuments, getVendorPerformance, uploadVendorDoc
 import { getWorkOrders, updateWorkOrderStatus } from '@/api/workOrders';
 import { createServiceRequest, getServiceRequests } from '@/api/serviceRequests';
 import { getInvoices } from '@/api/finance';
+import { formatCurrency } from '@/utils/formatters';
 
 const VendorPortal = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -372,7 +373,7 @@ const VendorPortal = () => {
       `Vendor: ${derivedVendorData.name}`,
       `Issue Date: ${invoice.date || 'â€”'}`,
       `Due Date: ${invoice.dueDate || 'â€”'}`,
-      `Amount: $${invoice.amount}`,
+      `Amount: ${formatCurrency(invoice.amount || 0)}`,
       `Status: ${getStatusLabel(invoice.status)}`,
       `Description: ${invoice.description}`,
     ];
@@ -419,13 +420,13 @@ const VendorPortal = () => {
         <KPICard
           icon={<DollarSign className="h-5 w-5" />}
           title="Monthly Spend"
-          value={`$${derivedVendorData.monthlySpend.toLocaleString()}`}
+          value={formatCurrency(derivedVendorData.monthlySpend || 0)}
           color="indigo"
         />
         <KPICard
           icon={<TrendingUp className="h-5 w-5" />}
           title="Total Spend"
-          value={`$${derivedVendorData.totalSpend.toLocaleString()}`}
+          value={formatCurrency(derivedVendorData.totalSpend || 0)}
           color="blue"
         />
         <KPICard
@@ -640,7 +641,7 @@ const VendorPortal = () => {
                         <div>
                           <p className="text-xs text-gray-500 dark:text-gray-500">Estimated Cost</p>
                           <p className="font-medium text-gray-900 dark:text-white">
-                            {req.estimatedCost ? `$${req.estimatedCost.toLocaleString()}` : 'TBD'}
+                            {req.estimatedCost ? formatCurrency(req.estimatedCost) : 'TBD'}
                           </p>
                         </div>
                         <div>
@@ -713,7 +714,7 @@ const VendorPortal = () => {
                             <div>
                               <p className="text-xs text-gray-500 dark:text-gray-500">Amount</p>
                               <p className="font-medium text-gray-900 dark:text-white text-lg">
-                                ${invoice.amount.toLocaleString()}
+                                {formatCurrency(invoice.amount || 0)}
                               </p>
                             </div>
                           </div>

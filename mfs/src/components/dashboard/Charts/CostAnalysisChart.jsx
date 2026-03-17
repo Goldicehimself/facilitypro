@@ -13,6 +13,7 @@ import {
   ComposedChart,
 } from 'recharts';
 import { TrendingDown, DollarSign } from 'lucide-react';
+import { formatCurrency } from '@/utils/formatters';
 
 const CostAnalysisChart = ({ data = null }) => {
   const chartData = useMemo(() => {
@@ -62,7 +63,7 @@ const CostAnalysisChart = ({ data = null }) => {
           </p>
           <div className="flex items-baseline gap-2">
             <span className="text-2xl font-bold text-blue-900 dark:text-blue-100">
-              ${stats.totalCost.toLocaleString()}
+              {formatCurrency(stats.totalCost)}
             </span>
             <DollarSign className="h-5 w-5 text-blue-600 dark:text-blue-400" />
           </div>
@@ -95,7 +96,7 @@ const CostAnalysisChart = ({ data = null }) => {
               ? 'text-emerald-900 dark:text-emerald-100' 
               : 'text-amber-900 dark:text-amber-100'
             }`}>
-              ${Math.abs(stats.savingsVsLast).toLocaleString()}
+              {formatCurrency(Math.abs(stats.savingsVsLast))}
             </span>
             {isSavings && (
               <TrendingDown className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
@@ -130,7 +131,7 @@ const CostAnalysisChart = ({ data = null }) => {
                   border: '1px solid #e5e7eb',
                   borderRadius: '0.5rem',
                 }}
-                formatter={(value) => `$${value.toLocaleString()}`}
+                formatter={(value) => formatCurrency(value)}
               />
               <Legend />
               <Bar dataKey="preventive" fill="#10b981" name="Preventive Maintenance" />
@@ -167,7 +168,7 @@ const CostAnalysisChart = ({ data = null }) => {
                     {item.type}
                   </p>
                   <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                    ${item.amount.toLocaleString()}
+                    {formatCurrency(item.amount)}
                   </span>
                 </div>
                 <div className="w-full bg-zinc-200 dark:bg-zinc-700 rounded-full h-3">

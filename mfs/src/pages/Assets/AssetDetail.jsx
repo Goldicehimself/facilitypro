@@ -13,6 +13,7 @@ import Modal from '../../components/common/Modal';
 import { deleteAsset, getAsset, updateAsset, uploadAssetImage } from '../../api/assets';
 import { getWorkOrders } from '../../api/workOrders';
 import MaintenanceTimeline from '../../components/assets/MaintenanceTimeline';
+import { formatCurrency } from '@/utils/formatters';
 import AssetImage from '../../components/assets/AssetImage';
 import { toast } from 'react-toastify';
 
@@ -615,7 +616,7 @@ const AssetDetail = () => {
               <Divider sx={{ my: 1.5 }} />
 
               <Typography variant="caption" color="text.secondary">Total Maintenance Cost</Typography>
-              <Typography sx={{ fontWeight: 700 }}>${asset.performanceMetrics?.totalMaintenanceCost}</Typography>
+              <Typography sx={{ fontWeight: 700 }}>{formatCurrency(asset.performanceMetrics?.totalMaintenanceCost || 0)}</Typography>
 
               <Divider sx={{ my: 1.5 }} />
 

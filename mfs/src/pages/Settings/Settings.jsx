@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'react-toastify';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import { formatCurrency } from '@/utils/formatters';
 import {
   getOrgSettings,
   updateOrgSettings,
@@ -1843,7 +1844,7 @@ const Settings = () => {
                           className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                         />
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                          {includedSeats} seats included, ${extraSeatPrice}/seat for extras
+                          {includedSeats} seats included, {formatCurrency(extraSeatPrice)}/seat for extras
                         </p>
                       </div>
                     </div>
@@ -1860,16 +1861,16 @@ const Settings = () => {
                     {billingCycle === 'monthly' ? (
                       <div>
                         <div className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-                          ${totalMonthly.toFixed(2)}/mo
+                          {formatCurrency(totalMonthly)}/mo
                         </div>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                          Base ${baseMonthly}/mo + ${extraSeatPrice}/seat for {extraSeats} extra seat{extraSeats === 1 ? '' : 's'}
+                          Base {formatCurrency(baseMonthly)}/mo + {formatCurrency(extraSeatPrice)}/seat for {extraSeats} extra seat{extraSeats === 1 ? '' : 's'}
                         </p>
                       </div>
                     ) : (
                       <div>
                         <div className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-                          ${totalAnnual.toFixed(2)}/yr
+                          {formatCurrency(totalAnnual)}/yr
                         </div>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                           20% annual discount applied
@@ -1897,7 +1898,7 @@ const Settings = () => {
                           <div className="text-xs text-gray-500 dark:text-gray-400">{new Date(invoice.date).toLocaleDateString()}</div>
                         </div>
                         <div className="text-right">
-                          <div className="font-semibold text-gray-900 dark:text-gray-100">${invoice.amount.toFixed(2)}</div>
+                          <div className="font-semibold text-gray-900 dark:text-gray-100">{formatCurrency(invoice.amount)}</div>
                           <Badge className={`mt-1 capitalize ${invoice.status === 'paid' ? 'bg-emerald-100 text-emerald-700' : invoice.status === 'open' ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700'}`}>
                             {invoice.status}
                           </Badge>

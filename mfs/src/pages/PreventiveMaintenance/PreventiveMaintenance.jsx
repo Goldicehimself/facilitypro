@@ -23,6 +23,7 @@ import PMCalendar from '../../components/preventiveMaintenance/PMCalendar';
 import ComplianceChart from '../../components/preventiveMaintenance/ComplianceChart';
 import { useActivity } from '../../contexts/ActivityContext';
 import { getPreventiveMaintenances, getUpcomingMaintenance } from '../../api/preventiveMaintenance';
+import { formatCurrency } from '@/utils/formatters';
 
 const PreventiveMaintenance = () => {
   const theme = useTheme();
@@ -57,7 +58,7 @@ const PreventiveMaintenance = () => {
     { label: 'Scheduled Tasks', value: String(kpiSnapshot.scheduled), trend: '', color: '#4f46e5', icon: <Calendar size={18} /> },
     { label: 'Compliance Rate', value: `${kpiSnapshot.complianceRate}%`, trend: '', color: '#059669', icon: <TrendingUp size={18} /> },
     { label: 'Overdue Tasks', value: String(kpiSnapshot.overdue), trend: '', color: '#dc2626', icon: <AlertCircle size={18} /> },
-    { label: 'Monthly Spending', value: `$${Math.round(kpiSnapshot.monthlySpend)}`, trend: '', color: '#d97706', icon: <DownloadCloud size={18} /> },
+    { label: 'Monthly Spending', value: formatCurrency(Math.round(kpiSnapshot.monthlySpend)), trend: '', color: '#d97706', icon: <DownloadCloud size={18} /> },
   ];
 
   const complianceMetrics = useMemo(() => {

@@ -39,6 +39,7 @@ import GreetingBanner from '@/components/common/GreetingBanner';
 import { useQuery, useQueryClient } from 'react-query';
 import { createExpense, createInvoice, getExpenses, getInvoices, updateInvoice, deleteInvoice } from '@/api/finance';
 import { fetchVendors } from '@/api/vendors';
+import { formatCurrency } from '@/utils/formatters';
 
 // StatCard Component
 const StatCard = ({ icon: Icon, label, value, trend, color = 'indigo' }) => (
@@ -100,7 +101,7 @@ const InvoiceCard = ({ invoice, onSelect, onEdit, onDelete }) => {
         <div>
           <p className="text-xs text-gray-500 dark:text-gray-500">Due: {dueDateLabel}</p>
         </div>
-        <p className="text-xl font-bold text-indigo-600">${invoice.amount.toLocaleString()}</p>
+        <p className="text-xl font-bold text-indigo-600">{formatCurrency(invoice.amount || 0)}</p>
       </div>
       <div className="mt-3 flex items-center gap-2">
         <Button
@@ -490,25 +491,25 @@ export default function FinancePortal() {
         <StatCard
           icon={TrendingUp}
           label="Total Revenue"
-          value={`$${summary.totalRevenue.toLocaleString()}`}
+          value={formatCurrency(summary.totalRevenue)}
           color="emerald"
         />
         <StatCard
           icon={TrendingDown}
           label="Total Expenses"
-          value={`$${summary.totalExpenses.toLocaleString()}`}
+          value={formatCurrency(summary.totalExpenses)}
           color="red"
         />
         <StatCard
           icon={DollarSign}
           label="Net Profit"
-          value={`$${summary.netProfit.toLocaleString()}`}
+          value={formatCurrency(summary.netProfit)}
           color="indigo"
         />
         <StatCard
           icon={Clock}
           label="Pending Payments"
-          value={`$${summary.pendingPayments.toLocaleString()}`}
+          value={formatCurrency(summary.pendingPayments)}
           color="blue"
         />
         <StatCard
@@ -669,7 +670,7 @@ export default function FinancePortal() {
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
                       <div>
                         <p className="font-semibold text-gray-900 dark:text-white">
-                          ${request.amount.toLocaleString()} - {request.purpose}
+                          {formatCurrency(request.amount || 0)} - {request.purpose}
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
                           Requested by {request.requestedBy?.firstName || request.requestedBy?.email || 'Finance Officer'} on{' '}
@@ -890,7 +891,7 @@ export default function FinancePortal() {
                       >
                         <td className="px-6 py-3 text-sm text-gray-900 dark:text-white font-medium">{expense.category}</td>
                         <td className="px-6 py-3 text-sm text-gray-600 dark:text-gray-400">{expense.vendor}</td>
-                        <td className="px-6 py-3 text-sm font-semibold text-amber-600">${expense.amount.toLocaleString()}</td>
+                        <td className="px-6 py-3 text-sm font-semibold text-amber-600">{formatCurrency(expense.amount || 0)}</td>
                         <td className="px-6 py-3 text-sm text-gray-600 dark:text-gray-400">
                           {new Date(expense.date).toLocaleDateString()}
                         </td>
@@ -980,7 +981,7 @@ export default function FinancePortal() {
 
                 <div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">Amount</p>
-                  <p className="text-2xl font-bold text-indigo-600">${selectedInvoice.amount.toLocaleString()}</p>
+                  <p className="text-2xl font-bold text-indigo-600">{formatCurrency(selectedInvoice.amount || 0)}</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -1058,7 +1059,7 @@ export default function FinancePortal() {
               <div className="p-6 space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Payment Amount ($)
+                    Payment Amount (₦)
                   </label>
                   <Input
                     type="number"
@@ -1165,7 +1166,7 @@ export default function FinancePortal() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Amount ($)
+                      Amount (₦)
                     </label>
                     <Input
                       type="number"
@@ -1305,7 +1306,7 @@ export default function FinancePortal() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Amount ($)
+                      Amount (₦)
                     </label>
                     <Input
                       type="number"
@@ -1423,7 +1424,7 @@ export default function FinancePortal() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">Amount</p>
-                  <p className="text-2xl font-bold text-amber-600">${selectedExpense.amount.toLocaleString()}</p>
+                  <p className="text-2xl font-bold text-amber-600">{formatCurrency(selectedExpense.amount || 0)}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">Date</p>
@@ -1516,7 +1517,7 @@ export default function FinancePortal() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Amount ($)
+                    Amount (₦)
                   </label>
                   <Input
                     type="number"

@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { createVendor, getVendorById, updateVendor } from '@/api/vendors';
 import { useAuth } from '@/contexts/AuthContext';
+import { formatCurrency } from '@/utils/formatters';
 
 const VendorForm = () => {
   const navigate = useNavigate();
@@ -164,7 +165,6 @@ const VendorForm = () => {
   };
 
   const formatDate = (value) => (value ? new Date(value).toLocaleDateString() : 'N/A');
-  const formatCurrency = (value) => (Number.isFinite(value) ? `$${value.toLocaleString()}` : 'N/A');
 
   return (
     <div className="space-y-6">
@@ -531,7 +531,7 @@ const VendorForm = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Monthly Spend ($)
+                    Monthly Spend (₦)
                   </label>
                   <Input
                     type="number"

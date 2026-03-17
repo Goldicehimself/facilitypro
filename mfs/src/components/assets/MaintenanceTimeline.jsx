@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Typography, Chip } from '@mui/material';
+import { formatCurrency } from '@/utils/formatters';
 
 const TimelineItem = ({ item, isLast }) => {
   const statusColor = (s) => {
@@ -27,7 +28,7 @@ const TimelineItem = ({ item, isLast }) => {
           {item.type && <Chip size="small" label={item.type} />}
           {item.status && <Chip size="small" label={item.status} color={statusColor(item.status)} />}
         </Box>
-        <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>Technician: {item.technician} • {item.timeHours || 0} hrs • ${item.cost || 0}</Typography>
+        <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>Technician: {item.technician} • {item.timeHours || 0} hrs • {formatCurrency(item.cost || 0)}</Typography>
       </Box>
     </Box>
   );

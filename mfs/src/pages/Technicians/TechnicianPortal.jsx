@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { sendMessageToAdmins } from '../../api/notifications';
+import { formatCurrency } from '@/utils/formatters';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -892,7 +893,7 @@ export default function TechnicianPortal() {
       workOrderUpdateMutation.mutate({ id, data: { extraCosts: nextCosts } });
       setAddCostModalOpen(false);
       setNewCost({ description: '', amount: '', receiptRef: '', receiptFile: null });
-      alert(`✓ Cost "$${newCost.amount}" added successfully`);
+      alert(`✓ Cost "${formatCurrency(newCost.amount)}" added successfully`);
     } else {
       alert('⚠ Please fill in description and amount');
     }
@@ -1337,7 +1338,7 @@ export default function TechnicianPortal() {
                             <div>
                               <p className="text-sm font-medium text-gray-900 dark:text-white">{part.name}</p>
                               <p className="text-xs text-gray-500 dark:text-gray-400">
-                                Qty: {part.quantity} | Cost: ${part.originalCost * part.quantity}
+                                Qty: {part.quantity} | Cost: {formatCurrency(part.originalCost * part.quantity)}
                               </p>
                             </div>
                             <Button 
@@ -1393,7 +1394,7 @@ export default function TechnicianPortal() {
                                 )}
                               </div>
                               <div className="text-right">
-                                <p className="text-sm font-bold text-amber-600">${cost.amount}</p>
+                                <p className="text-sm font-bold text-amber-600">{formatCurrency(cost.amount)}</p>
                                 <Button 
                                   variant="ghost" 
                                   size="sm" 
@@ -1413,7 +1414,7 @@ export default function TechnicianPortal() {
                     {(selectedOrder.extraCosts || []).reduce((sum, cost) => sum + (Number(cost.amount) || 0), 0) > 0 && (
                       <div className="bg-amber-100 dark:bg-amber-900/40 p-2 rounded flex items-center justify-between">
                         <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">Total Extra Cost:</p>
-                        <p className="text-lg font-bold text-amber-700 dark:text-amber-300">${(selectedOrder.extraCosts || []).reduce((sum, cost) => sum + (Number(cost.amount) || 0), 0)}</p>
+                        <p className="text-lg font-bold text-amber-700 dark:text-amber-300">{formatCurrency((selectedOrder.extraCosts || []).reduce((sum, cost) => sum + (Number(cost.amount) || 0), 0))}</p>
                       </div>
                     )}
                   </div>
@@ -1654,7 +1655,7 @@ export default function TechnicianPortal() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Cost ($)
+                      Cost (₦)
                     </label>
                     <input
                       type="number"
@@ -1724,7 +1725,7 @@ export default function TechnicianPortal() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Amount ($)
+                      Amount (₦)
                     </label>
                     <input
                       type="number"

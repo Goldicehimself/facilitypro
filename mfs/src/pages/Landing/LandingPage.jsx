@@ -620,7 +620,7 @@ const LandingPage = () => {
           >
             {[
               {
-                quote: "FacilityPro reduced our maintenance response time by 60% and saved us $200K in the first year.",
+                quote: "FacilityPro reduced our maintenance response time by 60% and saved us ₦200K in the first year.",
                 name: "Sarah Johnson",
                 role: "Facility Manager",
                 company: "TechCorp Industries",
@@ -694,12 +694,12 @@ const LandingPage = () => {
             {[
               {
                 name: "Starter",
-                price: "$19",
+                price: "₦19",
                 period: "/month",
                 description: "For small teams getting started",
                 features: [
                   "5 seats included",
-                  "$4 per extra seat",
+                  "₦4 per extra seat",
                   "Work orders, assets, vendors",
                   "Basic reporting",
                   "Email support"
@@ -708,12 +708,12 @@ const LandingPage = () => {
               },
               {
                 name: "Professional",
-                price: "$39",
+                price: "₦39",
                 period: "/month",
                 description: "Best for growing teams",
                 features: [
                   "10 seats included",
-                  "$4 per extra seat",
+                  "₦4 per extra seat",
                   "Advanced reporting",
                   "PM scheduling",
                   "Notifications automation",

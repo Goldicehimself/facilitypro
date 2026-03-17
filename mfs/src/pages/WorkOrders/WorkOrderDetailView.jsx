@@ -17,6 +17,7 @@ import { toast } from "react-toastify";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { formatCurrency } from "@/utils/formatters";
 
 import { getWorkOrder, updateWorkOrderStatus, deleteWorkOrder } from "../../api/workOrders";
 import ProtectedImage from "../../components/common/ProtectedImage";
@@ -479,7 +480,7 @@ export default function WorkOrderDetailView() {
                 <div key={part.id || index} className="rounded-md border border-slate-200 p-3 dark:border-slate-700">
                   <p className="font-semibold text-slate-900 dark:text-slate-100">{part.name}</p>
                   <p className="text-xs text-slate-500">
-                    Qty: {part.quantity || 1} • Cost: ${Number(part.originalCost || part.cost || 0) * Number(part.quantity || 1)}
+                    Qty: {part.quantity || 1} • Cost: {formatCurrency(Number(part.originalCost || part.cost || 0) * Number(part.quantity || 1))}
                   </p>
                 </div>
               ))
@@ -502,7 +503,7 @@ export default function WorkOrderDetailView() {
                   <div key={cost.id || index} className="rounded-md border border-slate-200 p-3 dark:border-slate-700">
                     <p className="font-semibold text-slate-900 dark:text-slate-100">{cost.description}</p>
                     <p className="text-xs text-slate-500">
-                      {cost.date ? formatDateTime(cost.date) : "â€”"} • ${Number(cost.amount || 0)}
+                      {cost.date ? formatDateTime(cost.date) : "â€”"} • {formatCurrency(Number(cost.amount || 0))}
                     </p>
                     {cost.receipt && (
                       <a href={cost.receipt} target="_blank" rel="noreferrer" className="text-xs text-indigo-600 hover:underline">
@@ -513,7 +514,7 @@ export default function WorkOrderDetailView() {
                 ))}
                 {totalExtraCost > 0 && (
                   <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-200">
-                    <p className="text-sm font-semibold">Total: ${totalExtraCost}</p>
+                    <p className="text-sm font-semibold">Total: {formatCurrency(totalExtraCost)}</p>
                   </div>
                 )}
               </>

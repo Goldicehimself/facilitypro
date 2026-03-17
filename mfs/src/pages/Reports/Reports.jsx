@@ -47,6 +47,7 @@ import {
 import { toast } from 'react-toastify';
 import { fetchReports, exportReport, fetchReportWarnings } from '../../api/reports';
 import { createPreventiveMaintenance } from '../../api/preventiveMaintenance';
+import { formatCurrency } from '@/utils/formatters';
 
 const ReportsPage = () => {
   const theme = useTheme();
@@ -280,7 +281,7 @@ const ReportsPage = () => {
                     Total Costs
                   </Typography>
                   <Typography variant="h5" sx={{ fontWeight: 800, color: 'text.primary' }}>
-                    ${(safeSummary.totalCosts / 1000).toFixed(1)}K
+                    ₦{(safeSummary.totalCosts / 1000).toFixed(1)}K
                   </Typography>
                 </Box>
                 <Avatar sx={{ bgcolor: '#d9770620', width: 42, height: 42, color: '#d97706' }}>
@@ -394,12 +395,12 @@ const ReportsPage = () => {
                       borderRadius: '0.5rem',
                       color: isDark ? '#e2e8f0' : '#111827',
                     }}
-                    formatter={(value) => `$${value.toLocaleString()}`}
+                    formatter={(value) => formatCurrency(value)}
                   />
                   <Legend
                     verticalAlign="bottom"
                     height={36}
-                    formatter={(value, entry) => `${value}: $${(entry.payload.value / 1000).toFixed(0)}K`}
+                    formatter={(value, entry) => `${value}: ₦${(entry.payload.value / 1000).toFixed(0)}K`}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -476,7 +477,7 @@ const ReportsPage = () => {
                   <Chip label={`${safeAssetPerformance.repairTrend >= 0 ? '+' : ''}${safeAssetPerformance.repairTrend}%`} size="small" color={safeAssetPerformance.repairTrend >= 0 ? 'success' : 'error'} variant="outlined" sx={{ fontWeight: 700, fontSize: '0.7rem' }} />
                 </Box>
                 <Typography variant="h4" sx={{ fontWeight: 800, color: 'text.primary' }}>
-                  ${(safeAssetPerformance.repairCosts / 1000).toFixed(1)}K
+                  ₦{(safeAssetPerformance.repairCosts / 1000).toFixed(1)}K
                 </Typography>
               </Box>
             </CardContent>

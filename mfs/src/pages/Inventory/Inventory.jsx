@@ -14,6 +14,7 @@ import {
   Eye
 } from 'lucide-react';
 import { getInventoryItems, getInventorySummary, updateInventoryItem } from '../../api/inventory';
+import { formatCurrency } from '@/utils/formatters';
 
 const Inventory = () => {
   const navigate = useNavigate();
@@ -334,7 +335,7 @@ const Inventory = () => {
                     <td className="py-4 px-4 font-medium text-gray-900 dark:text-zinc-100">{item.currentStock}</td>
                     <td className="py-4 px-4 text-gray-700 dark:text-zinc-300">{item.reorderPoint}</td>
                     <td className="py-4 px-4 font-medium text-gray-900 dark:text-zinc-100">
-                      ${item.unitCost.toFixed(2)}
+                      {formatCurrency(Number(item.unitCost || 0))}
                     </td>
                     <td className="py-4 px-4 text-gray-700 dark:text-zinc-300">
                       {typeof item.usage30d === 'number' ? `${item.usage30d} units` : (item.usage30d || 'â€”')}
