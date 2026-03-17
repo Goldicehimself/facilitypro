@@ -694,7 +694,7 @@ const LandingPage = () => {
             {[
               {
                 name: "Starter",
-                price: "₦19",
+                price: "₦19000",
                 period: "/month",
                 description: "For small teams getting started",
                 features: [
@@ -708,7 +708,7 @@ const LandingPage = () => {
               },
               {
                 name: "Professional",
-                price: "₦39",
+                price: "₦39000",
                 period: "/month",
                 description: "Best for growing teams",
                 features: [
