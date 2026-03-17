@@ -20,7 +20,8 @@ const bulkAssignSchema = Joi.object({
     assignee: Joi.string().optional(),
     category: Joi.string().optional(),
     location: Joi.string().optional(),
-    search: Joi.string().allow('').optional()
+    search: Joi.string().allow('').optional(),
+    dateRange: Joi.string().optional()
   }).optional()
 }).required();
 

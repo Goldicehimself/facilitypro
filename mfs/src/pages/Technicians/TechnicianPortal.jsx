@@ -39,7 +39,7 @@ import { Separator } from '@/components/ui/separator';
 import GreetingBanner from '@/components/common/GreetingBanner';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { useAuth } from '../../contexts/AuthContext';
-import { getWorkOrders } from '../../api/workOrders';
+import { getWorkOrders, updateWorkOrder, updateWorkOrderStatus, addWorkOrderComment, uploadWorkOrderReceipt, notifyWorkOrderUpdate } from '../../api/workOrders';
 import { getServiceRequests, updateServiceRequestStatus } from '../../api/serviceRequests';
 import { getProfile, deleteCertificate } from '../../api/profile';
 import ProtectedImage from '@/components/common/ProtectedImage';
@@ -70,8 +70,10 @@ const priorityColorMap = {
 
 const statusColorMap = {
   pending: 'bg-slate-100 text-slate-800 border-slate-300',
+  assigned: 'bg-blue-100 text-blue-800 border-blue-300',
   scheduled: 'bg-blue-100 text-blue-800 border-blue-300',
   in_progress: 'bg-amber-100 text-amber-800 border-amber-300',
+  'in-progress': 'bg-amber-100 text-amber-800 border-amber-300',
   completed: 'bg-emerald-100 text-emerald-800 border-emerald-300',
   cancelled: 'bg-red-100 text-red-800 border-red-300',
   overdue: 'bg-rose-100 text-rose-800 border-rose-300',
@@ -87,8 +89,10 @@ const serviceRequestStatusColorMap = {
 const formatStatusLabel = (status) => {
   const map = {
     pending: 'Pending',
+    assigned: 'Assigned',
     scheduled: 'Scheduled',
     in_progress: 'In Progress',
+    'in-progress': 'In Progress',
     completed: 'Completed',
     cancelled: 'Cancelled',
     overdue: 'Overdue',
@@ -131,10 +135,12 @@ const StatCard = ({ icon, title, value, subtext, color = 'indigo' }) => {
 };
 
 // Work Order Card Component
-const WorkOrderCard = ({ order, onViewDetails }) => {
+const WorkOrderCard = ({ order, onViewDetails, onStart, onComplete, updating }) => {
   const isOverdue = new Date(order.dueDate) < new Date() && order.status !== 'completed';
   const statusColor = statusColorMap[order.status] || statusColorMap.pending;
   const priorityColor = priorityColorMap[order.priority] || priorityColorMap.low;
+  const canStart = ['pending', 'scheduled', 'assigned', 'open'].includes(order.status);
+  const canComplete = order.status === 'in_progress' || order.status === 'in-progress';
 
   return (
     <motion.div
@@ -220,6 +226,27 @@ const WorkOrderCard = ({ order, onViewDetails }) => {
               <Eye className="h-4 w-4 mr-2" />
               View Details
             </Button>
+            {canStart && (
+              <Button
+                onClick={() => onStart(order)}
+                size="sm"
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+                disabled={updating}
+              >
+                Start
+              </Button>
+            )}
+            {canComplete && (
+              <Button
+                onClick={() => onComplete(order)}
+                size="sm"
+                variant="outline"
+                className="w-full"
+                disabled={updating}
+              >
+                Complete
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -310,15 +337,16 @@ const ServiceRequestCard = ({ request, onStart, onComplete, updating }) => {
 const TechnicianDetailsCard = ({ technician, metrics, onDeleteCertificate }) => {
   const [messageOpen, setMessageOpen] = useState(false);
   const [messageText, setMessageText] = useState('');
+  const certificationsSafe = Array.isArray(technician.certifications)
+    ? technician.certifications
+    : [];
 
   const handleMessage = () => {
     setMessageOpen(true);
   };
 
   const handleDownloadProfile = () => {
-    const certifications = Array.isArray(technician.certifications)
-      ? technician.certifications.map((cert) => formatCertLabel(cert))
-      : [];
+    const certifications = certificationsSafe.map((cert) => formatCertLabel(cert));
     const csvHeader = [
       'name',
       'email',
@@ -437,7 +465,7 @@ const TechnicianDetailsCard = ({ technician, metrics, onDeleteCertificate }) => 
           <div>
             <p className="text-sm text-gray-600 dark:text-gray-400">Certifications</p>
             <p className="text-lg font-bold text-indigo-600">
-              {technician.certifications.filter((cert) => getCertStatus(cert) === 'approved').length}
+              {certificationsSafe.filter((cert) => getCertStatus(cert) === 'approved').length}
             </p>
           </div>
           <div>
@@ -450,7 +478,7 @@ const TechnicianDetailsCard = ({ technician, metrics, onDeleteCertificate }) => 
         <div>
           <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Certifications</p>
           <div className="flex gap-2 flex-wrap">
-            {technician.certifications.map((cert) => {
+            {certificationsSafe.map((cert) => {
               const status = getCertStatus(cert);
               return (
                 <Badge
@@ -470,9 +498,9 @@ const TechnicianDetailsCard = ({ technician, metrics, onDeleteCertificate }) => 
               );
             })}
           </div>
-          {technician.certifications.length > 0 && (
+          {certificationsSafe.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-2">
-              {technician.certifications.map((cert) => {
+              {certificationsSafe.map((cert) => {
                 const id = typeof cert === 'string' ? cert : cert.publicId;
                 return (
                   <Button
@@ -563,7 +591,7 @@ export default function TechnicianPortal() {
   const [addPartModalOpen, setAddPartModalOpen] = useState(false);
   const [newPart, setNewPart] = useState({ name: '', cost: '', quantity: 1 });
   const [addCostModalOpen, setAddCostModalOpen] = useState(false);
-  const [newCost, setNewCost] = useState({ description: '', amount: '', receipt: '' });
+  const [newCost, setNewCost] = useState({ description: '', amount: '', receiptRef: '', receiptFile: null });
 
   const { data: workOrders = [], isLoading } = useQuery(
     ['workOrders', { scope: 'technician' }],
@@ -574,7 +602,7 @@ export default function TechnicianPortal() {
     () => getServiceRequests({ page: 1, limit: 50 })
   );
   const serviceRequestMutation = useMutation(
-    ({ id, status }) => updateServiceRequestStatus(id, status),
+    ({ id, status, meta }) => updateServiceRequestStatus(id, status, meta),
     {
       onSuccess: () => {
         queryClient.invalidateQueries(['serviceRequests']);
@@ -582,6 +610,62 @@ export default function TechnicianPortal() {
       },
       onError: () => {
         toast.error('Failed to update service request');
+      }
+    }
+  );
+  const workOrderStatusMutation = useMutation(
+    ({ id, status, meta }) => updateWorkOrderStatus(id, status, '', meta),
+    {
+      onSuccess: (updated) => {
+        queryClient.invalidateQueries(['workOrders']);
+        if (updated) {
+          setSelectedOrder((prev) => (prev ? { ...prev, ...updated } : prev));
+        }
+        toast.success('Work order updated');
+      },
+      onError: () => {
+        toast.error('Failed to update work order');
+      }
+    }
+  );
+  const workOrderUpdateMutation = useMutation(
+    ({ id, data }) => updateWorkOrder(id, data),
+    {
+      onSuccess: (updated) => {
+        queryClient.invalidateQueries(['workOrders']);
+        if (updated) {
+          setSelectedOrder((prev) => (prev ? { ...prev, ...updated } : prev));
+        }
+        toast.success('Work order updated');
+      },
+      onError: () => {
+        toast.error('Failed to update work order');
+      }
+    }
+  );
+  const workOrderCommentMutation = useMutation(
+    ({ id, comment }) => addWorkOrderComment(id, comment),
+    {
+      onSuccess: (updated) => {
+        queryClient.invalidateQueries(['workOrders']);
+        if (updated) {
+          setSelectedOrder((prev) => (prev ? { ...prev, ...updated } : prev));
+        }
+        toast.success('Note added');
+      },
+      onError: () => {
+        toast.error('Failed to add note');
+      }
+    }
+  );
+  const workOrderNotifyMutation = useMutation(
+    (id) => notifyWorkOrderUpdate(id),
+    {
+      onSuccess: () => {
+        toast.success('Admin notified');
+      },
+      onError: () => {
+        toast.error('Failed to notify admin');
       }
     }
   );
@@ -652,6 +736,7 @@ export default function TechnicianPortal() {
 
   const normalizeStatus = (status, dueDate) => {
     if (status === 'overdue') return 'overdue';
+    if (status === 'in-progress') return 'in_progress';
     if (status === 'open') return 'pending';
     if (!status && dueDate && new Date(dueDate) < new Date()) return 'overdue';
     return status || 'pending';
@@ -670,7 +755,7 @@ export default function TechnicianPortal() {
         progress,
         location: order.location?.name || order.location || '—',
         assetName: order.asset?.name || order.assetName || '—',
-        estimatedHours: order.estimatedHours || 0,
+        estimatedHours: order.estimatedHours ?? order.estimatedDuration ?? 0,
         actualHours: order.actualHours || 0,
         notes: order.notes || order.description || '',
       };
@@ -694,28 +779,58 @@ export default function TechnicianPortal() {
   // Handle Add Note
   const handleAddNote = () => {
     if (newNote.trim()) {
-      setSelectedOrder({
-        ...selectedOrder,
-        notes: (selectedOrder.notes ? selectedOrder.notes + '\n\n' : '') + newNote
-      });
-      setNoteModalOpen(false);
-      setNewNote('');
-      alert(`✓ Note added successfully`);
+      const id = selectedOrder?.id || selectedOrder?._id;
+      if (!id) return;
+      workOrderCommentMutation.mutate(
+        { id, comment: newNote.trim() },
+        {
+          onSuccess: () => {
+            setNoteModalOpen(false);
+            setNewNote('');
+          }
+        }
+      );
     } else {
       alert('⚠ Please enter a note');
     }
   };
 
-  // Handle Complete Order
-  const handleCompleteOrder = () => {
-    setSelectedOrder({
-      ...selectedOrder,
-      status: 'completed'
+  const handleStartOrder = (order = null) => {
+    const target = order || selectedOrder;
+    if (!target) return;
+    const id = target.id || target._id;
+    if (!id) return;
+    const startedAt = target.startedAt || new Date().toISOString();
+    workOrderStatusMutation.mutate({
+      id,
+      status: 'in_progress',
+      meta: { startedAt }
     });
-    setTimeout(() => {
-      setSelectedOrder(null);
-    }, 500);
-    alert(`✓ Work Order marked as completed!`);
+  };
+
+  // Handle Complete Order
+  const handleCompleteOrder = (order = null) => {
+    const target = order || selectedOrder;
+    if (!target) return;
+    const id = target.id || target._id;
+    if (!id) return;
+    const now = new Date().toISOString();
+    const meta = {
+      completedAt: target.completedAt || now,
+    };
+    if (!target.startedAt) {
+      meta.startedAt = now;
+    }
+    workOrderStatusMutation.mutate(
+      { id, status: 'completed', meta },
+      {
+        onSuccess: () => {
+          setTimeout(() => {
+            setSelectedOrder(null);
+          }, 300);
+        }
+      }
+    );
   };
 
   // Handle Add Part
@@ -728,10 +843,15 @@ export default function TechnicianPortal() {
         originalCost: parseFloat(newPart.cost),
         quantity: newPart.quantity || 1
       };
+      const nextParts = [...(selectedOrder.replacedParts || []), newPartObj];
       setSelectedOrder({
         ...selectedOrder,
-        replacedParts: [...(selectedOrder.replacedParts || []), newPartObj]
+        replacedParts: nextParts
       });
+      const id = selectedOrder?.id || selectedOrder?._id;
+      if (id) {
+        workOrderUpdateMutation.mutate({ id, data: { replacedParts: nextParts } });
+      }
       setAddPartModalOpen(false);
       setNewPart({ name: '', cost: '', quantity: 1 });
       alert(`✓ Part "${newPart.name}" added successfully`);
@@ -741,21 +861,37 @@ export default function TechnicianPortal() {
   };
 
   // Handle Add Cost
-  const handleAddCost = () => {
+  const handleAddCost = async () => {
     if (newCost.description && newCost.amount) {
+      const id = selectedOrder?.id || selectedOrder?._id;
+      if (!id) return;
+      let receiptUrl = newCost.receiptRef || null;
+      if (newCost.receiptFile) {
+        try {
+          const uploaded = await uploadWorkOrderReceipt(id, newCost.receiptFile);
+          const urls = Array.isArray(uploaded?.urls) ? uploaded.urls : [];
+          if (urls.length > 0) {
+            receiptUrl = urls[urls.length - 1];
+          }
+        } catch (err) {
+          toast.error('Receipt upload failed');
+        }
+      }
       const newCostObj = {
         id: Date.now(),
         description: newCost.description,
         amount: parseFloat(newCost.amount),
         date: new Date().toISOString(),
-        receipt: newCost.receiptRef || null
+        receipt: receiptUrl
       };
+      const nextCosts = [...(selectedOrder.extraCosts || []), newCostObj];
       setSelectedOrder({
         ...selectedOrder,
-        extraCosts: [...(selectedOrder.extraCosts || []), newCostObj]
+        extraCosts: nextCosts
       });
+      workOrderUpdateMutation.mutate({ id, data: { extraCosts: nextCosts } });
       setAddCostModalOpen(false);
-      setNewCost({ description: '', amount: '', receiptRef: '' });
+      setNewCost({ description: '', amount: '', receiptRef: '', receiptFile: null });
       alert(`✓ Cost "$${newCost.amount}" added successfully`);
     } else {
       alert('⚠ Please fill in description and amount');
@@ -764,19 +900,29 @@ export default function TechnicianPortal() {
 
   // Handle Delete Part
   const handleDeletePart = (partId) => {
+    const nextParts = (selectedOrder.replacedParts || []).filter(p => p.id !== partId);
     setSelectedOrder({
       ...selectedOrder,
-      replacedParts: selectedOrder.replacedParts.filter(p => p.id !== partId)
+      replacedParts: nextParts
     });
+    const id = selectedOrder?.id || selectedOrder?._id;
+    if (id) {
+      workOrderUpdateMutation.mutate({ id, data: { replacedParts: nextParts } });
+    }
     alert(`✓ Part removed`);
   };
 
   // Handle Delete Cost
   const handleDeleteCost = (costId) => {
+    const nextCosts = (selectedOrder.extraCosts || []).filter(c => c.id !== costId);
     setSelectedOrder({
       ...selectedOrder,
-      extraCosts: selectedOrder.extraCosts.filter(c => c.id !== costId)
+      extraCosts: nextCosts
     });
+    const id = selectedOrder?.id || selectedOrder?._id;
+    if (id) {
+      workOrderUpdateMutation.mutate({ id, data: { extraCosts: nextCosts } });
+    }
     alert(`✓ Cost removed`);
   };
 
@@ -827,6 +973,9 @@ export default function TechnicianPortal() {
     averageCompletionTime: technicianProfile.avgCompletionHours || 0,
     satisfactionRating: technicianProfile.rating || 0
   }), [stats, technicianProfile.rating, technicianProfile.avgCompletionHours]);
+
+  const canStartOrder = selectedOrder?.status === 'pending' || selectedOrder?.status === 'scheduled';
+  const canCompleteOrder = selectedOrder?.status === 'in_progress' || selectedOrder?.status === 'in-progress';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 p-6">
@@ -927,6 +1076,7 @@ export default function TechnicianPortal() {
                   </SelectItem>
                   <SelectItem value="pending" className="hover:bg-indigo-50 dark:hover:bg-indigo-900/30 cursor-pointer">⏱️ Pending</SelectItem>
                   <SelectItem value="scheduled" className="hover:bg-blue-50 dark:hover:bg-blue-900/30 cursor-pointer">📅 Scheduled</SelectItem>
+                  <SelectItem value="assigned" className="hover:bg-blue-50 dark:hover:bg-blue-900/30 cursor-pointer">Assigned</SelectItem>
                   <SelectItem value="in_progress" className="hover:bg-amber-50 dark:hover:bg-amber-900/30 cursor-pointer">⚙️ In Progress</SelectItem>
                   <SelectItem value="completed" className="hover:bg-emerald-50 dark:hover:bg-emerald-900/30 cursor-pointer">✅ Completed</SelectItem>
                 </SelectContent>
@@ -971,8 +1121,24 @@ export default function TechnicianPortal() {
                     key={request.id || request._id}
                     request={request}
                     updating={serviceRequestMutation.isLoading}
-                    onStart={(req) => serviceRequestMutation.mutate({ id: req.id || req._id, status: 'in-progress' })}
-                    onComplete={(req) => serviceRequestMutation.mutate({ id: req.id || req._id, status: 'completed' })}
+                    onStart={(req) =>
+                      serviceRequestMutation.mutate({
+                        id: req.id || req._id,
+                        status: 'in-progress',
+                        meta: { startedAt: req.startedAt || new Date().toISOString() }
+                      })
+                    }
+                    onComplete={(req) => {
+                      const now = new Date().toISOString();
+                      serviceRequestMutation.mutate({
+                        id: req.id || req._id,
+                        status: 'completed',
+                        meta: {
+                          startedAt: req.startedAt || now,
+                          completedAt: req.completedAt || now
+                        }
+                      });
+                    }}
                   />
                 ))}
               </AnimatePresence>
@@ -1002,6 +1168,9 @@ export default function TechnicianPortal() {
                     key={order.id}
                     order={order}
                     onViewDetails={setSelectedOrder}
+                    onStart={handleStartOrder}
+                    onComplete={handleCompleteOrder}
+                    updating={workOrderStatusMutation.isLoading}
                   />
                 ))}
               </AnimatePresence>
@@ -1103,14 +1272,16 @@ export default function TechnicianPortal() {
                     <p className="text-gray-600 dark:text-gray-400">{selectedOrder.description}</p>
                   </div>
 
-                  {/* Materials */}
+                  {/* Required Parts & Materials */}
                   <div>
-                    <p className="font-semibold text-gray-900 dark:text-white mb-2">Materials Required</p>
+                    <p className="font-semibold text-gray-900 dark:text-white mb-2">Required Parts & Materials</p>
                     <div className="grid grid-cols-2 gap-2">
-                      {selectedOrder.materials.map((material, idx) => (
+                      {((selectedOrder.parts || selectedOrder.materials) || []).map((part, idx) => (
                         <div key={idx} className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-zinc-800 rounded">
                           <Wrench className="h-4 w-4 text-indigo-600" />
-                          <span className="text-sm text-gray-700 dark:text-gray-300">{material}</span>
+                          <span className="text-sm text-gray-700 dark:text-gray-300">
+                            {typeof part === 'string' ? part : `${part.name}${part.qty ? ` (x${part.qty})` : ''}`}
+                          </span>
                         </div>
                       ))}
                     </div>
@@ -1121,6 +1292,24 @@ export default function TechnicianPortal() {
                     <div className="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 p-4 rounded">
                       <p className="text-sm font-semibold text-blue-900 dark:text-blue-200 mb-1">Notes</p>
                       <p className="text-sm text-blue-800 dark:text-blue-300">{selectedOrder.notes}</p>
+                    </div>
+                  )}
+
+                  {/* Comments */}
+                  {selectedOrder.comments && selectedOrder.comments.length > 0 && (
+                    <div className="bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700 p-4 rounded">
+                      <p className="text-sm font-semibold text-slate-900 dark:text-white mb-2">Comments</p>
+                      <div className="space-y-2">
+                        {selectedOrder.comments.map((comment, idx) => (
+                          <div key={comment.id || comment._id || idx} className="text-sm text-slate-700 dark:text-slate-200">
+                            <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                              <span>{comment.user?.name || 'Technician'}</span>
+                              <span>{comment.createdAt ? new Date(comment.createdAt).toLocaleString() : ''}</span>
+                            </div>
+                            <p className="mt-1">{comment.text}</p>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
 
@@ -1197,8 +1386,8 @@ export default function TechnicianPortal() {
                                 {cost.receipt && (
                                   <div className="flex items-center gap-1 mt-2">
                                     <FileText className="h-3 w-3 text-indigo-600" />
-                                    <a href="#" className="text-xs text-indigo-600 hover:underline">
-                                      {cost.receipt}
+                                    <a href={cost.receipt} target="_blank" rel="noreferrer" className="text-xs text-indigo-600 hover:underline">
+                                      View receipt
                                     </a>
                                   </div>
                                 )}
@@ -1221,10 +1410,10 @@ export default function TechnicianPortal() {
                     ) : (
                       <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-2 mb-3">No extra costs recorded</p>
                     )}
-                    {selectedOrder.totalExtraCost > 0 && (
+                    {(selectedOrder.extraCosts || []).reduce((sum, cost) => sum + (Number(cost.amount) || 0), 0) > 0 && (
                       <div className="bg-amber-100 dark:bg-amber-900/40 p-2 rounded flex items-center justify-between">
                         <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">Total Extra Cost:</p>
-                        <p className="text-lg font-bold text-amber-700 dark:text-amber-300">${selectedOrder.totalExtraCost}</p>
+                        <p className="text-lg font-bold text-amber-700 dark:text-amber-300">${(selectedOrder.extraCosts || []).reduce((sum, cost) => sum + (Number(cost.amount) || 0), 0)}</p>
                       </div>
                     )}
                   </div>
@@ -1246,9 +1435,32 @@ export default function TechnicianPortal() {
 
                   {/* Action Buttons */}
                   <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-zinc-800">
+                    <Button
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => {
+                        const id = selectedOrder?.id || selectedOrder?._id;
+                        if (id) {
+                          workOrderNotifyMutation.mutate(id);
+                        }
+                      }}
+                      disabled={workOrderNotifyMutation.isLoading}
+                    >
+                      Notify Admin
+                    </Button>
+                    {canStartOrder && (
+                      <Button
+                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                        onClick={() => handleStartOrder()}
+                        disabled={workOrderStatusMutation.isLoading}
+                      >
+                        Start Order
+                      </Button>
+                    )}
                     <Button 
                       className="flex-1 bg-blue-700 hover:bg-blue-800 text-white"
                       onClick={() => setProgressModalOpen(true)}
+                      disabled={workOrderStatusMutation.isLoading}
                     >
                       Update Progress
                     </Button>
@@ -1256,16 +1468,20 @@ export default function TechnicianPortal() {
                       variant="outline" 
                       className="flex-1"
                       onClick={() => setNoteModalOpen(true)}
+                      disabled={workOrderStatusMutation.isLoading}
                     >
                       Add Note
                     </Button>
-                    <Button 
-                      variant="outline" 
-                      className="flex-1"
-                      onClick={() => handleCompleteOrder()}
-                    >
-                      Complete Order
-                    </Button>
+                    {canCompleteOrder && (
+                      <Button 
+                        variant="outline" 
+                        className="flex-1"
+                        onClick={() => handleCompleteOrder()}
+                        disabled={workOrderStatusMutation.isLoading}
+                      >
+                        Complete Order
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </motion.div>
@@ -1522,15 +1738,17 @@ export default function TechnicianPortal() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Receipt Reference
+                      Receipt Upload
                     </label>
                     <input
-                      type="text"
-                      value={newCost.receiptRef || ''}
-                      onChange={(e) => setNewCost({ ...newCost, receiptRef: e.target.value })}
-                      placeholder="e.g., REC-001"
+                      type="file"
+                      accept="image/*,application/pdf"
+                      onChange={(e) => setNewCost({ ...newCost, receiptFile: e.target.files?.[0] || null })}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     />
+                    {newCost.receiptFile && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{newCost.receiptFile.name}</p>
+                    )}
                   </div>
                 </div>
                 <div className="flex gap-3 p-6 border-t border-gray-200 dark:border-zinc-800">
@@ -1661,11 +1879,27 @@ export default function TechnicianPortal() {
                     <Button
                       onClick={() => {
                         if (issueForm.title && issueForm.description) {
-                          alert(
-                            `Issue Reported!\n\nTitle: ${issueForm.title}\nSeverity: ${issueForm.severity}\nCategory: ${issueForm.category}\nDescription: ${issueForm.description}\n\nWork Order: ${selectedOrder?.id}`
+                          const id = selectedOrder?.id || selectedOrder?._id;
+                          if (!id) return;
+                          const issue = {
+                            id: Date.now(),
+                            title: issueForm.title,
+                            description: issueForm.description,
+                            severity: issueForm.severity,
+                            category: issueForm.category,
+                            createdBy: user?.id || user?._id || null,
+                            createdAt: new Date().toISOString()
+                          };
+                          const nextIssues = [...(selectedOrder?.issues || []), issue];
+                          workOrderUpdateMutation.mutate(
+                            { id, data: { issues: nextIssues } },
+                            {
+                              onSuccess: () => {
+                                setReportIssueOpen(false);
+                                setIssueForm({ title: '', description: '', severity: 'medium', category: 'technical' });
+                              }
+                            }
                           );
-                          setReportIssueOpen(false);
-                          setIssueForm({ title: '', description: '', severity: 'medium', category: 'technical' });
                         } else {
                           alert('Please fill in all required fields');
                         }
@@ -1692,4 +1926,19 @@ export default function TechnicianPortal() {
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

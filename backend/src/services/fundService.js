@@ -1,5 +1,7 @@
 // Fund Request Service
 const FundRequest = require('../models/FundRequest');
+const financeService = require('./financeService');
+const { inferExpenseCategory } = require('../utils/fundCategory');
 const { NotFoundError, BadRequestError } = require('../utils/errorHandler');
 
 const createFundRequest = async (organizationId, userId, payload) => {
@@ -56,6 +58,25 @@ const approveFund = async (organizationId, fundId, adminId) => {
   fund.decidedBy = adminId;
   fund.decidedAt = new Date();
   await fund.save();
+
+  if (!fund.expenseId) {
+    const category = inferExpenseCategory({ purpose: fund.purpose, notes: fund.notes });
+    const notes = [
+      fund.purpose ? `Fund request: ${fund.purpose}` : 'Fund request approved',
+      fund.notes ? `Notes: ${fund.notes}` : null
+    ].filter(Boolean).join(' | ');
+    const expense = await financeService.createExpense(organizationId, fund.requestedBy, {
+      category,
+      vendor: '',
+      amount: fund.amount,
+      status: 'approved',
+      date: fund.decidedAt,
+      notes
+    });
+    fund.expenseId = expense._id;
+    await fund.save();
+  }
+
   await fund.populate('requestedBy', 'firstName lastName email');
   await fund.populate('decidedBy', 'firstName lastName email');
   return fund;

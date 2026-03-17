@@ -18,7 +18,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
-import { getWorkOrder, updateWorkOrderStatus } from "../../api/workOrders";
+import { getWorkOrder, updateWorkOrderStatus, deleteWorkOrder } from "../../api/workOrders";
 import ProtectedImage from "../../components/common/ProtectedImage";
 
 const formatDateTime = (value) =>
@@ -81,6 +81,16 @@ export default function WorkOrderDetailView() {
       onError: () => toast.error("Failed to update status"),
     }
   );
+  const deleteMut = useMutation(
+    () => deleteWorkOrder(id),
+    {
+      onSuccess: () => {
+        toast.success("Work order deleted");
+        navigate("/work-orders");
+      },
+      onError: () => toast.error("Failed to delete work order"),
+    }
+  );
 
   const normalized = useMemo(() => {
     if (!workOrder) return null;
@@ -95,6 +105,7 @@ export default function WorkOrderDetailView() {
       dueDate: workOrder.dueDate || workOrder.scheduledDate || null,
       createdAt: workOrder.createdAt || null,
       completedAt: workOrder.completedAt || null,
+      progress: Number.isFinite(workOrder.progress) ? workOrder.progress : null,
       locationName:
         workOrder.location?.fullPath ||
         workOrder.location?.name ||
@@ -134,8 +145,16 @@ export default function WorkOrderDetailView() {
           createdAt: c.timestamp || c.createdAt || null,
         };
       }),
+      replacedParts: Array.isArray(workOrder.replacedParts) ? workOrder.replacedParts : [],
+      extraCosts: Array.isArray(workOrder.extraCosts) ? workOrder.extraCosts : [],
+      issues: Array.isArray(workOrder.issues) ? workOrder.issues : [],
     };
   }, [workOrder]);
+
+  const totalExtraCost = useMemo(() => {
+    if (!normalized?.extraCosts?.length) return 0;
+    return normalized.extraCosts.reduce((sum, cost) => sum + (Number(cost.amount) || 0), 0);
+  }, [normalized]);
 
   const handleStatus = (status) => {
     statusMut.mutate(status);
@@ -197,25 +216,18 @@ export default function WorkOrderDetailView() {
             {statusLabel(normalized.status)}
           </Badge>
           <Button
-            onClick={() => handleStatus("in_progress")}
-            disabled={
-              statusMut.isLoading || normalized.status === "in_progress"
-            }
-          >
-            Start
-          </Button>
-          <Button
-            onClick={() => handleStatus("completed")}
-            disabled={statusMut.isLoading || normalized.status === "completed"}
-          >
-            Complete
-          </Button>
-          <Button
             variant="outline"
             onClick={() => handleStatus("cancelled")}
             disabled={statusMut.isLoading}
           >
             Cancel
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => deleteMut.mutate()}
+            disabled={deleteMut.isLoading}
+          >
+            Delete
           </Button>
         </div>
       </div>
@@ -248,6 +260,11 @@ export default function WorkOrderDetailView() {
                 icon={<CheckCircle2 className="h-4 w-4" />}
                 label="Completed"
                 value={formatDateTime(normalized.completedAt)}
+              />
+              <SummaryItem
+                icon={<CheckCircle2 className="h-4 w-4" />}
+                label="Progress"
+                value={Number.isFinite(normalized.progress) ? `${normalized.progress}%` : "â€”"}
               />
               <SummaryItem
                 icon={<Tag className="h-4 w-4" />}
@@ -418,6 +435,109 @@ export default function WorkOrderDetailView() {
                   <p className="mt-1 text-slate-600 dark:text-slate-300">
                     {comment.text}
                   </p>
+                </div>
+              ))
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+              Required Parts & Materials
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm text-slate-600 dark:text-slate-300">
+            {(Array.isArray(workOrder?.parts) ? workOrder.parts : []).length === 0 ? (
+              <p className="text-sm text-slate-500">No parts recorded.</p>
+            ) : (
+              (workOrder.parts || []).map((part, index) => (
+                <div key={part.id || index} className="rounded-md border border-slate-200 p-3 dark:border-slate-700">
+                  <p className="font-semibold text-slate-900 dark:text-slate-100">{part.name || 'Item'}</p>
+                  <p className="text-xs text-slate-500">
+                    Qty: {part.qty || 1}
+                  </p>
+                </div>
+              ))
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+              Replaced Parts (Tech)
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm text-slate-600 dark:text-slate-300">
+            {normalized.replacedParts.length === 0 ? (
+              <p className="text-sm text-slate-500">No replaced parts recorded.</p>
+            ) : (
+              normalized.replacedParts.map((part, index) => (
+                <div key={part.id || index} className="rounded-md border border-slate-200 p-3 dark:border-slate-700">
+                  <p className="font-semibold text-slate-900 dark:text-slate-100">{part.name}</p>
+                  <p className="text-xs text-slate-500">
+                    Qty: {part.quantity || 1} • Cost: ${Number(part.originalCost || part.cost || 0) * Number(part.quantity || 1)}
+                  </p>
+                </div>
+              ))
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+              Extra Costs (Tech)
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm text-slate-600 dark:text-slate-300">
+            {normalized.extraCosts.length === 0 ? (
+              <p className="text-sm text-slate-500">No extra costs recorded.</p>
+            ) : (
+              <>
+                {normalized.extraCosts.map((cost, index) => (
+                  <div key={cost.id || index} className="rounded-md border border-slate-200 p-3 dark:border-slate-700">
+                    <p className="font-semibold text-slate-900 dark:text-slate-100">{cost.description}</p>
+                    <p className="text-xs text-slate-500">
+                      {cost.date ? formatDateTime(cost.date) : "â€”"} • ${Number(cost.amount || 0)}
+                    </p>
+                    {cost.receipt && (
+                      <a href={cost.receipt} target="_blank" rel="noreferrer" className="text-xs text-indigo-600 hover:underline">
+                        View receipt
+                      </a>
+                    )}
+                  </div>
+                ))}
+                {totalExtraCost > 0 && (
+                  <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-200">
+                    <p className="text-sm font-semibold">Total: ${totalExtraCost}</p>
+                  </div>
+                )}
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+              Reported Issues
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm text-slate-600 dark:text-slate-300">
+            {normalized.issues.length === 0 ? (
+              <p className="text-sm text-slate-500">No issues reported.</p>
+            ) : (
+              normalized.issues.map((issue, index) => (
+                <div key={issue.id || index} className="rounded-md border border-slate-200 p-3 dark:border-slate-700">
+                  <p className="font-semibold text-slate-900 dark:text-slate-100">{issue.title}</p>
+                  <p className="text-xs text-slate-500">
+                    {issue.severity || "â€”"} • {issue.category || "â€”"} • {issue.createdAt ? formatDateTime(issue.createdAt) : "â€”"}
+                  </p>
+                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{issue.description}</p>
                 </div>
               ))
             )}

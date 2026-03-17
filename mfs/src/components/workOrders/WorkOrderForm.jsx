@@ -70,14 +70,25 @@ export default function WorkOrderForm() {
     return [];
   }, [vendorsResponse]);
 
+  const parseEstimatedHours = (value) => {
+    if (!value) return undefined;
+    if (typeof value === 'number') return value;
+    const match = String(value).match(/[\d.]+/);
+    if (!match) return undefined;
+    const parsed = Number(match[0]);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  };
+
   const onSubmit = async (data) => {
     const attachments = fileItems.map((item) => item.name);
     const photos = fileItems.filter((item) => item.isImage).map((item) => item.name);
+    const estimatedHours = parseEstimatedHours(data.estimatedDuration);
     const payload = {
       ...data,
       asset: data.asset?.id || data.asset || undefined,
       assignedTo: data.assignedTo?.id || data.assignedTo || undefined,
       vendor: data.vendor?.id || data.vendor || undefined,
+      estimatedHours,
       parts,
       attachments,
       photos,
@@ -275,6 +286,16 @@ export default function WorkOrderForm() {
                         <option value="electrical">⚡ Electrical</option>
                         <option value="plumbing">💧 Plumbing</option>
                         <option value="hvac">❄️ HVAC</option>
+                        <option value="mechanical">🛠️ Mechanical</option>
+                        <option value="carpentry">🪚 Carpentry</option>
+                        <option value="painting">🎨 Painting</option>
+                        <option value="cleaning">🧹 Cleaning</option>
+                        <option value="security">🛡️ Security</option>
+                        <option value="elevator">🛗 Elevator</option>
+                        <option value="fire_safety">🧯 Fire Safety</option>
+                        <option value="landscaping">🌿 Landscaping</option>
+                        <option value="it">💻 IT / Network</option>
+                        <option value="lighting">💡 Lighting</option>
                         <option value="general">🔧 General</option>
                       </select>
                     )}
@@ -484,16 +505,18 @@ export default function WorkOrderForm() {
                   {imageItems.length > 0 && (
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                       {imageItems.map((item) => (
-                        <div key={item.id} className="relative rounded-lg overflow-hidden border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800">
+                        <div key={item.id} className="rounded-lg overflow-hidden border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800">
                           <img src={item.previewUrl} alt={item.name} className="h-28 w-full object-cover" />
                           <div className="px-2 py-1 text-xs text-zinc-700 dark:text-zinc-300 truncate">{item.name}</div>
-                          <button
-                            type="button"
-                            onClick={() => removeFile(item.id)}
-                            className="absolute top-2 right-2 bg-white/90 dark:bg-zinc-900/90 text-red-600 hover:text-red-700 rounded-full p-1 shadow"
-                          >
-                            <Delete size={14} />
-                          </button>
+                          <div className="px-2 pb-2">
+                            <button
+                              type="button"
+                              onClick={() => removeFile(item.id)}
+                              className="text-xs text-red-600 hover:text-red-700"
+                            >
+                              Remove
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>

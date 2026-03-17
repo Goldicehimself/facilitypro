@@ -14,6 +14,8 @@ const normalizeRequest = (request) => {
   return {
     ...request,
     id: request.id || request._id,
+    startedAt: request.startedAt || request.startDate,
+    completedAt: request.completedAt,
     requester: normalizeUser(request.requester),
     assignee: normalizeUser(request.assignee),
   };
@@ -59,8 +61,8 @@ export const assignServiceRequest = async (id, assigneeId, note = '') => {
   return normalizeRequest(response.data?.data);
 };
 
-export const updateServiceRequestStatus = async (id, status) => {
-  const response = await axiosInstance.patch(`/service-requests/${id}/status`, { status });
+export const updateServiceRequestStatus = async (id, status, meta = {}) => {
+  const response = await axiosInstance.patch(`/service-requests/${id}/status`, { status, ...meta });
   return normalizeRequest(response.data?.data);
 };
 

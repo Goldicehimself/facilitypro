@@ -16,6 +16,8 @@ const normalizeWorkOrder = (wo) => {
     ...wo,
     id: wo.id || wo._id,
     woNumber: wo.woNumber || wo.workOrderNumber,
+    startedAt: wo.startedAt || wo.startDate,
+    completedAt: wo.completedAt || wo.completionDate,
     createdBy: normalizeUserRef(wo.createdBy),
     assignedTo: normalizeUserRef(wo.assignedTo),
     team: Array.isArray(wo.team) ? wo.team.map(normalizeUserRef) : wo.team,
@@ -65,10 +67,10 @@ export const deleteWorkOrder = async (id) => {
   return response.data?.data;
 };
 
-export const updateWorkOrderStatus = async (id, status, notes = '') => {
+export const updateWorkOrderStatus = async (id, status, notes = '', meta = {}) => {
   const response = await axiosInstance.patch(
     `/work-orders/${id}/status`,
-    { status, notes },
+    { status, notes, ...meta },
     { suppressToast: true }
   );
   return normalizeWorkOrder(response.data?.data);
@@ -104,6 +106,30 @@ export const uploadWorkOrderPhoto = async (id, files) => {
       },
     }
   );
+  return response.data?.data;
+};
+
+export const uploadWorkOrderReceipt = async (id, files) => {
+  const formData = new FormData();
+  const fileList = Array.isArray(files) ? files : [files];
+  fileList.filter(Boolean).forEach((file) => {
+    formData.append('receipts', file);
+  });
+
+  const response = await axiosInstance.post(
+    `/work-orders/${id}/receipts`,
+    formData,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    }
+  );
+  return response.data?.data;
+};
+
+export const notifyWorkOrderUpdate = async (id) => {
+  const response = await axiosInstance.post(`/work-orders/${id}/notify`);
   return response.data?.data;
 };
 

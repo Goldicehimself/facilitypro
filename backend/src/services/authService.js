@@ -247,7 +247,9 @@ const register = async ({
     phone,
     gender,
     role: assignedRole,
-    organization: organization._id
+    organization: organization._id,
+    // Joined members must verify email before becoming active in the org
+    active: false
   });
 
   await user.save();
@@ -444,6 +446,9 @@ const verifyUserEmail = async (token, { orgCode, email } = {}) => {
   user.emailVerifiedAt = new Date();
   user.emailVerificationTokenHash = null;
   user.emailVerificationExpiresAt = null;
+  if (!user.active) {
+    user.active = true;
+  }
   await user.save();
   return { userId: user._id, verifiedAt: user.emailVerifiedAt };
 };

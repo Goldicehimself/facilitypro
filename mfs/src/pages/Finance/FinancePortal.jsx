@@ -455,6 +455,7 @@ export default function FinancePortal() {
     try {
       if (nextStatus === 'approved') {
         await approveFundRequest(id);
+        await queryClient.invalidateQueries(['financeExpenses']);
       } else {
         await rejectFundRequest(id);
       }
@@ -1141,13 +1142,18 @@ export default function FinancePortal() {
                   </label>
                   <Select
                     value={invoiceForm.vendor}
-                    onValueChange={(value) => setInvoiceForm((prev) => ({ ...prev, vendor: value }))}
+                    onValueChange={(value) =>
+                      setInvoiceForm((prev) => ({
+                        ...prev,
+                        vendor: value === '__none__' ? '' : value
+                      }))
+                    }
                   >
                     <SelectTrigger className="bg-white dark:bg-zinc-800 border-gray-300 dark:border-zinc-700 text-gray-900 dark:text-gray-100">
                       <SelectValue placeholder="Select vendor" />
                     </SelectTrigger>
                     <SelectContent className="dark:bg-zinc-900 dark:text-gray-100">
-                      <SelectItem value="">No vendor</SelectItem>
+                      <SelectItem value="__none__">No vendor</SelectItem>
                       {vendors.map((vendor) => (
                         <SelectItem key={vendor.id} value={vendor.id}>
                           {vendor.name}
@@ -1276,13 +1282,18 @@ export default function FinancePortal() {
                   </label>
                   <Select
                     value={editInvoiceForm.vendor}
-                    onValueChange={(value) => setEditInvoiceForm((prev) => ({ ...prev, vendor: value }))}
+                    onValueChange={(value) =>
+                      setEditInvoiceForm((prev) => ({
+                        ...prev,
+                        vendor: value === '__none__' ? '' : value
+                      }))
+                    }
                   >
                     <SelectTrigger className="bg-white dark:bg-zinc-800 border-gray-300 dark:border-zinc-700 text-gray-900 dark:text-gray-100">
                       <SelectValue placeholder="Select vendor" />
                     </SelectTrigger>
                     <SelectContent className="dark:bg-zinc-900 dark:text-gray-100">
-                      <SelectItem value="">No vendor</SelectItem>
+                      <SelectItem value="__none__">No vendor</SelectItem>
                       {vendors.map((vendor) => (
                         <SelectItem key={vendor.id} value={vendor.id}>
                           {vendor.name}
@@ -1499,6 +1510,7 @@ export default function FinancePortal() {
                       <SelectItem value="labor">Labor</SelectItem>
                       <SelectItem value="travel">Travel</SelectItem>
                       <SelectItem value="equipment">Equipment</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

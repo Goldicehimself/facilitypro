@@ -7,13 +7,16 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { createVendor, getVendorById, updateVendor } from '@/api/vendors';
+import { useAuth } from '@/contexts/AuthContext';
 
 const VendorForm = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { id } = useParams();
+  const { user } = useAuth();
+  const canManage = ['admin', 'facility_manager'].includes(user?.role);
   const isEdit = !!id;
-  const isView = isEdit && !location.pathname.endsWith('/edit');
+  const isView = (isEdit && !location.pathname.endsWith('/edit')) || !canManage;
 
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -51,6 +54,11 @@ const VendorForm = () => {
   const statuses = ['active', 'inactive', 'suspended'];
 
   useEffect(() => {
+    if (!canManage && !isEdit) {
+      toast.error('You do not have permission to create vendors');
+      navigate('/vendors');
+      return;
+    }
     if (!isEdit) return;
 
     let isActive = true;

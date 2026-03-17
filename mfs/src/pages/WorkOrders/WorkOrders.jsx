@@ -31,6 +31,7 @@ export default function WorkOrders() {
   const [sortBy, setSortBy] = useState(null);
   const [sortDir, setSortDir] = useState('asc');
   const [updatingId, setUpdatingId] = useState(null);
+  const [exporting, setExporting] = useState(false);
 
   // Read URL search params and apply filters
   useEffect(() => {
@@ -151,6 +152,76 @@ export default function WorkOrders() {
       onSettled: () => setUpdatingId(null),
     }
   );
+
+  const buildFilters = () => ({
+    status: statusFilter,
+    priority: priorityFilter,
+    search,
+    category: categoryFilter,
+    assignee: assigneeFilter,
+    dateRange,
+    location: locationFilter
+  });
+
+  const escapeCsv = (value) => {
+    const safe = value === null || value === undefined ? '' : String(value);
+    return `"${safe.replace(/\"/g, '\"\"')}"`;
+  };
+
+  const handleExportCsv = async () => {
+    try {
+      setExporting(true);
+      const filters = buildFilters();
+      const limit = 100;
+      let pageNum = 1;
+      let all = [];
+      while (true) {
+        const data = await getWorkOrders({ ...filters, page: pageNum, limit });
+        const list = Array.isArray(data) ? data : (data?.workOrders || data?.data || []);
+        all = all.concat(list);
+        const totalPages = data?.pagination?.totalPages;
+        if (!totalPages || pageNum >= totalPages) break;
+        pageNum += 1;
+      }
+      if (!all.length) {
+        toast.info('No work orders to export');
+        return;
+      }
+      const csv = [
+        ['WO ID', 'Title', 'Asset', 'Assigned To', 'Assigned Email', 'Priority', 'Status', 'Progress', 'Estimated Hours', 'Actual Hours', 'Extra Cost Total', 'Replaced Parts', 'Issues', 'Started At', 'Completed At', 'Location', 'Due Date'],
+        ...all.map(wo => [
+          wo.woNumber,
+          wo.title || wo.description,
+          wo.asset?.name || wo.location?.name || '',
+          wo.assignedTo?.name || 'Unassigned',
+          wo.assignedTo?.email || '',
+          wo.priority,
+          wo.status,
+          Number.isFinite(wo.progress) ? wo.progress : '',
+          wo.estimatedHours ?? wo.estimatedDuration ?? '',
+          wo.actualHours ?? '',
+          (Array.isArray(wo.extraCosts) ? wo.extraCosts : []).reduce((sum, cost) => sum + (Number(cost.amount) || 0), 0),
+          Array.isArray(wo.replacedParts) ? wo.replacedParts.length : 0,
+          Array.isArray(wo.issues) ? wo.issues.length : 0,
+          wo.startedAt || wo.startDate || '',
+          wo.completedAt || wo.completionDate || '',
+          wo.location?.name || wo.location || '',
+          wo.dueDate ? new Date(wo.dueDate).toLocaleDateString() : ''
+        ])
+      ].map(row => row.map(escapeCsv).join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `work-orders-${new Date().toLocaleDateString()}.csv`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      toast.error('Export failed');
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const stats = useMemo(() => {
     const total = workOrdersList.length;
@@ -295,27 +366,12 @@ export default function WorkOrders() {
               Bulk Assign
             </Button>
 
-            <Button className="bg-blue-700 hover:bg-blue-800 text-white flex items-center gap-2" size="sm" onClick={() => {
-              const csv = [
-                ['WO ID', 'Title', 'Asset', 'Assigned To', 'Priority', 'Status', 'Due Date'],
-                ...displayedWorkOrders.map(wo => [
-                  wo.woNumber,
-                  wo.title || wo.description,
-                  wo.asset?.name || wo.location?.name || '',
-                  wo.assignedTo?.name || 'Unassigned',
-                  wo.priority,
-                  wo.status,
-                  wo.dueDate ? new Date(wo.dueDate).toLocaleDateString() : ''
-                ])
-              ].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
-              const blob = new Blob([csv], { type: 'text/csv' });
-              const url = window.URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = url;
-              a.download = `work-orders-${new Date().toLocaleDateString()}.csv`;
-              a.click();
-              window.URL.revokeObjectURL(url);
-            }}>
+            <Button
+              className="bg-blue-700 hover:bg-blue-800 text-white flex items-center gap-2"
+              size="sm"
+              onClick={handleExportCsv}
+              disabled={exporting}
+            >
               <Download size={14} /> Export CSV
             </Button>
           </div>
@@ -402,36 +458,6 @@ export default function WorkOrders() {
                           <Button variant="outline" size="sm" onClick={() => navigate(`/work-orders/${wo.id}`, { state: { workOrder: wo } })} className="text-xs text-zinc-700 dark:text-zinc-200">
                             <Eye size={14} /> View
                           </Button>
-                          {wo.status === 'open' && (
-                            <Button 
-                              size="sm" 
-                              className="bg-blue-700 hover:bg-blue-800 text-white text-xs"
-                              onClick={() => statusMutation.mutate({ id: wo.id, status: 'in_progress' })}
-                              disabled={statusMutation.isLoading && updatingId === wo.id}
-                            >
-                              Start
-                            </Button>
-                          )}
-                          {wo.status === 'overdue' && (
-                            <Button 
-                              size="sm" 
-                              className="bg-rose-600 hover:bg-rose-700 text-white text-xs"
-                              onClick={() => statusMutation.mutate({ id: wo.id, status: 'in_progress' })}
-                              disabled={statusMutation.isLoading && updatingId === wo.id}
-                            >
-                              Start Now
-                            </Button>
-                          )}
-                          {wo.status === 'in_progress' && (
-                            <Button 
-                              size="sm" 
-                              className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs"
-                              onClick={() => statusMutation.mutate({ id: wo.id, status: 'completed' })}
-                              disabled={statusMutation.isLoading && updatingId === wo.id}
-                            >
-                              Complete
-                            </Button>
-                          )}
                           {wo.status === 'completed' && <Button size="sm" variant="outline" className="text-xs text-zinc-700 dark:text-zinc-200">Completed</Button>}
                           {wo.status === 'cancelled' && <Button size="sm" variant="outline" className="text-xs text-zinc-700 dark:text-zinc-200">Cancelled</Button>}
                           {(wo.status === 'open' || wo.status === 'in_progress' || wo.status === 'overdue') && (
@@ -591,7 +617,7 @@ export default function WorkOrders() {
                     </Button>
                     <Button className="bg-blue-700 hover:bg-blue-800 text-white" onClick={() => {
                       if (selectAllMode) {
-                        bulkAssignMutation.mutate({ ids: null, assignee: assigneeSelected, filters: { status: statusFilter, priority: priorityFilter, search } });
+                        bulkAssignMutation.mutate({ ids: null, assignee: assigneeSelected, filters: buildFilters() });
                       } else {
                         bulkAssignMutation.mutate({ ids: selected, assignee: assigneeSelected, filters: {} });
                       }

@@ -173,7 +173,11 @@ const updateServiceRequestStatus = async (req, res, next) => {
     const request = await serviceRequestService.updateServiceRequestStatus(
       req.user.organization,
       req.params.id,
-      req.body.status
+      req.body.status,
+      {
+        startedAt: req.body.startedAt,
+        completedAt: req.body.completedAt
+      }
     );
     response.success(res, 'Service request status updated successfully', request);
   } catch (error) {

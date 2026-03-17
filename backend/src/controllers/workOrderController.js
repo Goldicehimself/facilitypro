@@ -69,6 +69,13 @@ const buildBulkAssignFilter = (organizationId, { ids = null, filters = {} } = {}
   if (filters.assignee && filters.assignee !== 'all') scopedFilters.assignedTo = filters.assignee;
   if (filters.category && filters.category !== 'all') scopedFilters.category = filters.category;
   if (filters.location && filters.location !== 'all') scopedFilters.location = filters.location;
+  if (filters.dateRange && filters.dateRange !== 'all') {
+    const days = Number(filters.dateRange);
+    if (!Number.isNaN(days)) {
+      const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+      scopedFilters.createdAt = { $gte: cutoff };
+    }
+  }
   if (filters.search && filters.search.trim()) {
     const regex = new RegExp(filters.search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
     scopedFilters.$or = [
@@ -327,7 +334,26 @@ const updateWorkOrder = async (req, res, next) => {
 
 const updateWorkOrderStatus = async (req, res, next) => {
   try {
-    const { status, notes } = req.body;
+    const {
+      status,
+      notes,
+      startedAt,
+      completedAt,
+      startDate,
+      completionDate
+    } = req.body;
+    if (
+      [constants.WORK_ORDER_STATUS.IN_PROGRESS, constants.WORK_ORDER_STATUS.COMPLETED].includes(status) &&
+      req.user?.role !== constants.ROLES.TECHNICIAN
+    ) {
+      throw new AuthorizationError('Only technicians can start or complete work orders');
+    }
+    if (status === constants.WORK_ORDER_STATUS.CANCELLED) {
+      const allowedRoles = [constants.ROLES.ADMIN, constants.ROLES.FACILITY_MANAGER];
+      if (!allowedRoles.includes(req.user?.role)) {
+        throw new AuthorizationError('Only admins or facility managers can cancel work orders');
+      }
+    }
     const existing = await workOrderService.getWorkOrderById(req.user.organization, req.params.id);
     if (
       existing?.requiresCertification &&
@@ -340,7 +366,16 @@ const updateWorkOrderStatus = async (req, res, next) => {
         'Certification required to start or complete this work order'
       );
     }
-    const workOrder = await workOrderService.updateWorkOrderStatus(req.user.organization, req.params.id, status, notes);
+    const workOrder = await workOrderService.updateWorkOrderStatus(
+      req.user.organization,
+      req.params.id,
+      status,
+      notes,
+      {
+        startDate: startDate || startedAt,
+        completionDate: completionDate || completedAt
+      }
+    );
     webhookService.emitWebhookEvent(req.user.organization, 'workorder.status_changed', { workOrder, status });
     const recipients = [
       workOrder.createdBy?._id,
@@ -587,6 +622,57 @@ const addWorkOrderPhotos = async (req, res, next) => {
   }
 };
 
+const uploadWorkOrderReceipts = async (req, res, next) => {
+  try {
+    if (!req.files || req.files.length === 0) {
+      throw new ValidationError('At least one receipt is required');
+    }
+    const filePaths = req.files.map((file) => file.path);
+    response.success(res, 'Receipt uploaded successfully', { urls: filePaths });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const notifyWorkOrderUpdate = async (req, res, next) => {
+  try {
+    const workOrder = await workOrderService.getWorkOrderById(req.user.organization, req.params.id);
+    const recipients = await notificationService.getRoleUserIds(
+      [constants.ROLES.ADMIN, constants.ROLES.FACILITY_MANAGER],
+      req.user.organization
+    );
+    const uniqueRecipients = [...new Set(recipients.map((id) => id.toString()))]
+      .filter((id) => id !== req.user.id);
+
+    if (uniqueRecipients.length) {
+      await notificationService.createNotificationsForUsers(uniqueRecipients, {
+        organization: req.user.organization,
+        title: 'Work order update',
+        message: `${workOrder.title} has new updates`,
+        type: 'workorder_update',
+        entityType: 'WorkOrder',
+        entityId: workOrder._id,
+        link: `/work-orders/${workOrder._id}`
+      });
+    }
+
+    activityService.broadcast({
+      type: 'workorder_update',
+      message: `${workOrder.title} has new updates`,
+      entityType: 'WorkOrder',
+      entityId: workOrder._id,
+      link: `/work-orders/${workOrder._id}`,
+      createdAt: new Date().toISOString(),
+      organization: req.user.organization,
+      user: req.user.email
+    });
+
+    response.success(res, 'Admin notified', { notified: uniqueRecipients.length });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getWorkOrders,
   getWorkOrderById,
@@ -597,5 +683,7 @@ module.exports = {
   bulkAssignWorkOrders,
   deleteWorkOrder,
   addComment,
-  addWorkOrderPhotos
+  addWorkOrderPhotos,
+  uploadWorkOrderReceipts,
+  notifyWorkOrderUpdate
 };

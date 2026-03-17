@@ -40,7 +40,9 @@ const assignServiceRequestSchema = Joi.object({
 });
 
 const updateServiceRequestStatusSchema = Joi.object({
-  status: Joi.string().required().valid('pending', 'assigned', 'in-progress', 'completed')
+  status: Joi.string().required().valid('pending', 'assigned', 'in-progress', 'completed'),
+  startedAt: Joi.date().iso().optional(),
+  completedAt: Joi.date().iso().optional()
 });
 
 module.exports = {

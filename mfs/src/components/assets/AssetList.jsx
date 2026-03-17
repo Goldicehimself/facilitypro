@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import logger from '../../utils/logger';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 import {
   getAssets,
   bulkImportAssets,
@@ -68,6 +69,8 @@ export default function AssetList() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { addActivity } = useActivity();
+  const { user } = useAuth();
+  const canManage = ['admin', 'facility_manager'].includes(user?.role);
 
   const [assets, setAssets] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -331,32 +334,40 @@ export default function AssetList() {
 
         {/* ================= ACTIONS ================= */}
         <div className="flex flex-wrap gap-3">
-          <Button onClick={() => navigate('/assets/new')} className="bg-blue-700 hover:bg-blue-800 text-white shadow-md">
-            <Plus className="mr-2 h-4 w-4" /> Add Asset
-          </Button>
-          <Button 
-            onClick={() => importInputRef.current?.click()}
-            disabled={importing}
-            variant="outline" 
-            className="border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200"
-          >
-            <Upload className="mr-2 h-4 w-4" /> 
-            {importing ? 'Importing...' : 'Import Assets'}
-          </Button>
-          <Button
-            onClick={handleDownloadTemplate}
-            variant="outline"
-            className="border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200"
-          >
-            Download Template
-          </Button>
-          <input
-            ref={importInputRef}
-            type="file"
-            accept=".csv,.xlsx,.xls"
-            onChange={handleImportAssets}
-            className="hidden"
-          />
+          {canManage && (
+            <Button onClick={() => navigate('/assets/new')} className="bg-blue-700 hover:bg-blue-800 text-white shadow-md">
+              <Plus className="mr-2 h-4 w-4" /> Add Asset
+            </Button>
+          )}
+          {canManage && (
+            <Button 
+              onClick={() => importInputRef.current?.click()}
+              disabled={importing}
+              variant="outline" 
+              className="border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200"
+            >
+              <Upload className="mr-2 h-4 w-4" /> 
+              {importing ? 'Importing...' : 'Import Assets'}
+            </Button>
+          )}
+          {canManage && (
+            <Button
+              onClick={handleDownloadTemplate}
+              variant="outline"
+              className="border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200"
+            >
+              Download Template
+            </Button>
+          )}
+          {canManage && (
+            <input
+              ref={importInputRef}
+              type="file"
+              accept=".csv,.xlsx,.xls"
+              onChange={handleImportAssets}
+              className="hidden"
+            />
+          )}
           <Button
             onClick={handleExportAssets}
             variant="outline"
@@ -585,7 +596,8 @@ export default function AssetList() {
       </div>
 
       {/* ================= QUICK ACTIONS ================= */}
-      <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-8 mt-10">
+      {canManage && (
+        <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-8 mt-10">
         <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">Quick Actions</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <button 
@@ -657,7 +669,8 @@ export default function AssetList() {
             <p className="text-xs text-slate-500 dark:text-slate-400">Asset analytics</p>
           </button>
         </div>
-      </div>
+        </div>
+      )}
 
       {/* ================= SCANNER MODAL ================= */}
       <AssetQRScanner 

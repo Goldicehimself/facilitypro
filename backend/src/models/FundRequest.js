@@ -37,7 +37,11 @@ const fundRequestSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   },
-  decidedAt: Date
+  decidedAt: Date,
+  expenseId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Expense'
+  }
 }, {
   timestamps: true
 });

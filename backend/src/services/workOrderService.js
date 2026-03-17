@@ -66,12 +66,26 @@ const updateWorkOrder = async (organizationId, id, updateData) => {
   return workOrder;
 };
 
-const updateWorkOrderStatus = async (organizationId, id, status, notes = '') => {
+const updateWorkOrderStatus = async (organizationId, id, status, notes = '', meta = {}) => {
+  const existing = await WorkOrder.findOne({ _id: id, organization: organizationId })
+    .select('startDate completionDate');
   const updateData = { status, updatedAt: new Date() };
   if (notes) updateData.notes = notes;
-  
+
+  if (status === 'in_progress') {
+    if (meta.startDate) {
+      updateData.startDate = new Date(meta.startDate);
+    } else if (!existing?.startDate) {
+      updateData.startDate = new Date();
+    }
+  }
+
   if (status === 'completed') {
-    updateData.completionDate = new Date();
+    if (meta.completionDate) {
+      updateData.completionDate = new Date(meta.completionDate);
+    } else {
+      updateData.completionDate = new Date();
+    }
   }
 
   return updateWorkOrder(organizationId, id, updateData);
@@ -95,6 +109,13 @@ const bulkAssignWorkOrders = async (organizationId, { ids = null, assigneeId = n
     if (filters.assignee && filters.assignee !== 'all') scopedFilters.assignedTo = filters.assignee;
     if (filters.category && filters.category !== 'all') scopedFilters.category = filters.category;
     if (filters.location && filters.location !== 'all') scopedFilters.location = filters.location;
+    if (filters.dateRange && filters.dateRange !== 'all') {
+      const days = Number(filters.dateRange);
+      if (!Number.isNaN(days)) {
+        const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+        scopedFilters.createdAt = { $gte: cutoff };
+      }
+    }
     if (filters.search && filters.search.trim()) {
       const regex = new RegExp(filters.search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
       scopedFilters.$or = [

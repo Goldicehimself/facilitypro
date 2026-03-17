@@ -46,6 +46,7 @@ const serviceRequestSchema = new mongoose.Schema({
   },
   assignmentNote: String,
   assignedAt: Date,
+  startedAt: Date,
   completedAt: Date,
   organization: {
     type: mongoose.Schema.Types.ObjectId,

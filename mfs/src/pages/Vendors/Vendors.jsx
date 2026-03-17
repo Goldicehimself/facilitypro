@@ -3,6 +3,7 @@ import { useQuery } from 'react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Search, Plus } from 'lucide-react';
 import { fetchVendors } from '../../api/vendors';
+import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import PerformanceMetrics from '@/components/vendors/PerformanceMetrics';
@@ -10,6 +11,8 @@ import VendorList from '@/components/vendors/VendorList';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const VendorsPage = () => {
+  const { user } = useAuth();
+  const canManage = ['admin', 'facility_manager'].includes(user?.role);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState('');
@@ -114,22 +117,24 @@ const VendorsPage = () => {
               Manage vendor directory, contracts, and performance metrics
             </p>
           </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              className="border-indigo-300 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-600 dark:text-indigo-200 dark:hover:bg-indigo-900/30"
-              onClick={() => navigate('/vendors/import')}
-            >
-              Import
-            </Button>
-            <Button
-              className="bg-blue-700 text-white hover:bg-blue-800"
-              onClick={() => navigate('/vendors/new')}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Vendor
-            </Button>
-          </div>
+          {canManage && (
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                className="border-indigo-300 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-600 dark:text-indigo-200 dark:hover:bg-indigo-900/30"
+                onClick={() => navigate('/vendors/import')}
+              >
+                Import
+              </Button>
+              <Button
+                className="bg-blue-700 text-white hover:bg-blue-800"
+                onClick={() => navigate('/vendors/new')}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Vendor
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -226,6 +231,7 @@ const VendorsPage = () => {
           onPageSizeChange={setPageSize}
           onView={(vendor) => navigate(`/vendors/${vendor.id}`)}
           onEdit={(vendor) => navigate(`/vendors/${vendor.id}/edit`)}
+          canManage={canManage}
         />
       )}
     </div>

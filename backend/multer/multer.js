@@ -74,6 +74,19 @@ const workOrderPhotoUpload = multer({
   }
 });
 
+// ========== WORKORDER RECEIPT UPLOADS (Images + PDF) ==========
+const workOrderReceiptUpload = multer({
+  storage: memoryStorage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/jpg', 'application/pdf'];
+    if (!allowedTypes.includes(file.mimetype)) {
+      return cb(new Error('Invalid file type. Only JPEG, PNG, GIF, JPG, and PDF are allowed.'), false);
+    }
+    cb(null, true);
+  }
+});
+
 // ========== EXPORT HANDLERS ==========
 module.exports = {
   // Asset uploads
@@ -94,5 +107,6 @@ module.exports = {
 
   // WorkOrder photo uploads
   uploadWorkOrderPhotoSingle: workOrderPhotoUpload.single('photo'),
-  uploadWorkOrderPhotoMultiple: workOrderPhotoUpload.array('photos', 10)
+  uploadWorkOrderPhotoMultiple: workOrderPhotoUpload.array('photos', 10),
+  uploadWorkOrderReceiptMultiple: workOrderReceiptUpload.array('receipts', 5)
 };

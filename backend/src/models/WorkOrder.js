@@ -69,6 +69,10 @@ const workOrderSchema = new mongoose.Schema({
   overdueNotifiedAt: Date,
   estimatedHours: Number,
   actualHours: Number,
+  progress: {
+    type: Number,
+    default: 0
+  },
   estimatedCost: Number,
   actualCost: Number,
   notes: String,
@@ -83,10 +87,40 @@ const workOrderSchema = new mongoose.Schema({
       default: Date.now
     }
   }],
+  replacedParts: [{
+    name: String,
+    quantity: Number,
+    cost: Number,
+    originalCost: Number
+  }],
+  extraCosts: [{
+    description: String,
+    amount: Number,
+    date: Date,
+    receipt: String
+  }],
+  issues: [{
+    title: String,
+    description: String,
+    severity: String,
+    category: String,
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
   attachments: [String],
   photos: [String],
   tags: [String],
   location: String,
+  parts: [{
+    name: String,
+    qty: Number
+  }],
   requiresCertification: {
     type: Boolean,
     default: false

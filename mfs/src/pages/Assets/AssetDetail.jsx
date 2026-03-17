@@ -21,6 +21,7 @@ const AssetDetail = () => {
   const isDark = theme.palette.mode === 'dark';
   const { id } = useParams();
   const { user } = useAuth();
+  const canManage = ['admin', 'facility_manager'].includes(user?.role);
   const navigate = useNavigate();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -324,24 +325,26 @@ const AssetDetail = () => {
             </Typography>
           </div>
           
-          <Stack direction="row" spacing={1}>
-            <Button 
-              variant="contained"
-              startIcon={<EditIcon />}
-              onClick={openEditModal}
-              sx={{ fontWeight: 600 }}
-            >
-              Edit
-            </Button>
-            <Button 
-              variant="outlined"
-              onClick={() => setConfirmOpen(true)}
-              color="error"
-              startIcon={<DeleteIcon />}
-            >
-              Delete
-            </Button>
-          </Stack>
+          {canManage && (
+            <Stack direction="row" spacing={1}>
+              <Button 
+                variant="contained"
+                startIcon={<EditIcon />}
+                onClick={openEditModal}
+                sx={{ fontWeight: 600 }}
+              >
+                Edit
+              </Button>
+              <Button 
+                variant="outlined"
+                onClick={() => setConfirmOpen(true)}
+                color="error"
+                startIcon={<DeleteIcon />}
+              >
+                Delete
+              </Button>
+            </Stack>
+          )}
         </Box>
       </Box>
 
@@ -562,7 +565,9 @@ const AssetDetail = () => {
           }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
               <Typography variant="h6" sx={{ fontWeight: 700, color: isDark ? '#e2e8f0' : '#1e293b' }}>Maintenance Schedule</Typography>
-              <Button startIcon={<AddIcon />} size="small" onClick={() => openScheduleModal(null)}>Add</Button>
+              {canManage && (
+                <Button startIcon={<AddIcon />} size="small" onClick={() => openScheduleModal(null)}>Add</Button>
+              )}
             </Box>
             <Stack spacing={1}>
               {asset.maintenanceSchedule?.map(s => (
@@ -573,8 +578,12 @@ const AssetDetail = () => {
                   </div>
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                     <Chip label={s.status === 'due_soon' ? 'DUE' : s.status === 'scheduled' ? 'SCHEDULED' : 'OK'} size="small" color={s.status === 'due_soon' ? 'warning' : 'default'} />
-                    <IconButton size="small" onClick={() => openScheduleModal(s)}><EditIcon fontSize="small" /></IconButton>
-                    <IconButton size="small" color="error" onClick={() => confirmDeleteSchedule(s)}><DeleteIcon fontSize="small" /></IconButton>
+                    {canManage && (
+                      <IconButton size="small" onClick={() => openScheduleModal(s)}><EditIcon fontSize="small" /></IconButton>
+                    )}
+                    {canManage && (
+                      <IconButton size="small" color="error" onClick={() => confirmDeleteSchedule(s)}><DeleteIcon fontSize="small" /></IconButton>
+                    )}
                   </div>
                 </Paper>
               ))}
@@ -641,7 +650,9 @@ const AssetDetail = () => {
           }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
               <Typography variant="h6" sx={{ fontWeight: 700, color: isDark ? '#e2e8f0' : '#1e293b' }}>Parts & Components</Typography>
-              <Button startIcon={<AddIcon />} size="small" onClick={() => openPartModal(null)}>Add</Button>
+              {canManage && (
+                <Button startIcon={<AddIcon />} size="small" onClick={() => openPartModal(null)}>Add</Button>
+              )}
             </Box>
             <Stack spacing={1}>
               {asset.parts?.map(p => (
@@ -651,8 +662,12 @@ const AssetDetail = () => {
                     <Typography variant="caption" color="text.secondary">Stock: {p.inStock} / Min: {p.minLevel}</Typography>
                   </div>
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                    <IconButton size="small" onClick={() => openPartModal(p)}><EditIcon fontSize="small" /></IconButton>
-                    <IconButton size="small" color="error" onClick={() => confirmDeletePart(p)}><DeleteIcon fontSize="small" /></IconButton>
+                    {canManage && (
+                      <IconButton size="small" onClick={() => openPartModal(p)}><EditIcon fontSize="small" /></IconButton>
+                    )}
+                    {canManage && (
+                      <IconButton size="small" color="error" onClick={() => confirmDeletePart(p)}><DeleteIcon fontSize="small" /></IconButton>
+                    )}
                   </div>
                 </Paper>
               ))}

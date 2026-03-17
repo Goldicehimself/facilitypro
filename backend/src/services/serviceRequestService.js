@@ -106,10 +106,23 @@ const assignServiceRequest = async (organizationId, id, assigneeId, note = '') =
   return updateServiceRequest(organizationId, id, updateData);
 };
 
-const updateServiceRequestStatus = async (organizationId, id, status) => {
+const updateServiceRequestStatus = async (organizationId, id, status, meta = {}) => {
+  const existing = await ServiceRequest.findOne({ _id: id, organization: organizationId })
+    .select('startedAt completedAt');
   const updateData = { status, updatedAt: new Date() };
+  if (status === 'in-progress') {
+    if (meta.startedAt) {
+      updateData.startedAt = new Date(meta.startedAt);
+    } else if (!existing?.startedAt) {
+      updateData.startedAt = new Date();
+    }
+  }
   if (status === 'completed') {
-    updateData.completedAt = new Date();
+    if (meta.completedAt) {
+      updateData.completedAt = new Date(meta.completedAt);
+    } else {
+      updateData.completedAt = new Date();
+    }
   }
   return updateServiceRequest(organizationId, id, updateData);
 };

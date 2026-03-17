@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import { Menu, LogOut, Settings, User, Search, Wrench } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../contexts/AuthContext";
+import { getWorkOrders } from "../../../api/workOrders";
+import { getAssets } from "../../../api/assets";
+import { fetchVendors } from "../../../api/vendors";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -21,6 +24,12 @@ const MainLayout = ({ children }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [globalSearch, setGlobalSearch] = useState("");
   const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
+  const [globalSearchLoading, setGlobalSearchLoading] = useState(false);
+  const [globalSearchResults, setGlobalSearchResults] = useState({
+    workOrders: [],
+    assets: [],
+    vendors: []
+  });
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     const saved = localStorage.getItem("mp_sidebar_collapsed");
     return saved === "true";
@@ -41,6 +50,50 @@ const MainLayout = ({ children }) => {
   useEffect(() => {
     localStorage.setItem("mp_sidebar_collapsed", String(sidebarCollapsed));
   }, [sidebarCollapsed]);
+
+  useEffect(() => {
+    const query = globalSearch.trim();
+    if (!query) {
+      setGlobalSearchResults({ workOrders: [], assets: [], vendors: [] });
+      setGlobalSearchLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setGlobalSearchLoading(true);
+    const timer = setTimeout(async () => {
+      try {
+        const [woRes, assetRes, vendorRes] = await Promise.all([
+          getWorkOrders({ search: query, limit: 5, page: 1 }),
+          getAssets({ search: query, limit: 5, page: 1 }),
+          fetchVendors()
+        ]);
+        if (cancelled) return;
+        const workOrders = Array.isArray(woRes) ? woRes : (woRes?.workOrders || woRes?.data || []);
+        const assets = Array.isArray(assetRes?.data) ? assetRes.data : (assetRes?.assets || assetRes?.data || []);
+        const vendorsRaw = Array.isArray(vendorRes) ? vendorRes : (vendorRes?.vendors || []);
+        const vendors = vendorsRaw.filter((v) => {
+          const name = (v?.name || '').toLowerCase();
+          const email = (v?.email || '').toLowerCase();
+          return name.includes(query.toLowerCase()) || email.includes(query.toLowerCase());
+        }).slice(0, 5);
+        setGlobalSearchResults({
+          workOrders: workOrders.slice(0, 5),
+          assets: assets.slice(0, 5),
+          vendors
+        });
+      } catch (err) {
+        if (!cancelled) {
+          setGlobalSearchResults({ workOrders: [], assets: [], vendors: [] });
+        }
+      } finally {
+        if (!cancelled) setGlobalSearchLoading(false);
+      }
+    }, 350);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [globalSearch]);
 
   const getRoleDisplay = (role) => {
     const roles = {
@@ -133,6 +186,9 @@ const MainLayout = ({ children }) => {
 
             {globalSearchOpen && globalSearch.trim() && (
               <div className="absolute left-0 right-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden">
+                <div className="px-4 py-2 text-xs text-slate-500 bg-slate-50 border-b border-slate-200">
+                  Global results for "{globalSearch}"
+                </div>
                 <button
                   type="button"
                   onMouseDown={(e) => e.preventDefault()}
@@ -157,9 +213,45 @@ const MainLayout = ({ children }) => {
                 >
                   Search Vendors
                 </button>
-                <div className="px-4 py-2 text-xs text-slate-500 bg-slate-50 border-t border-slate-200">
-                  TODO: global search across all modules
-                </div>
+
+                <div className="border-t border-slate-200" />
+
+                {globalSearchLoading ? (
+                  <div className="px-4 py-3 text-sm text-slate-500">Searching...</div>
+                ) : (
+                  <div className="divide-y divide-slate-100">
+                    <SearchSection
+                      title="Work Orders"
+                      items={globalSearchResults.workOrders.map((wo) => ({
+                        id: wo.id,
+                        label: `${wo.woNumber || wo.id} • ${wo.title || wo.description || 'Work order'}`,
+                        sub: wo.status || '—',
+                        path: `/work-orders/${wo.id}`
+                      }))}
+                      onSelect={(path) => navigate(path)}
+                    />
+                    <SearchSection
+                      title="Assets"
+                      items={globalSearchResults.assets.map((asset) => ({
+                        id: asset.id,
+                        label: asset.name || asset.assetName || 'Asset',
+                        sub: asset.category || asset.status || '—',
+                        path: `/assets/${asset.id}`
+                      }))}
+                      onSelect={(path) => navigate(path)}
+                    />
+                    <SearchSection
+                      title="Vendors"
+                      items={globalSearchResults.vendors.map((vendor) => ({
+                        id: vendor.id,
+                        label: vendor.name || 'Vendor',
+                        sub: vendor.email || vendor.phone || '—',
+                        path: `/vendors/${vendor.id}`
+                      }))}
+                      onSelect={(path) => navigate(path)}
+                    />
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -329,5 +421,33 @@ const MainLayout = ({ children }) => {
 };
 
 export default MainLayout;
+
+function SearchSection({ title, items, onSelect }) {
+  return (
+    <div className="px-4 py-3">
+      <div className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-2">
+        {title}
+      </div>
+      {items.length === 0 ? (
+        <div className="text-sm text-slate-500">No results</div>
+      ) : (
+        <div className="space-y-2">
+          {items.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => onSelect(item.path)}
+              className="w-full text-left rounded-lg px-3 py-2 hover:bg-slate-50"
+            >
+              <div className="text-sm text-slate-900">{item.label}</div>
+              <div className="text-xs text-slate-500">{item.sub}</div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 

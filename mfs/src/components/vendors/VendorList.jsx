@@ -38,6 +38,7 @@ const VendorList = ({
   vendors,
   onView,
   onEdit,
+  canManage = false,
   page = 1,
   pageSize = 5,
   totalItems = vendors.length,
@@ -133,13 +134,15 @@ const VendorList = ({
                     >
                       <Eye className="h-4 w-4" />
                     </button>
-                    <button
-                      onClick={() => onEdit(vendor)}
-                      className="p-2 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
-                      title="Edit"
-                    >
-                      <Edit2 className="h-4 w-4" />
-                    </button>
+                    {canManage && (
+                      <button
+                        onClick={() => onEdit(vendor)}
+                        className="p-2 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+                        title="Edit"
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </button>
+                    )}
                     <button
                       className="p-2 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
                       title="More"

@@ -183,7 +183,11 @@ const getEntitlements = (billing = {}) => {
 
 const listMembers = async (organizationId, { page = 1, limit = 20, role, search, includeStats = false } = {}) => {
   const skip = (page - 1) * limit;
-  const filter = { organization: organizationId };
+  const filter = {
+    organization: organizationId,
+    active: true,
+    emailVerifiedAt: { $ne: null }
+  };
   if (role) filter.role = role;
 
   if (search) {
@@ -291,11 +295,21 @@ const enableOrganization = async (organizationId) => {
   );
 
   if (!org) throw new NotFoundError('Organization');
-  await User.updateMany({ organization: organizationId }, { active: true });
+  await User.updateMany(
+    { organization: organizationId, emailVerifiedAt: { $ne: null } },
+    { active: true }
+  );
   return org;
 };
 
 const setUserActiveStatus = async (organizationId, userId, active) => {
+  if (active) {
+    const target = await User.findOne({ _id: userId, organization: organizationId }).select('emailVerifiedAt');
+    if (!target) throw new NotFoundError('User');
+    if (!target.emailVerifiedAt) {
+      throw new ValidationError('User email must be verified before activation');
+    }
+  }
   const user = await User.findOneAndUpdate(
     { _id: userId, organization: organizationId },
     { active: !!active },
