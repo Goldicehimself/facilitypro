@@ -183,8 +183,8 @@ const PMTaskCreate = () => {
           </Grid>
           <Grid item xs={12} md={6}>
             <TextField
-              label="Due Date"
-              type="date"
+              label="Due Date & Time"
+              type="datetime-local"
               value={form.dueDate}
               onChange={handleChange('dueDate')}
               error={Boolean(errors.dueDate)}

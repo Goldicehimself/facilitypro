@@ -8,10 +8,18 @@ import {
   Button,
   Popover,
   Paper,
+  Badge,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  MenuItem,
 } from '@mui/material';
 import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { PickersDay } from '@mui/x-date-pickers/PickersDay';
 import {
   ChevronLeft,
   ChevronRight,
@@ -33,8 +41,8 @@ import {
   subMonths,
   addMonths,
 } from 'date-fns';
-import { useQuery } from 'react-query';
-import { getWorkOrders } from '../../api/workOrders';
+import { useQuery, useQueryClient } from 'react-query';
+import { getPreventiveMaintenances, updatePreventiveMaintenance } from '../../api/preventiveMaintenance';
 
 /* =========================
    Constants
@@ -52,40 +60,42 @@ const PRIORITY_COLOR = {
 export default function PMCalendar() {
   const navigate = useNavigate();
   const closeTimerRef = useRef(null);
+  const queryClient = useQueryClient();
 
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [popover, setPopover] = useState({ anchor: null, event: null });
-  const { data: workOrdersResponse = [], isLoading } = useQuery(
-    ['pm-work-orders'],
-    () => getWorkOrders({}),
+  const [rescheduleOpen, setRescheduleOpen] = useState(false);
+  const [rescheduleForm, setRescheduleForm] = useState({
+    id: '',
+    dateTime: '',
+    frequency: ''
+  });
+  const { data: maintenanceResponse = [], isLoading } = useQuery(
+    ['preventiveMaintenances', { page: 1, limit: 300 }],
+    () => getPreventiveMaintenances({ page: 1, limit: 300 }),
     { staleTime: 60000 }
   );
 
-  const workOrders = useMemo(() => {
-    if (Array.isArray(workOrdersResponse)) return workOrdersResponse;
-    if (Array.isArray(workOrdersResponse?.workOrders)) return workOrdersResponse.workOrders;
-    if (Array.isArray(workOrdersResponse?.data)) return workOrdersResponse.data;
+  const maintenances = useMemo(() => {
+    if (Array.isArray(maintenanceResponse)) return maintenanceResponse;
+    if (Array.isArray(maintenanceResponse?.maintenances)) return maintenanceResponse.maintenances;
+    if (Array.isArray(maintenanceResponse?.data)) return maintenanceResponse.data;
     return [];
-  }, [workOrdersResponse]);
+  }, [maintenanceResponse]);
 
   /* =========================
      Events
   ========================= */
   const events = useMemo(() => {
-    return workOrders
-      .filter(
-        (w) =>
-          ['Maintenance', 'Inspection', 'Calibration'].includes(
-            w.serviceType
-          ) || /preventive/i.test(w.title)
-      )
-      .map((w) => ({
-        ...w,
-        date: w.dueDate ? parseISO(w.dueDate) : null,
+    return maintenances
+      .map((m) => ({
+        ...m,
+        title: m.name,
+        date: m.nextDueDate ? parseISO(m.nextDueDate) : null,
       }))
-      .filter((w) => w.date);
-  }, [workOrders]);
+      .filter((m) => m.date);
+  }, [maintenances]);
 
   /* =========================
      Memoized events by day (PERFORMANCE)
@@ -102,6 +112,31 @@ export default function PMCalendar() {
 
   const eventsForDay = (date) =>
     eventsByDay[format(date, 'yyyy-MM-dd')] || [];
+
+  const CalendarDay = (dayProps) => {
+    const { day, outsideCurrentMonth, ...other } = dayProps;
+    const key = format(day, 'yyyy-MM-dd');
+    const count = eventsByDay[key]?.length || 0;
+
+    return (
+      <Badge
+        overlap="circular"
+        badgeContent={count}
+        color="primary"
+        invisible={count === 0}
+        sx={{
+          '& .MuiBadge-badge': {
+            minWidth: 16,
+            height: 16,
+            fontSize: '0.6rem',
+            fontWeight: 700
+          }
+        }}
+      >
+        <PickersDay day={day} outsideCurrentMonth={outsideCurrentMonth} {...other} />
+      </Badge>
+    );
+  };
 
   /* =========================
      Month matrix
@@ -153,14 +188,37 @@ export default function PMCalendar() {
     );
   };
 
-  const handleView = (ev) => {
-    navigate(`/work-orders/${ev.id}`);
+  const handleView = () => {
+    navigate('/preventive-maintenance');
     setPopover({ anchor: null, event: null });
   };
 
   const handleReschedule = (ev) => {
-    alert(`Reschedule: ${ev.title}`);
+    const dateTime = ev.nextDueDate
+      ? format(parseISO(ev.nextDueDate), "yyyy-MM-dd'T'HH:mm")
+      : '';
+    setRescheduleForm({
+      id: ev.id || ev._id,
+      dateTime,
+      frequency: ev.frequency || ''
+    });
+    setRescheduleOpen(true);
     setPopover({ anchor: null, event: null });
+  };
+
+  const submitReschedule = async () => {
+    if (!rescheduleForm.id || !rescheduleForm.dateTime) return;
+    try {
+      await updatePreventiveMaintenance(rescheduleForm.id, {
+        nextDueDate: new Date(rescheduleForm.dateTime).toISOString(),
+        frequency: rescheduleForm.frequency || undefined
+      });
+      await queryClient.invalidateQueries(['preventiveMaintenances']);
+      await queryClient.invalidateQueries(['preventiveMaintenances', 'upcoming']);
+      setRescheduleOpen(false);
+    } catch {
+      // handled by interceptor
+    }
   };
 
   /* =========================
@@ -181,6 +239,7 @@ export default function PMCalendar() {
           <DateCalendar
             value={selectedDate}
             onChange={(newValue) => setSelectedDate(newValue)}
+            slots={{ day: CalendarDay }}
             sx={{
               '& .MuiPickersCalendarHeader-root': {
                 display: 'flex',
@@ -242,8 +301,16 @@ export default function PMCalendar() {
             >
               <Typography fontWeight={700}>{ev.title}</Typography>
               <Typography variant="caption" color="#6b7280">
-                {ev.location?.name || ev.asset?.name || ev.category}
+                {ev.asset?.name || 'Preventive Maintenance'} â€¢ {ev.frequency || 'schedule'}
               </Typography>
+              <Box mt={1} display="flex" gap={1}>
+                <Button size="small" variant="outlined" onClick={handleView}>
+                  View
+                </Button>
+                <Button size="small" variant="contained" onClick={() => handleReschedule(ev)}>
+                  Reschedule
+                </Button>
+              </Box>
             </Box>
           ))}
         </Box>
@@ -269,15 +336,13 @@ export default function PMCalendar() {
               {popover.event.title}
             </Typography>
             <Typography variant="caption" color="#6b7280">
-              {popover.event.location?.name ||
-                popover.event.asset?.name ||
-                popover.event.category}
+              {popover.event.asset?.name || 'Preventive Maintenance'} â€¢ {popover.event.frequency || 'schedule'}
             </Typography>
             <Box mt={1} display="flex" gap={1}>
               <Button
                 size="small"
                 variant="outlined"
-                onClick={() => handleView(popover.event)}
+                onClick={handleView}
               >
                 View
               </Button>
@@ -292,6 +357,42 @@ export default function PMCalendar() {
           </Box>
         )}
       </Popover>
+
+      <Dialog open={rescheduleOpen} onClose={() => setRescheduleOpen(false)} fullWidth maxWidth="xs">
+        <DialogTitle>Reschedule Maintenance</DialogTitle>
+        <DialogContent sx={{ pt: 1, display: 'grid', gap: 2 }}>
+          <TextField
+            label="Next Due Date & Time"
+            type="datetime-local"
+            value={rescheduleForm.dateTime}
+            onChange={(e) => setRescheduleForm((prev) => ({ ...prev, dateTime: e.target.value }))}
+            InputLabelProps={{ shrink: true }}
+            fullWidth
+          />
+          <TextField
+            select
+            label="Frequency"
+            value={rescheduleForm.frequency}
+            onChange={(e) => setRescheduleForm((prev) => ({ ...prev, frequency: e.target.value }))}
+            fullWidth
+          >
+            <MenuItem value="weekly">Weekly</MenuItem>
+            <MenuItem value="bi-weekly">Biweekly</MenuItem>
+            <MenuItem value="monthly">Monthly</MenuItem>
+            <MenuItem value="quarterly">Quarterly</MenuItem>
+            <MenuItem value="semi-annual">Semi-Annual</MenuItem>
+            <MenuItem value="annual">Annually</MenuItem>
+          </TextField>
+        </DialogContent>
+        <DialogActions>
+          <Button variant="outlined" onClick={() => setRescheduleOpen(false)}>
+            Cancel
+          </Button>
+          <Button variant="contained" onClick={submitReschedule}>
+            Save
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
     </LocalizationProvider>
   );

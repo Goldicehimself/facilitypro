@@ -29,6 +29,7 @@ const PMScheduleInspection = () => {
     title: '',
     asset: '',
     inspectionType: '',
+    frequency: 'annual',
     scheduledDate: '',
     inspector: '',
     priority: 'medium',
@@ -46,6 +47,7 @@ const PMScheduleInspection = () => {
     if (!form.title.trim()) nextErrors.title = 'Title is required';
     if (!form.asset.trim()) nextErrors.asset = 'Asset is required';
     if (!form.inspectionType) nextErrors.inspectionType = 'Inspection type is required';
+    if (!form.frequency) nextErrors.frequency = 'Frequency is required';
     if (!form.scheduledDate) nextErrors.scheduledDate = 'Scheduled date is required';
     if (!form.inspector.trim()) nextErrors.inspector = 'Inspector is required';
     setErrors(nextErrors);
@@ -83,7 +85,7 @@ const PMScheduleInspection = () => {
     const payload = {
       name: form.title,
       asset: form.asset,
-      frequency: 'annual',
+      frequency: form.frequency,
       nextDueDate: form.scheduledDate,
       priority: form.priority,
       description: `${form.inspectionType} inspection${form.notes ? ` - ${form.notes}` : ''}`,
@@ -171,9 +173,26 @@ const PMScheduleInspection = () => {
             </FormControl>
           </Grid>
           <Grid item xs={12} md={6}>
+            <FormControl fullWidth error={Boolean(errors.frequency)}>
+              <InputLabel>Frequency</InputLabel>
+              <Select
+                label="Frequency"
+                value={form.frequency}
+                onChange={handleChange('frequency')}
+              >
+                <MenuItem value="weekly">Weekly</MenuItem>
+                <MenuItem value="bi-weekly">Biweekly</MenuItem>
+                <MenuItem value="monthly">Monthly</MenuItem>
+                <MenuItem value="quarterly">Quarterly</MenuItem>
+                <MenuItem value="semi-annual">Semi-Annual</MenuItem>
+                <MenuItem value="annual">Annually</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid item xs={12} md={6}>
             <TextField
-              label="Scheduled Date"
-              type="date"
+              label="Scheduled Date & Time"
+              type="datetime-local"
               value={form.scheduledDate}
               onChange={handleChange('scheduledDate')}
               error={Boolean(errors.scheduledDate)}

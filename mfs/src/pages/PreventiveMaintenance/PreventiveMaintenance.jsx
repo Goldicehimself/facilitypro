@@ -171,7 +171,13 @@ const PreventiveMaintenance = () => {
                   <Button size="small" variant="outlined" startIcon={<Clock size={12} />} sx={{ textTransform: 'none', fontWeight: 600, fontSize: '0.8rem', borderColor: isDark ? '#334155' : '#e5e7eb', color: isDark ? '#cbd5f5' : '#6b7280', '&:hover': { bgcolor: isDark ? '#0f172a' : '#f9fafb', borderColor: isDark ? '#475569' : '#d1d5db' } }}>
                     This Month
                   </Button>
-                  <Button size="small" variant="contained" startIcon={<Plus size={14} />} sx={{ textTransform: 'none', fontWeight: 600, fontSize: '0.8rem', py: 0.75, px: 1.5 }}>
+                  <Button
+                    size="small"
+                    variant="contained"
+                    startIcon={<Plus size={14} />}
+                    onClick={() => navigate('/preventive-maintenance/schedule')}
+                    sx={{ textTransform: 'none', fontWeight: 600, fontSize: '0.8rem', py: 0.75, px: 1.5 }}
+                  >
                     Schedule
                   </Button>
                 </Box>
