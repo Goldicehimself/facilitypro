@@ -1911,14 +1911,14 @@ const Settings = () => {
 
                       const upgradeTarget =
                         billingPlan === 'starter'
-                          ? '/checkout?plan=pro&cycle=annual&returnTo=billing'
+                          ? `/checkout?plan=pro&cycle=annual&returnTo=billing${orgCodeFromStorage ? `&orgCode=${orgCodeFromStorage}` : ''}`
                           : '/contact-sales';
 
                       return (
                         <div className="flex items-center gap-2">
                           <Button
                             variant="outline"
-                            onClick={() => navigate(`/checkout?plan=${billingPlan}&cycle=${billingCycle}&returnTo=billing`)}
+                            onClick={() => navigate(`/checkout?plan=${billingPlan}&cycle=${billingCycle}&returnTo=billing${orgCodeFromStorage ? `&orgCode=${orgCodeFromStorage}` : ''}`)}
                           >
                             Manage Billing
                           </Button>
@@ -2006,3 +2006,5 @@ const Settings = () => {
 };
 
 export default Settings;
+  const orgCodeFromStorage =
+    (localStorage.getItem('orgCode') || sessionStorage.getItem('orgCode') || '').trim().toUpperCase();
