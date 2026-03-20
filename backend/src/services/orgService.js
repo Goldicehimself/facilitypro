@@ -363,7 +363,9 @@ const updateCertificateStatus = async (organizationId, userId, { publicId, statu
 };
 
 const getSettings = async (organizationId) => {
-  const org = await Organization.findById(organizationId).select('settings name industry');
+  const org = await Organization.findById(organizationId)
+    .select('settings name industry')
+    .lean();
   if (!org) throw new NotFoundError('Organization');
   const settings = normalizeSettings(org);
   return { settings, entitlements: getEntitlements(settings.billing) };
