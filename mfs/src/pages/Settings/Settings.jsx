@@ -141,10 +141,7 @@ const Settings = () => {
   const [extraSeatPrice, setExtraSeatPrice] = useState(4000);
   const [trialEndsAt, setTrialEndsAt] = useState(null);
   const [subscriptionStatus, setSubscriptionStatus] = useState('trialing');
-  const [invoices] = useState([
-    { id: 'inv_001', date: '2026-02-01', amount: 39, status: 'paid' },
-    { id: 'inv_000', date: '2026-01-01', amount: 39, status: 'paid' }
-  ]);
+  const [invoices, setInvoices] = useState([]);
 
   const planPricing = PRICING_PLANS.reduce((acc, plan) => {
     acc[plan.id] = {
@@ -285,6 +282,17 @@ const Settings = () => {
     setSeatCount(billing.seatCount ?? (planPricing[planFromSettings]?.seatsIncluded || 5));
     setTrialEndsAt(billing.trialEndsAt || null);
     setSubscriptionStatus(billing.status || 'trialing');
+
+    if (billing.lastPaidAt && billing.lastPaymentAmount) {
+      setInvoices([{
+        id: billing.lastPaymentReference || 'inv_latest',
+        date: billing.lastPaidAt,
+        amount: billing.lastPaymentAmount,
+        status: 'paid'
+      }]);
+    } else {
+      setInvoices([]);
+    }
   };
 
   const applyBillingOverride = () => {
@@ -1976,23 +1984,29 @@ const Settings = () => {
                 <div className="p-6 rounded-lg border border-gray-200 dark:border-gray-700">
                   <div className="flex items-center justify-between mb-4">
                     <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Invoices</h4>
-                    <Badge className="bg-slate-200 text-slate-700">Last 3</Badge>
+                    <Badge className="bg-slate-200 text-slate-700">Latest</Badge>
                   </div>
                   <div className="space-y-3">
-                    {invoices.map((invoice) => (
-                      <div key={invoice.id} className="flex items-center justify-between text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-3">
-                        <div>
-                          <div className="font-medium text-gray-900 dark:text-gray-100">{invoice.id}</div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400">{new Date(invoice.date).toLocaleDateString()}</div>
-                        </div>
-                        <div className="text-right">
-                          <div className="font-semibold text-gray-900 dark:text-gray-100">{formatCurrency(invoice.amount)}</div>
-                          <Badge className={`mt-1 capitalize ${invoice.status === 'paid' ? 'bg-emerald-100 text-emerald-700' : invoice.status === 'open' ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700'}`}>
-                            {invoice.status}
-                          </Badge>
-                        </div>
+                    {invoices.length === 0 ? (
+                      <div className="text-sm text-gray-500 dark:text-gray-400">
+                        No invoices yet.
                       </div>
-                    ))}
+                    ) : (
+                      invoices.map((invoice) => (
+                        <div key={invoice.id} className="flex items-center justify-between text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-3">
+                          <div>
+                            <div className="font-medium text-gray-900 dark:text-gray-100">{invoice.id}</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">{new Date(invoice.date).toLocaleDateString()}</div>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-semibold text-gray-900 dark:text-gray-100">{formatCurrency(invoice.amount)}</div>
+                            <Badge className={`mt-1 capitalize ${invoice.status === 'paid' ? 'bg-emerald-100 text-emerald-700' : invoice.status === 'open' ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700'}`}>
+                              {invoice.status}
+                            </Badge>
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
                     Invoices are generated after successful Paystack payments.
