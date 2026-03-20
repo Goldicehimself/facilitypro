@@ -28,11 +28,14 @@ const CostAnalysisChart = ({ data = null }) => {
 
     const currentMonth = chartData[chartData.length - 1];
     const previousMonth = chartData[chartData.length - 2];
-    const totalCost = currentMonth.total;
-    const preventivePercentage = Math.round(
-      (currentMonth.preventive / currentMonth.total) * 100
-    );
-    const savingsVsLast = previousMonth ? previousMonth.total - currentMonth.total : 0;
+    const totalCost = Number(currentMonth?.total || 0);
+    const preventiveBase = Number(currentMonth?.preventive || 0);
+    const preventivePercentage = totalCost
+      ? Math.round((preventiveBase / totalCost) * 100)
+      : 0;
+    const savingsVsLast = previousMonth
+      ? Number(previousMonth.total || 0) - totalCost
+      : 0;
 
     return { totalCost, preventivePercentage, savingsVsLast };
   }, [chartData]);
