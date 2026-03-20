@@ -231,75 +231,89 @@ const Settings = () => {
     setHasChanges(true);
   };
 
-  useEffect(() => {
-    const loadSettings = async () => {
-      setLoadingSettings(true);
-      try {
-        const response = await getOrgSettings();
-        const settings = response?.settings || response || {};
+  const applySettings = (settings = {}) => {
+    const securityPolicy = settings.securityPolicy || {};
+    setTwoFactorAuth(!!securityPolicy.twoFactorAuth);
+    setEnforceMfa(!!securityPolicy.enforceMfa);
+    setStrongPassword(
+      typeof securityPolicy.strongPassword === 'boolean' ? securityPolicy.strongPassword : true
+    );
+    setMinPasswordLength(
+      String(securityPolicy.minPasswordLength ?? 12)
+    );
+    setLockoutThreshold(
+      getLockoutLabel(securityPolicy.lockoutThreshold ?? 5)
+    );
+    if (typeof securityPolicy.sessionTimeoutMinutes === 'number') {
+      setSessionTimeout(getSessionTimeoutLabel(securityPolicy.sessionTimeoutMinutes));
+    }
+    setRestrictInviteDomains(!!securityPolicy.restrictInviteDomains);
+    setAllowedInviteDomains((securityPolicy.allowedInviteDomains || []).join(', '));
 
-        const securityPolicy = settings.securityPolicy || {};
-        setTwoFactorAuth(!!securityPolicy.twoFactorAuth);
-        setEnforceMfa(!!securityPolicy.enforceMfa);
-        setStrongPassword(
-          typeof securityPolicy.strongPassword === 'boolean' ? securityPolicy.strongPassword : true
-        );
-        setMinPasswordLength(
-          String(securityPolicy.minPasswordLength ?? 12)
-        );
-        setLockoutThreshold(
-          getLockoutLabel(securityPolicy.lockoutThreshold ?? 5)
-        );
-        if (typeof securityPolicy.sessionTimeoutMinutes === 'number') {
-          setSessionTimeout(getSessionTimeoutLabel(securityPolicy.sessionTimeoutMinutes));
-        }
-        setRestrictInviteDomains(!!securityPolicy.restrictInviteDomains);
-        setAllowedInviteDomains((securityPolicy.allowedInviteDomains || []).join(', '));
+    const notifications = settings.notifications || {};
+    setNotifyWoCreated(!!notifications.notifyWoCreated);
+    setNotifyWoAssigned(!!notifications.notifyWoAssigned);
+    setNotifyWoOverdue(!!notifications.notifyWoOverdue);
+    setNotifyPmDue(!!notifications.notifyPmDue);
+    setNotifyEmail(
+      typeof notifications.notifyEmail === 'boolean' ? notifications.notifyEmail : true
+    );
+    setNotifyInApp(
+      typeof notifications.notifyInApp === 'boolean' ? notifications.notifyInApp : true
+    );
+    setQuietHoursEnabled(!!notifications.quietHoursEnabled);
+    if (typeof notifications.quietHoursStart === 'string') setQuietHoursStart(notifications.quietHoursStart);
+    if (typeof notifications.quietHoursEnd === 'string') setQuietHoursEnd(notifications.quietHoursEnd);
 
-        const notifications = settings.notifications || {};
-        setNotifyWoCreated(!!notifications.notifyWoCreated);
-        setNotifyWoAssigned(!!notifications.notifyWoAssigned);
-        setNotifyWoOverdue(!!notifications.notifyWoOverdue);
-        setNotifyPmDue(!!notifications.notifyPmDue);
-        setNotifyEmail(
-          typeof notifications.notifyEmail === 'boolean' ? notifications.notifyEmail : true
-        );
-        setNotifyInApp(
-          typeof notifications.notifyInApp === 'boolean' ? notifications.notifyInApp : true
-        );
-        setQuietHoursEnabled(!!notifications.quietHoursEnabled);
-        if (typeof notifications.quietHoursStart === 'string') setQuietHoursStart(notifications.quietHoursStart);
-        if (typeof notifications.quietHoursEnd === 'string') setQuietHoursEnd(notifications.quietHoursEnd);
+    const companyProfile = settings.companyProfile || {};
+    if (typeof companyProfile.companyName === 'string') setCompanyName(companyProfile.companyName);
+    if (typeof companyProfile.logoUrl === 'string') setCompanyLogoUrl(companyProfile.logoUrl);
+    if (typeof companyProfile.logoDataUrl === 'string') setCompanyLogoDataUrl(companyProfile.logoDataUrl);
+    if (typeof companyProfile.address === 'string') setCompanyAddress(companyProfile.address);
+    if (typeof companyProfile.contactEmail === 'string') setCompanyContactEmail(companyProfile.contactEmail);
+    if (typeof companyProfile.contactPhone === 'string') setCompanyContactPhone(companyProfile.contactPhone);
+    if (typeof companyProfile.industry === 'string') setCompanyIndustry(companyProfile.industry);
+    if (typeof companyProfile.supportEmail === 'string') setSupportContactEmail(companyProfile.supportEmail);
+    if (typeof companyProfile.supportPhone === 'string') setSupportContactPhone(companyProfile.supportPhone);
 
-        const companyProfile = settings.companyProfile || {};
-        if (typeof companyProfile.companyName === 'string') setCompanyName(companyProfile.companyName);
-        if (typeof companyProfile.logoUrl === 'string') setCompanyLogoUrl(companyProfile.logoUrl);
-        if (typeof companyProfile.logoDataUrl === 'string') setCompanyLogoDataUrl(companyProfile.logoDataUrl);
-        if (typeof companyProfile.address === 'string') setCompanyAddress(companyProfile.address);
-        if (typeof companyProfile.contactEmail === 'string') setCompanyContactEmail(companyProfile.contactEmail);
-        if (typeof companyProfile.contactPhone === 'string') setCompanyContactPhone(companyProfile.contactPhone);
-        if (typeof companyProfile.industry === 'string') setCompanyIndustry(companyProfile.industry);
-        if (typeof companyProfile.supportEmail === 'string') setSupportContactEmail(companyProfile.supportEmail);
-        if (typeof companyProfile.supportPhone === 'string') setSupportContactPhone(companyProfile.supportPhone);
+    const billing = settings.billing || {};
+    const planFromSettings = billing.plan || 'starter';
+    setBillingPlan(planFromSettings);
+    setBillingCycle(billing.billingCycle || 'monthly');
+    setSeatsIncluded(billing.seatsIncluded ?? (planPricing[planFromSettings]?.seatsIncluded || 5));
+    setExtraSeatPrice(billing.extraSeatPrice ?? 4000);
+    setSeatCount(billing.seatCount ?? (planPricing[planFromSettings]?.seatsIncluded || 5));
+    setTrialEndsAt(billing.trialEndsAt || null);
+    setSubscriptionStatus(billing.status || 'trialing');
+  };
 
-        const billing = settings.billing || {};
-        const planFromSettings = billing.plan || 'starter';
-        setBillingPlan(planFromSettings);
-        setBillingCycle(billing.billingCycle || 'monthly');
-        setSeatsIncluded(billing.seatsIncluded ?? (planPricing[planFromSettings]?.seatsIncluded || 5));
-        setExtraSeatPrice(billing.extraSeatPrice ?? 4000);
-        setSeatCount(billing.seatCount ?? (planPricing[planFromSettings]?.seatsIncluded || 5));
-        setTrialEndsAt(billing.trialEndsAt || null);
-        setSubscriptionStatus(billing.status || 'trialing');
-      } catch (error) {
+  const loadSettings = async (showError = true) => {
+    setLoadingSettings(true);
+    try {
+      const response = await getOrgSettings();
+      const settings = response?.settings || response || {};
+      applySettings(settings);
+    } catch (error) {
+      if (showError) {
         toast.error('Failed to load organization settings.');
-      } finally {
-        setLoadingSettings(false);
       }
-    };
+    } finally {
+      setLoadingSettings(false);
+    }
+  };
 
-    loadSettings();
+  useEffect(() => {
+    loadSettings(true);
   }, []);
+
+  useEffect(() => {
+    const tab = (searchParams.get('tab') || '').trim().toLowerCase();
+    if (tab === 'billing') {
+      loadSettings(false);
+    }
+  }, [searchParams]);
+
+  // Removed duplicate loadSettings hook (handled above)
 
   useEffect(() => {
     const loadIntegrations = async () => {
