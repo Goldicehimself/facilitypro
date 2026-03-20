@@ -63,6 +63,9 @@ function handleError(error) {
     // Handle specific status codes
     switch (error.response.status) {
       case 401:
+        if (error.config?.suppressAuthRedirect) {
+          break;
+        }
         // Unauthorized - redirect to login
         localStorage.removeItem('token');
         localStorage.removeItem('user');
