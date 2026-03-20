@@ -287,6 +287,26 @@ const Settings = () => {
     setSubscriptionStatus(billing.status || 'trialing');
   };
 
+  const applyBillingOverride = () => {
+    try {
+      const raw = localStorage.getItem('pendingBilling');
+      if (!raw) return false;
+      const billing = JSON.parse(raw);
+      const planFromSettings = billing?.plan || 'starter';
+      setBillingPlan(planFromSettings);
+      setBillingCycle(billing?.billingCycle || 'monthly');
+      setSeatsIncluded(billing?.seatsIncluded ?? (planPricing[planFromSettings]?.seatsIncluded || 5));
+      setExtraSeatPrice(billing?.extraSeatPrice ?? 4000);
+      setSeatCount(billing?.seatCount ?? (planPricing[planFromSettings]?.seatsIncluded || 5));
+      setTrialEndsAt(billing?.trialEndsAt || null);
+      setSubscriptionStatus(billing?.status || 'trialing');
+      localStorage.removeItem('pendingBilling');
+      return true;
+    } catch (e) {
+      return false;
+    }
+  };
+
   const loadSettings = async (showError = true) => {
     setLoadingSettings(true);
     try {
@@ -303,12 +323,14 @@ const Settings = () => {
   };
 
   useEffect(() => {
+    applyBillingOverride();
     loadSettings(true);
   }, []);
 
   useEffect(() => {
     const tab = (searchParams.get('tab') || '').trim().toLowerCase();
     if (tab === 'billing') {
+      applyBillingOverride();
       loadSettings(false);
     }
   }, [searchParams]);

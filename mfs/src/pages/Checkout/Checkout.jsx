@@ -125,7 +125,16 @@ const Checkout = () => {
             orgCode,
             plan: resolvedPlanId,
             billingCycle,
-          }, { suppressToast: true }).catch(() => {
+          }, { suppressToast: true }).then((res) => {
+            const billing = res?.data?.data?.billing;
+            if (billing) {
+              try {
+                localStorage.setItem('pendingBilling', JSON.stringify(billing));
+              } catch (e) {
+                // ignore storage errors
+              }
+            }
+          }).catch(() => {
             // ignore verification errors here; webhook will handle it
           });
           const redirectTarget =
