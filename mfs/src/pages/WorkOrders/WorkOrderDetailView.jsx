@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -19,8 +19,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/utils/formatters";
 
-import { getWorkOrder, updateWorkOrderStatus, deleteWorkOrder } from "../../api/workOrders";
+import { getWorkOrder, updateWorkOrder, updateWorkOrderStatus, deleteWorkOrder } from "../../api/workOrders";
 import ProtectedImage from "../../components/common/ProtectedImage";
+import { useAuth } from "../../contexts/AuthContext";
 
 const formatDateTime = (value) =>
   value ? new Date(value).toLocaleString("en-US") : "—";
@@ -59,6 +60,7 @@ export default function WorkOrderDetailView() {
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const locationWorkOrder = location.state?.workOrder || null;
 
   const { data: fetchedWorkOrder, isLoading } = useQuery(
@@ -80,6 +82,16 @@ export default function WorkOrderDetailView() {
         toast.success("Status updated");
       },
       onError: () => toast.error("Failed to update status"),
+    }
+  );
+  const actualCostMut = useMutation(
+    (value) => updateWorkOrder(id, value),
+    {
+      onSuccess: (updated) => {
+        queryClient.setQueryData(["workOrder", id], updated);
+        toast.success("Actual cost updated");
+      },
+      onError: () => toast.error("Failed to update actual cost"),
     }
   );
   const deleteMut = useMutation(
@@ -149,8 +161,27 @@ export default function WorkOrderDetailView() {
       replacedParts: Array.isArray(workOrder.replacedParts) ? workOrder.replacedParts : [],
       extraCosts: Array.isArray(workOrder.extraCosts) ? workOrder.extraCosts : [],
       issues: Array.isArray(workOrder.issues) ? workOrder.issues : [],
+      actualCost: Number.isFinite(Number(workOrder.actualCost)) ? Number(workOrder.actualCost) : null,
     };
   }, [workOrder]);
+
+  const [actualCostInput, setActualCostInput] = useState("");
+
+  useEffect(() => {
+    if (!normalized) return;
+    setActualCostInput(
+      normalized.actualCost !== null && normalized.actualCost !== undefined
+        ? String(normalized.actualCost)
+        : ""
+    );
+  }, [normalized?.actualCost]);
+
+  const canEditActualCost = ["admin", "facility_manager", "finance"].includes(user?.role);
+  const actualCostChanged =
+    (actualCostInput || "") !==
+    (normalized?.actualCost !== null && normalized?.actualCost !== undefined
+      ? String(normalized.actualCost)
+      : "");
 
   const totalExtraCost = useMemo(() => {
     if (!normalized?.extraCosts?.length) return 0;
@@ -444,6 +475,54 @@ export default function WorkOrderDetailView() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+              Actual Cost
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm text-slate-600 dark:text-slate-300">
+            <div>
+              <p className="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                Current Total
+              </p>
+              <p className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                {formatCurrency(Number(normalized.actualCost || 0))}
+              </p>
+            </div>
+            <div>
+              <label className="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                Set Actual Cost
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="1"
+                value={actualCostInput}
+                onChange={(e) => setActualCostInput(e.target.value)}
+                disabled={!canEditActualCost || actualCostMut.isLoading}
+                className="mt-2 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                placeholder="e.g., 150000"
+              />
+              {!canEditActualCost && (
+                <p className="mt-2 text-xs text-slate-400">
+                  Only admin/finance can edit actual cost.
+                </p>
+              )}
+            </div>
+            <Button
+              variant="outline"
+              disabled={!canEditActualCost || !actualCostChanged || actualCostMut.isLoading}
+              onClick={() => {
+                const trimmed = actualCostInput.trim();
+                const payload = trimmed === "" ? { actualCost: null } : { actualCost: Number(trimmed) };
+                actualCostMut.mutate(payload);
+              }}
+            >
+              Save Actual Cost
+            </Button>
+          </CardContent>
+        </Card>
         <Card>
           <CardHeader className="pb-2">
             <div className="text-sm font-semibold text-slate-700 dark:text-slate-300">

@@ -69,11 +69,46 @@ router.get('/', protect, async (req, res, next) => {
           $project: {
             maintenanceType: 1,
             createdAt: 1,
+            partsCost: {
+              $sum: {
+                $map: {
+                  input: { $ifNull: ['$replacedParts', []] },
+                  as: 'part',
+                  in: {
+                    $multiply: [
+                      { $ifNull: ['$$part.quantity', 1] },
+                      { $ifNull: ['$$part.originalCost', { $ifNull: ['$$part.cost', 0] }] }
+                    ]
+                  }
+                }
+              }
+            },
+            extraCost: {
+              $sum: {
+                $map: {
+                  input: { $ifNull: ['$extraCosts', []] },
+                  as: 'cost',
+                  in: { $ifNull: ['$$cost.amount', 0] }
+                }
+              }
+            },
+            actualCost: { $ifNull: ['$actualCost', 0] },
+            estimatedCost: { $ifNull: ['$estimatedCost', 0] }
+          }
+        },
+        {
+          $addFields: {
             cost: {
               $cond: [
                 { $gt: ['$actualCost', 0] },
                 '$actualCost',
-                { $ifNull: ['$estimatedCost', 0] }
+                {
+                  $cond: [
+                    { $gt: ['$estimatedCost', 0] },
+                    '$estimatedCost',
+                    { $add: ['$partsCost', '$extraCost'] }
+                  ]
+                }
               ]
             }
           }
