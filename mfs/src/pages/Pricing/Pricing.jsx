@@ -1,56 +1,12 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import { PRICING_PLANS, formatNgn } from '../../data/pricing';
 
 const Pricing = () => {
   const navigate = useNavigate();
 
-  const plans = [
-    {
-      name: 'Starter',
-      price: '₦19',
-      period: '/month',
-      description: 'For small teams getting started',
-      features: [
-        '5 seats included',
-        '₦4 per extra seat',
-        'Work orders, assets, vendors',
-        'Basic reporting',
-        'Email support',
-      ],
-      popular: false,
-    },
-    {
-      name: 'Professional',
-      price: '₦39',
-      period: '/month',
-      description: 'Best for growing teams',
-      features: [
-        '10 seats included',
-        '₦4 per extra seat',
-        'Advanced reporting',
-        'PM scheduling',
-        'Notifications automation',
-        'API access',
-        'Priority support',
-      ],
-      popular: true,
-    },
-    {
-      name: 'Enterprise',
-      price: 'Custom',
-      period: '',
-      description: 'For large-scale operations',
-      features: [
-        'SSO & audit logs',
-        'Advanced security controls',
-        'Custom integrations',
-        'Dedicated onboarding',
-        'SLA support',
-      ],
-      popular: false,
-    },
-  ];
+  const plans = PRICING_PLANS;
 
   return (
     <div className="min-h-screen bg-white">
@@ -63,7 +19,7 @@ const Pricing = () => {
         <div className="grid md:grid-cols-3 gap-6">
           {plans.map((p) => (
             <div
-              key={p.name}
+              key={p.id}
               className={`border rounded-lg p-6 shadow-sm ${p.popular ? 'border-blue-500 shadow-lg' : 'border-slate-200'}`}
             >
               {p.popular && (
@@ -77,8 +33,10 @@ const Pricing = () => {
                 <h3 className="text-xl font-semibold">{p.name}</h3>
                 <p className="text-gray-600 mt-1">{p.description}</p>
                 <div className="text-3xl font-bold mt-4">
-                  {p.price}
-                  <span className="text-base font-normal text-gray-600">{p.period}</span>
+                  {p.id === 'enterprise' ? 'Custom' : formatNgn(p.monthly)}
+                  <span className="text-base font-normal text-gray-600">
+                    {p.id === 'enterprise' ? '' : '/month'}
+                  </span>
                 </div>
               </div>
               <ul className="mt-6 space-y-2 text-gray-600">
@@ -90,7 +48,7 @@ const Pricing = () => {
                 size="lg"
                 className="mt-6 w-full rounded-full"
                 variant={p.name === 'Enterprise' ? 'outline' : 'default'}
-                onClick={() => navigate(p.name === 'Enterprise' ? '/help-center' : '/register')}
+                onClick={() => navigate(p.name === 'Enterprise' ? '/contact-sales' : `/register?plan=${p.id}`)}
               >
                 {p.name === 'Enterprise' ? 'Contact Sales' : 'Get Started'}
               </Button>
@@ -106,3 +64,4 @@ const Pricing = () => {
 };
 
 export default Pricing;
+

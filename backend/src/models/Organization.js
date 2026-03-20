@@ -99,9 +99,13 @@ const billingSettingsSchema = new mongoose.Schema({
   billingCycle: { type: String, default: 'monthly' },
   seatsIncluded: { type: Number, default: 5 },
   seatCount: { type: Number, default: 1 },
-  extraSeatPrice: { type: Number, default: 4 },
+  extraSeatPrice: { type: Number, default: 4000 },
   trialEndsAt: { type: Date, default: null },
-  status: { type: String, default: 'trialing' }
+  status: { type: String, default: 'trialing' },
+  provider: { type: String, default: null },
+  lastPaidAt: { type: Date, default: null },
+  lastPaymentReference: { type: String, default: null },
+  lastPaymentAmount: { type: Number, default: null }
 }, { _id: false });
 
 const organizationSchema = new mongoose.Schema({

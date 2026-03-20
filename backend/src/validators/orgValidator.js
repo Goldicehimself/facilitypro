@@ -64,7 +64,7 @@ const updateOrgSettingsSchema = Joi.object({
     billingCycle: Joi.string().valid('monthly', 'annual').optional(),
     seatsIncluded: Joi.number().integer().min(1).max(10000).optional(),
     seatCount: Joi.number().integer().min(1).max(100000).optional(),
-    extraSeatPrice: Joi.number().min(0).max(1000).optional(),
+    extraSeatPrice: Joi.number().min(0).max(1000000).optional(),
     trialEndsAt: Joi.date().optional(),
     status: Joi.string().valid('trialing', 'active', 'past_due', 'canceled').optional()
   }).optional()

@@ -3,8 +3,8 @@ import { toast } from 'react-toastify';
 
 // Use Vite proxy in development to avoid CORS; use env URL in production.
 const API_BASE_URL = import.meta.env.DEV
-  ? '/api'
-  : (import.meta.env.VITE_API_URL || 'https://mfs-h8k0.onrender.com/api');
+  ? '/api/v1'
+  : (import.meta.env.VITE_API_URL || 'https://mfs-h8k0.onrender.com/api/v1');
 
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,

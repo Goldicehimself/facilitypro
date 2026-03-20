@@ -87,7 +87,7 @@ const Dashboard = () => {
     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
     if (!token || token.startsWith('local-')) return;
 
-    const apiBase = import.meta.env.VITE_API_URL || '/api';
+    const apiBase = import.meta.env.VITE_API_URL || '/api/v1';
     const streamUrl = `${apiBase.replace(/\/$/, '')}/activities/stream?token=${encodeURIComponent(token)}`;
     const stream = new EventSource(streamUrl);
 

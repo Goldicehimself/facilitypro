@@ -19,6 +19,8 @@ const ResetPassword = lazy(() => import('./pages/Auth/ResetPassword'));
 const LandingPage = lazy(() => import('./pages/Landing/LandingPage'));
 const Pricing = lazy(() => import('./pages/Pricing/Pricing'));
 const Demo = lazy(() => import('./pages/Demo/Demo'));
+const Checkout = lazy(() => import('./pages/Checkout/Checkout'));
+const ContactSales = lazy(() => import('./pages/ContactSales/ContactSales'));
 
 // Main Pages
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -119,6 +121,8 @@ const AppRoutes = () => {
         <Route path="/" element={<LandingPage />} />
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/demo" element={<Demo />} />
+        <Route path="/checkout" element={<Checkout />} />
+        <Route path="/contact-sales" element={<ContactSales />} />
         <Route path="/help-center" element={<PublicHelp />} />
 
         {/* Protected Routes (dashboard accessible at /dashboard) */}

@@ -37,6 +37,7 @@ const auditRoutes = require('./src/routes/auditRoutes');
 const inventoryRoutes = require('./src/routes/inventoryRoutes');
 const serviceRequestRoutes = require('./src/routes/serviceRequestRoutes');
 const financeRoutes = require('./src/routes/financeRoutes');
+const billingRoutes = require('./src/routes/billingRoutes');
 
 const EXPRESSPORT = constants.PORT;
 const app = express();
@@ -70,8 +71,15 @@ app.use(
 );
 
 //  Body parsing
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use('/api/v1/billing/webhook', express.raw({ type: 'application/json' }));
+app.use((req, res, next) => {
+  if (req.originalUrl?.startsWith('/api/v1/billing/webhook')) return next();
+  return express.json()(req, res, next);
+});
+app.use((req, res, next) => {
+  if (req.originalUrl?.startsWith('/api/v1/billing/webhook')) return next();
+  return express.urlencoded({ extended: true })(req, res, next);
+});
 
 // IMPORTANT for Render / proxies
 app.set("trust proxy", 1);
@@ -92,7 +100,7 @@ app.use(limiter);
 app.use(requestLogger);
 
 // Dynamic APIs → never cache
-app.use('/api', (req, res, next) => {
+app.use('/api/v1', (req, res, next) => {
   res.set('Cache-Control', 'no-store');
   next();
 });
@@ -101,28 +109,29 @@ app.use('/api', (req, res, next) => {
 app.use(express.static('public'));
 
 // Health check endpoint
-app.get('/api/health', (req, res) => {
+app.get('/api/v1/health', (req, res) => {
   res.json({ status: 'OK', message: 'Server is running' });
 });
 
 // API Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/assets', assetRoutes);
-app.use('/api/work-orders', workOrderRoutes);
-app.use('/api/vendors', vendorRoutes);
-app.use('/api/preventive-maintenance', preventiveMaintenanceRoutes);
-app.use('/api/reports', reportRoutes);
-app.use('/api/notifications', notificationRoutes);
-app.use('/api/activities', activityRoutes);
-app.use('/api/org', orgRoutes);
-app.use('/api/leaves', leaveRoutes);
-app.use('/api/funds', fundRoutes);
-app.use('/api/email', emailRoutes);
-app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/audit', auditRoutes);
-app.use('/api/inventory', inventoryRoutes);
-app.use('/api/service-requests', serviceRequestRoutes);
-app.use('/api/finance', financeRoutes);
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/assets', assetRoutes);
+app.use('/api/v1/work-orders', workOrderRoutes);
+app.use('/api/v1/vendors', vendorRoutes);
+app.use('/api/v1/preventive-maintenance', preventiveMaintenanceRoutes);
+app.use('/api/v1/reports', reportRoutes);
+app.use('/api/v1/notifications', notificationRoutes);
+app.use('/api/v1/activities', activityRoutes);
+app.use('/api/v1/org', orgRoutes);
+app.use('/api/v1/leaves', leaveRoutes);
+app.use('/api/v1/funds', fundRoutes);
+app.use('/api/v1/email', emailRoutes);
+app.use('/api/v1/dashboard', dashboardRoutes);
+app.use('/api/v1/audit', auditRoutes);
+app.use('/api/v1/inventory', inventoryRoutes);
+app.use('/api/v1/service-requests', serviceRequestRoutes);
+app.use('/api/v1/finance', financeRoutes);
+app.use('/api/v1/billing', billingRoutes);
 
 // 404 handler
 app.use((req, res) => {
@@ -179,7 +188,7 @@ const startServer = async () => {
 
   const server = app.listen(EXPRESSPORT, () => {
     logger.info(`Server is running on http://localhost:${EXPRESSPORT}`);
-    logger.info(`API Documentation: http://localhost:${EXPRESSPORT}/api/docs`);
+    logger.info(`API Documentation: http://localhost:${EXPRESSPORT}/api/v1/docs`);
     logger.info(`EMAIL_BASE_URL: ${process.env.EMAIL_BASE_URL || '(not set)'}`);
     logger.info(`FRONTEND_URL: ${process.env.FRONTEND_URL || '(not set)'}`);
   });

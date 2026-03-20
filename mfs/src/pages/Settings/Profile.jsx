@@ -138,8 +138,8 @@ const Profile = () => {
     let objectUrl = null;
 
     const buildUploadUrl = (filePath) => {
-      const apiBase = import.meta.env.VITE_API_URL || '/api';
-      const base = apiBase.endsWith('/api') ? apiBase.slice(0, -4) : apiBase;
+      const apiBase = import.meta.env.VITE_API_URL || '/api/v1';
+      const base = apiBase.endsWith('/api/v1') ? apiBase.slice(0, -7) : apiBase;
       return `${base}/${filePath.replace(/^\/+/, '')}`;
     };
 
@@ -410,8 +410,8 @@ const Profile = () => {
   };
 
   const buildUploadUrl = (filePath) => {
-    const apiBase = import.meta.env.VITE_API_URL || '/api';
-    const base = apiBase.endsWith('/api') ? apiBase.slice(0, -4) : apiBase;
+    const apiBase = import.meta.env.VITE_API_URL || '/api/v1';
+    const base = apiBase.endsWith('/api/v1') ? apiBase.slice(0, -7) : apiBase;
     return `${base}/${filePath.replace(/^\/+/, '')}`;
   };
 

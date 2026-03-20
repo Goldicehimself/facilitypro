@@ -269,6 +269,7 @@ export const AuthProvider = ({ children }) => {
   // Register a new user
   const register = async (userData) => {
     try {
+      const postRegisterRedirect = userData.postRegisterRedirect;
       const firstName = userData.firstName || (userData.name || '').trim().split(' ')[0] || 'User';
       const lastName =
         userData.lastName ||
@@ -362,7 +363,13 @@ export const AuthProvider = ({ children }) => {
             // ignore storage errors
           }
         }
-        navigate('/verify-user-email');
+        if (postRegisterRedirect) {
+          navigate(postRegisterRedirect);
+        } else {
+          navigate('/verify-user-email');
+        }
+      } else if (postRegisterRedirect) {
+        navigate(postRegisterRedirect);
       }
       return { success: true, orgCode, mode: userData.mode, emailSent, verificationLink };
     } catch (error) {

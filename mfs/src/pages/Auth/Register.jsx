@@ -55,6 +55,11 @@ const Register = () => {
   const { register: registerUser } = useAuth();
   const [searchParams] = useSearchParams();
   const inviteCodeFromQuery = searchParams.get('invite') || '';
+  const planFromQuery = (searchParams.get('plan') || '').toLowerCase();
+  const cycleFromQuery = (searchParams.get('cycle') || 'monthly').toLowerCase();
+  const checkoutPlan = ['starter', 'pro'].includes(planFromQuery) ? planFromQuery : '';
+  const checkoutCycle = cycleFromQuery === 'annual' ? 'annual' : 'monthly';
+  const checkoutRedirect = checkoutPlan ? `/checkout?plan=${checkoutPlan}&cycle=${checkoutCycle}` : '';
   
   const [serverError, setServerError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -156,6 +161,7 @@ const Register = () => {
       department,
       password,
       role,
+      postRegisterRedirect: checkoutRedirect || undefined,
     });
 
     setLoading(false);
@@ -163,7 +169,25 @@ const Register = () => {
       const msg = result.error || 'Registration failed.';
       setServerError(msg);
       toast.error(msg);
-    } else if (submitMode === 'org' && result.orgCode) {
+    } else {
+      if (checkoutPlan) {
+        try {
+          const resolvedOrgCode = result.orgCode || orgCode?.toUpperCase() || '';
+          localStorage.setItem('pendingCheckout', JSON.stringify({
+            plan: checkoutPlan,
+            cycle: checkoutCycle,
+            email,
+            orgCode: resolvedOrgCode,
+            name: [firstName, lastName].filter(Boolean).join(' '),
+            createdAt: new Date().toISOString(),
+          }));
+        } catch (e) {
+          // ignore storage errors
+        }
+      }
+    }
+
+    if (submitMode === 'org' && result.orgCode) {
       setOrgCreatedCode(result.orgCode);
       toast.success(
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>

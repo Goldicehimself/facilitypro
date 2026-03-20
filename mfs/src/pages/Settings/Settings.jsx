@@ -5,8 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'react-toastify';
 import { useAuth } from '../../contexts/AuthContext';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
 import { formatCurrency } from '@/utils/formatters';
+import { PRICING_PLANS, ANNUAL_DISCOUNT } from '../../data/pricing';
 import {
   getOrgSettings,
   updateOrgSettings,
@@ -29,6 +31,8 @@ import OrgAdmin from '../Org/OrgAdmin';
 
 const Settings = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { theme, resolvedTheme, setTheme } = useTheme();
   const [activeTab, setActiveTab] = useState('general');
   const [hasChanges, setHasChanges] = useState(false);
@@ -134,7 +138,7 @@ const Settings = () => {
   const [billingCycle, setBillingCycle] = useState('monthly');
   const [seatCount, setSeatCount] = useState(5);
   const [seatsIncluded, setSeatsIncluded] = useState(5);
-  const [extraSeatPrice, setExtraSeatPrice] = useState(4);
+  const [extraSeatPrice, setExtraSeatPrice] = useState(4000);
   const [trialEndsAt, setTrialEndsAt] = useState(null);
   const [subscriptionStatus, setSubscriptionStatus] = useState('trialing');
   const [invoices] = useState([
@@ -142,19 +146,20 @@ const Settings = () => {
     { id: 'inv_000', date: '2026-01-01', amount: 39, status: 'paid' }
   ]);
 
-  const planPricing = {
-    starter: { monthly: 19, seatsIncluded: 5 },
-    pro: { monthly: 39, seatsIncluded: 10 },
-    enterprise: { monthly: 0, seatsIncluded: 0 }
-  };
-
-  const annualDiscount = 0.2;
+  const planPricing = PRICING_PLANS.reduce((acc, plan) => {
+    acc[plan.id] = {
+      monthly: plan.monthly,
+      seatsIncluded: plan.seatsIncluded,
+      extraSeatPrice: plan.extraSeatPrice,
+    };
+    return acc;
+  }, {});
   const includedSeats = planPricing[billingPlan]?.seatsIncluded ?? seatsIncluded;
   const baseMonthly = planPricing[billingPlan]?.monthly ?? 0;
   const extraSeats = Math.max(0, Number(seatCount || 0) - includedSeats);
   const extraMonthly = extraSeats * Number(extraSeatPrice || 0);
   const totalMonthly = baseMonthly + extraMonthly;
-  const totalAnnual = (baseMonthly * 12 * (1 - annualDiscount)) + (extraSeats * Number(extraSeatPrice || 0) * 12 * (1 - annualDiscount));
+  const totalAnnual = (baseMonthly * 12 * (1 - ANNUAL_DISCOUNT)) + (extraSeats * Number(extraSeatPrice || 0) * 12 * (1 - ANNUAL_DISCOUNT));
 
   const sessionTimeoutOptions = [
     { label: '30 minutes', minutes: 30 },
@@ -282,7 +287,7 @@ const Settings = () => {
         setBillingPlan(planFromSettings);
         setBillingCycle(billing.billingCycle || 'monthly');
         setSeatsIncluded(billing.seatsIncluded ?? (planPricing[planFromSettings]?.seatsIncluded || 5));
-        setExtraSeatPrice(billing.extraSeatPrice ?? 4);
+        setExtraSeatPrice(billing.extraSeatPrice ?? 4000);
         setSeatCount(billing.seatCount ?? (planPricing[planFromSettings]?.seatsIncluded || 5));
         setTrialEndsAt(billing.trialEndsAt || null);
         setSubscriptionStatus(billing.status || 'trialing');
@@ -511,6 +516,25 @@ const Settings = () => {
       toast.error('Failed to revoke API key.');
     }
   };
+
+  useEffect(() => {
+    const tab = (searchParams.get('tab') || '').trim().toLowerCase();
+    if (!tab) return;
+    const allowedTabs = new Set([
+      'general',
+      'security',
+      'users',
+      'company',
+      'notifications',
+      'integrations',
+      'billing',
+      'role-specific',
+      'help',
+    ]);
+    if (allowedTabs.has(tab)) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
 
   return (
     <div className="space-y-6">
@@ -1877,11 +1901,39 @@ const Settings = () => {
                         </p>
                       </div>
                     )}
-                    <div className="flex items-center gap-2">
-                      <Button variant="outline">Manage Billing</Button>
-                      <Button className="bg-blue-700 hover:bg-blue-800 text-white">Upgrade Plan</Button>
-                    </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">TODO: connect payment provider</p>
+                    {(() => {
+                      const upgradeLabel =
+                        billingPlan === 'starter'
+                          ? 'Upgrade to Pro'
+                          : billingPlan === 'pro'
+                            ? 'Upgrade to Enterprise'
+                            : 'Contact Sales';
+
+                      const upgradeTarget =
+                        billingPlan === 'starter'
+                          ? '/checkout?plan=pro&cycle=annual&returnTo=billing'
+                          : '/contact-sales';
+
+                      return (
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            onClick={() => navigate(`/checkout?plan=${billingPlan}&cycle=${billingCycle}&returnTo=billing`)}
+                          >
+                            Manage Billing
+                          </Button>
+                          <Button
+                            className="bg-blue-700 hover:bg-blue-800 text-white"
+                            onClick={() => navigate(upgradeTarget)}
+                          >
+                            {upgradeLabel}
+                          </Button>
+                        </div>
+                      );
+                    })()}
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Payments are handled securely through Paystack.
+                    </p>
                   </div>
                 </div>
 
@@ -1906,7 +1958,9 @@ const Settings = () => {
                       </div>
                     ))}
                   </div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">TODO: load invoices from billing provider</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
+                    Invoices are generated after successful Paystack payments.
+                  </p>
                 </div>
               </div>
             </div>
@@ -1952,6 +2006,3 @@ const Settings = () => {
 };
 
 export default Settings;
-
-
-

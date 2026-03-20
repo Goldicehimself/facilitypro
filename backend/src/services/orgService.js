@@ -58,9 +58,13 @@ const DEFAULT_SETTINGS = {
     billingCycle: 'monthly',
     seatsIncluded: 5,
     seatCount: 1,
-    extraSeatPrice: 4,
+    extraSeatPrice: 4000,
     trialEndsAt: null,
-    status: 'trialing'
+    status: 'trialing',
+    provider: null,
+    lastPaidAt: null,
+    lastPaymentReference: null,
+    lastPaymentAmount: null
   }
 };
 
