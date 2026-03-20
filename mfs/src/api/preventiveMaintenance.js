@@ -75,3 +75,8 @@ export const markMaintenancePerformed = async (id, notes = '') => {
   const response = await axiosInstance.patch(`/preventive-maintenance/${id}/perform`, { notes });
   return normalizeMaintenance(response.data?.data);
 };
+
+export const getComplianceMetrics = async (params = {}) => {
+  const response = await axiosInstance.get('/preventive-maintenance/compliance', { params });
+  return response.data?.data;
+};

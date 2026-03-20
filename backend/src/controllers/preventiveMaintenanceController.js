@@ -212,6 +212,22 @@ const markAsPerformed = async (req, res, next) => {
   }
 };
 
+const getComplianceMetrics = async (req, res, next) => {
+  try {
+    if (req.user?.role === constants.ROLES.TECHNICIAN) {
+      await ensureCertifiedTechnicianAccess(req.user.organization, req.user.id);
+    }
+    const { months, target } = req.query;
+    const metrics = await preventiveMaintenanceService.getComplianceMetrics(req.user.organization, {
+      months,
+      target
+    });
+    response.success(res, 'Preventive maintenance compliance retrieved successfully', metrics);
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getPreventiveMaintenances,
   getPreventiveMaintenanceById,
@@ -219,5 +235,6 @@ module.exports = {
   updatePreventiveMaintenance,
   deletePreventiveMaintenance,
   getUpcomingMaintenance,
-  markAsPerformed
+  markAsPerformed,
+  getComplianceMetrics
 };

@@ -22,7 +22,7 @@ import { Plus, Calendar, TrendingUp, AlertCircle, DownloadCloud, FilePlus, Clock
 import PMCalendar from '../../components/preventiveMaintenance/PMCalendar';
 import ComplianceChart from '../../components/preventiveMaintenance/ComplianceChart';
 import { useActivity } from '../../contexts/ActivityContext';
-import { getPreventiveMaintenances, getUpcomingMaintenance } from '../../api/preventiveMaintenance';
+import { getPreventiveMaintenances, getUpcomingMaintenance, getComplianceMetrics } from '../../api/preventiveMaintenance';
 import { formatCurrency } from '@/utils/formatters';
 
 const PreventiveMaintenance = () => {
@@ -32,6 +32,9 @@ const PreventiveMaintenance = () => {
   const { addActivity } = useActivity();
   const { data: maintData, isLoading } = useQuery(['preventiveMaintenances'], () =>
     getPreventiveMaintenances({ page: 1, limit: 200 })
+  );
+  const { data: complianceData } = useQuery(['preventiveMaintenances', 'compliance-metrics'], () =>
+    getComplianceMetrics({ months: 6 })
   );
   const { data: upcomingData } = useQuery(['preventiveMaintenances', 'upcoming'], () =>
     getUpcomingMaintenance(30)
@@ -264,7 +267,11 @@ const PreventiveMaintenance = () => {
                 </Button>
               </Box>
               <Divider sx={{ mb: 2.5 }} />
-              <ComplianceChart />
+              <ComplianceChart
+                data={complianceData?.trend}
+                equipment={complianceData?.equipment}
+                overdue={complianceData?.overdue}
+              />
             </CardContent>
           </Card>
         </Grid>

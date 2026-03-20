@@ -15,10 +15,16 @@ import {
 import { AlertCircle, CheckCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
-const ComplianceChart = ({ data = null }) => {
+const ComplianceChart = ({ data = null, equipment = null, overdue = null }) => {
   const chartData = useMemo(() => {
     return Array.isArray(data) ? data : [];
   }, [data]);
+  const equipmentData = useMemo(() => {
+    return Array.isArray(equipment) ? equipment : [];
+  }, [equipment]);
+  const overdueData = useMemo(() => {
+    return Array.isArray(overdue) ? overdue : [];
+  }, [overdue]);
 
   // Calculate statistics
   const stats = useMemo(() => {
@@ -197,9 +203,29 @@ const ComplianceChart = ({ data = null }) => {
           <h4 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-4">
             Compliance by Equipment
           </h4>
-          <div className="space-y-3 text-sm text-zinc-500 dark:text-zinc-400">
-            No equipment compliance data available yet.
-          </div>
+          {equipmentData.length === 0 ? (
+            <div className="space-y-3 text-sm text-zinc-500 dark:text-zinc-400">
+              No equipment compliance data available yet.
+            </div>
+          ) : (
+            <div className="space-y-3 text-sm">
+              {equipmentData.map((item) => (
+                <div key={item.assetId || item.name} className="flex items-center justify-between">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate">
+                      {item.name}
+                    </p>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                      {item.completed}/{item.total} completed
+                    </p>
+                  </div>
+                  <Badge className={item.compliance >= 90 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-100' : 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-100'}>
+                    {item.compliance}%
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Critical Alerts */}
@@ -208,9 +234,29 @@ const ComplianceChart = ({ data = null }) => {
             <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
             Overdue Tasks
           </h4>
-          <div className="space-y-3 text-sm text-zinc-500 dark:text-zinc-400">
-            No overdue task data available yet.
-          </div>
+          {overdueData.length === 0 ? (
+            <div className="space-y-3 text-sm text-zinc-500 dark:text-zinc-400">
+              No overdue task data available yet.
+            </div>
+          ) : (
+            <div className="space-y-3 text-sm">
+              {overdueData.map((task) => (
+                <div key={task.id || task.name} className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate">
+                      {task.name}
+                    </p>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
+                      {task.assetName} • {task.daysOverdue}d overdue
+                    </p>
+                  </div>
+                  <Badge className="bg-rose-100 text-rose-700 dark:bg-rose-900 dark:text-rose-100">
+                    {task.priority}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -5,6 +5,7 @@ const preventiveMaintenanceController = require('../controllers/preventiveMainte
 const { protect } = require('../middleware/auth');
 
 router.get('/', protect, preventiveMaintenanceController.getPreventiveMaintenances);
+router.get('/compliance', protect, preventiveMaintenanceController.getComplianceMetrics);
 router.get('/upcoming', protect, preventiveMaintenanceController.getUpcomingMaintenance);
 router.get('/:id', protect, preventiveMaintenanceController.getPreventiveMaintenanceById);
 router.post('/', protect, preventiveMaintenanceController.createPreventiveMaintenance);

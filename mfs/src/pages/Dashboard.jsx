@@ -12,6 +12,7 @@ import CostAnalysisChart from '../components/dashboard/Charts/CostAnalysisChart'
 
 // API
 import { getDashboardData } from '../api/dashboard';
+import { getComplianceMetrics } from '../api/preventiveMaintenance';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -34,6 +35,10 @@ const Dashboard = () => {
         toast.error('Failed to load dashboard data');
       }
     }
+  );
+  const { data: complianceMetrics } = useQuery(
+    ['preventiveMaintenances', 'compliance-metrics-dashboard'],
+    () => getComplianceMetrics({ months: 6 })
   );
   const [hasLoaded, setHasLoaded] = useState(false);
 
@@ -181,8 +186,8 @@ const Dashboard = () => {
   const safeDashboardData = dashboardData && typeof dashboardData === 'object'
     ? dashboardData
     : {};
-  const complianceTrend = Array.isArray(safeDashboardData.complianceTrend)
-    ? safeDashboardData.complianceTrend
+  const liveComplianceTrend = Array.isArray(complianceMetrics?.trend)
+    ? complianceMetrics.trend
     : [];
   const costAnalysis = Array.isArray(safeDashboardData.costAnalysis)
     ? safeDashboardData.costAnalysis
@@ -344,7 +349,11 @@ const Dashboard = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                <ComplianceChart data={complianceTrend} />
+                <ComplianceChart
+                  data={liveComplianceTrend}
+                  equipment={complianceMetrics?.equipment}
+                  overdue={complianceMetrics?.overdue}
+                />
               </CardContent>
             </Card>
 

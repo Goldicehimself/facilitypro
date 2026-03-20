@@ -4,7 +4,7 @@ import { useTheme } from '@mui/material/styles';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from 'react-query';
 import ComplianceChart from '../../components/preventiveMaintenance/ComplianceChart';
-import { getPreventiveMaintenances } from '../../api/preventiveMaintenance';
+import { getPreventiveMaintenances, getComplianceMetrics } from '../../api/preventiveMaintenance';
 
 const PMCompliance = () => {
   const theme = useTheme();
@@ -12,6 +12,9 @@ const PMCompliance = () => {
   const navigate = useNavigate();
   const { data: maintData } = useQuery(['preventiveMaintenances', 'compliance'], () =>
     getPreventiveMaintenances({ page: 1, limit: 200 })
+  );
+  const { data: complianceData } = useQuery(['preventiveMaintenances', 'compliance-metrics'], () =>
+    getComplianceMetrics({ months: 6 })
   );
   const summary = useMemo(() => {
     const list = Array.isArray(maintData)
@@ -68,7 +71,11 @@ const PMCompliance = () => {
                   Export Report
                 </Button>
               </Box>
-              <ComplianceChart />
+              <ComplianceChart
+                data={complianceData?.trend}
+                equipment={complianceData?.equipment}
+                overdue={complianceData?.overdue}
+              />
             </CardContent>
           </Card>
         </Grid>
