@@ -21,6 +21,9 @@ router.get('/', protect, async (req, res, next) => {
   try {
     const orgFilter = buildOrgFilter(req);
     const now = new Date();
+    const monthsCount = 6;
+    const start = new Date(now.getFullYear(), now.getMonth() - (monthsCount - 1), 1);
+    const end = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
     const openStatuses = [
       constants.WORK_ORDER_STATUS.OPEN,
@@ -36,7 +39,8 @@ router.get('/', protect, async (req, res, next) => {
       activeAssets,
       pmTotal,
       pmOnTime,
-      maintenanceTypeBuckets
+      maintenanceTypeBuckets,
+      costBuckets
     ] = await Promise.all([
       WorkOrder.countDocuments({ ...orgFilter, status: { $in: openStatuses } }),
       WorkOrder.countDocuments({
@@ -53,6 +57,37 @@ router.get('/', protect, async (req, res, next) => {
         { $group: { _id: '$maintenanceType', count: { $sum: 1 } } },
         { $sort: { count: -1 } },
         { $limit: 6 }
+      ]),
+      WorkOrder.aggregate([
+        {
+          $match: {
+            ...orgFilter,
+            createdAt: { $gte: start, $lt: end }
+          }
+        },
+        {
+          $project: {
+            maintenanceType: 1,
+            createdAt: 1,
+            cost: {
+              $cond: [
+                { $gt: ['$actualCost', 0] },
+                '$actualCost',
+                { $ifNull: ['$estimatedCost', 0] }
+              ]
+            }
+          }
+        },
+        {
+          $group: {
+            _id: {
+              year: { $year: '$createdAt' },
+              month: { $month: '$createdAt' },
+              type: '$maintenanceType'
+            },
+            total: { $sum: '$cost' }
+          }
+        }
       ])
     ]);
 
@@ -70,6 +105,44 @@ router.get('/', protect, async (req, res, next) => {
           { name: 'Emergency', count: 0, trend: 'up' }
         ];
 
+    const monthBuckets = Array.from({ length: monthsCount }, (_, index) => {
+      const date = new Date(start.getFullYear(), start.getMonth() + index, 1);
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      return {
+        key,
+        month: date.toLocaleString('en-US', { month: 'short' }),
+        year: date.getFullYear(),
+        preventive: 0,
+        corrective: 0,
+        emergency: 0,
+        total: 0
+      };
+    });
+
+    const bucketMap = new Map(monthBuckets.map((item) => [item.key, item]));
+    costBuckets.forEach((bucket) => {
+      const key = `${bucket._id.year}-${String(bucket._id.month).padStart(2, '0')}`;
+      const target = bucketMap.get(key);
+      if (!target) return;
+      const type = String(bucket._id.type || '').toLowerCase();
+      if (type === constants.MAINTENANCE_TYPE.PREVENTIVE) {
+        target.preventive += bucket.total;
+      } else if (type === constants.MAINTENANCE_TYPE.CORRECTIVE) {
+        target.corrective += bucket.total;
+      } else if (type === constants.MAINTENANCE_TYPE.EMERGENCY) {
+        target.emergency += bucket.total;
+      }
+      target.total += bucket.total;
+    });
+
+    const costAnalysis = monthBuckets.map((item) => ({
+      month: item.month,
+      preventive: Math.round(item.preventive || 0),
+      corrective: Math.round(item.corrective || 0),
+      emergency: Math.round(item.emergency || 0),
+      total: Math.round(item.total || 0)
+    }));
+
     response.success(res, 'Dashboard loaded', {
       openWorkOrders,
       overdueWorkOrders,
@@ -78,7 +151,7 @@ router.get('/', protect, async (req, res, next) => {
       activeAssets,
       vendorPerformance: 0,
       complianceTrend: null,
-      costAnalysis: null,
+      costAnalysis,
       serviceCategories
     });
   } catch (error) {
