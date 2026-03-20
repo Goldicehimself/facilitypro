@@ -250,7 +250,7 @@ const ensureDueSoonNotifications = async (user, days = 7) => {
       type: 'maintenance_due_soon',
       entityType: 'PreventiveMaintenance',
       entityId: maintenance._id,
-      link: `/preventive-maintenance/${maintenance._id}`,
+      link: '/preventive-maintenance',
       dedupeKey: `maintenance-due-${maintenance._id}`
     });
   }

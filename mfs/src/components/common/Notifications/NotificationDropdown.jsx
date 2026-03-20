@@ -68,7 +68,11 @@ const NotificationDropdown = () => {
     
     // Navigate if actionUrl is provided
     if (notification.actionUrl) {
-      navigate(notification.actionUrl);
+      if (notification.actionUrl.startsWith('/preventive-maintenance/')) {
+        navigate('/preventive-maintenance');
+      } else {
+        navigate(notification.actionUrl);
+      }
       setOpen(false);
     }
   };
