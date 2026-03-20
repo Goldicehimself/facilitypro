@@ -120,16 +120,14 @@ const Checkout = () => {
           } catch (e) {
             // ignore storage errors
           }
-          try {
-            await axiosInstance.post('/billing/verify', {
-              reference: response.reference,
-              orgCode,
-              plan: resolvedPlanId,
-              billingCycle,
-            }, { suppressToast: true });
-          } catch (e) {
+          axiosInstance.post('/billing/verify', {
+            reference: response.reference,
+            orgCode,
+            plan: resolvedPlanId,
+            billingCycle,
+          }, { suppressToast: true }).catch(() => {
             // ignore verification errors here; webhook will handle it
-          }
+          });
           const redirectTarget =
             returnTo === 'billing' ? '/settings?tab=billing' : '/login';
           setTimeout(() => navigate(redirectTarget), 1500);
