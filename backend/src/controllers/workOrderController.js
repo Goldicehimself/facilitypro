@@ -622,6 +622,20 @@ const addWorkOrderPhotos = async (req, res, next) => {
   }
 };
 
+const addWorkOrderAttachments = async (req, res, next) => {
+  try {
+    if (!req.files || req.files.length === 0) {
+      throw new ValidationError('At least one attachment is required');
+    }
+
+    const filePaths = req.files.map((file) => file.path);
+    const workOrder = await workOrderService.addWorkOrderAttachments(req.user.organization, req.params.id, filePaths);
+    response.success(res, 'Work order attachments uploaded successfully', workOrder);
+  } catch (error) {
+    next(error);
+  }
+};
+
 const uploadWorkOrderReceipts = async (req, res, next) => {
   try {
     if (!req.files || req.files.length === 0) {
@@ -684,6 +698,7 @@ module.exports = {
   deleteWorkOrder,
   addComment,
   addWorkOrderPhotos,
+  addWorkOrderAttachments,
   uploadWorkOrderReceipts,
   notifyWorkOrderUpdate
 };

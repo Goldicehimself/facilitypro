@@ -60,15 +60,20 @@ router.get('/', protect, async (req, res, next) => {
       ]),
       WorkOrder.aggregate([
         {
+          $addFields: {
+            costDate: { $ifNull: ['$completionDate', '$createdAt'] }
+          }
+        },
+        {
           $match: {
             ...orgFilter,
-            createdAt: { $gte: start, $lt: end }
+            costDate: { $gte: start, $lt: end }
           }
         },
         {
           $project: {
             maintenanceType: 1,
-            createdAt: 1,
+            costDate: 1,
             partsCost: {
               $sum: {
                 $map: {
@@ -116,8 +121,8 @@ router.get('/', protect, async (req, res, next) => {
         {
           $group: {
             _id: {
-              year: { $year: '$createdAt' },
-              month: { $month: '$createdAt' },
+              year: { $year: '$costDate' },
+              month: { $month: '$costDate' },
               type: '$maintenanceType'
             },
             total: { $sum: '$cost' }

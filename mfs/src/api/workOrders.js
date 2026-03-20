@@ -128,6 +128,25 @@ export const uploadWorkOrderReceipt = async (id, files) => {
   return response.data?.data;
 };
 
+export const uploadWorkOrderAttachments = async (id, files) => {
+  const formData = new FormData();
+  const fileList = Array.isArray(files) ? files : [files];
+  fileList.filter(Boolean).forEach((file) => {
+    formData.append('documents', file);
+  });
+
+  const response = await axiosInstance.post(
+    `/work-orders/${id}/attachments`,
+    formData,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    }
+  );
+  return response.data?.data;
+};
+
 export const notifyWorkOrderUpdate = async (id) => {
   const response = await axiosInstance.post(`/work-orders/${id}/notify`);
   return response.data?.data;

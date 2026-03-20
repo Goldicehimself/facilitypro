@@ -201,6 +201,22 @@ const addWorkOrderPhotos = async (organizationId, id, filePaths = []) => {
   return workOrder;
 };
 
+const addWorkOrderAttachments = async (organizationId, id, filePaths = []) => {
+  const workOrder = await WorkOrder.findOneAndUpdate(
+    { _id: id, organization: organizationId },
+    {
+      $addToSet: { attachments: { $each: filePaths } },
+      updatedAt: new Date()
+    },
+    { new: true, runValidators: true }
+  ).populate('createdBy assignedTo asset vendor');
+
+  if (!workOrder) {
+    throw new NotFoundError('WorkOrder');
+  }
+  return workOrder;
+};
+
 module.exports = {
   getWorkOrders,
   getWorkOrderById,
@@ -212,6 +228,7 @@ module.exports = {
   deleteWorkOrder,
   addComment,
   addWorkOrderPhotos,
+  addWorkOrderAttachments,
   generateWorkOrderNumber,
   getOverdueWorkOrders,
   markOverdueNotified

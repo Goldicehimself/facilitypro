@@ -146,10 +146,12 @@ export default function WorkOrderDetailView() {
       photos: [
         ...(Array.isArray(workOrder.photos) ? workOrder.photos : []),
         ...(Array.isArray(workOrder.photoUrls) ? workOrder.photoUrls : []),
-        ...(Array.isArray(workOrder.attachments) ? workOrder.attachments : []),
       ]
         .map((item) => (typeof item === "string" ? { url: item } : item))
         .filter((item) => item && item.url),
+      attachments: (Array.isArray(workOrder.attachments) ? workOrder.attachments : []).map((item) =>
+        typeof item === "string" ? { url: item } : item
+      ),
       comments: (workOrder.comments || []).map((c) => {
         if (c.user || c.text) return c;
         return {
@@ -262,6 +264,33 @@ export default function WorkOrderDetailView() {
             Delete
           </Button>
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+              Files
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm text-slate-600 dark:text-slate-300">
+            {normalized.attachments.length === 0 ? (
+              <p className="text-sm text-slate-500">No files attached.</p>
+            ) : (
+              normalized.attachments.map((file, index) => (
+                <a
+                  key={`${file.url}-${index}`}
+                  href={file.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="block rounded-md border border-slate-200 p-3 text-slate-700 hover:border-indigo-300 hover:text-indigo-700 dark:border-slate-700 dark:text-slate-200"
+                >
+                  {file.name || file.url?.split('/').pop() || `Attachment ${index + 1}`}
+                </a>
+              ))
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -413,12 +442,12 @@ export default function WorkOrderDetailView() {
         <Card>
           <CardHeader className="pb-2">
             <div className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-              Attachments
+              Photos
             </div>
           </CardHeader>
           <CardContent>
             {normalized.photos.length === 0 ? (
-              <p className="text-sm text-slate-500">No attachments.</p>
+              <p className="text-sm text-slate-500">No photos.</p>
             ) : (
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {normalized.photos.map((photo, index) => (
@@ -431,7 +460,7 @@ export default function WorkOrderDetailView() {
                   >
                     <ProtectedImage
                       src={photo.url}
-                      alt={`attachment-${index}`}
+                      alt={`photo-${index}`}
                       className="h-28 w-full object-cover"
                     />
                   </motion.div>

@@ -4,7 +4,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { createWorkOrder } from '../../api/workOrders';
+import { createWorkOrder, uploadWorkOrderPhoto, uploadWorkOrderAttachments } from '../../api/workOrders';
 import { fetchMembers } from '../../api/org';
 import { useQuery, useQueryClient } from 'react-query';
 import { getAssets } from '../../api/assets';
@@ -94,7 +94,23 @@ export default function WorkOrderForm() {
       photos,
     };
     try {
-      await createWorkOrder(payload);
+      const created = await createWorkOrder(payload);
+      const imageFiles = fileItems.filter((item) => item.isImage && item.file).map((item) => item.file);
+      const attachmentFiles = fileItems.filter((item) => !item.isImage && item.file).map((item) => item.file);
+      if (created?.id && imageFiles.length) {
+        try {
+          await uploadWorkOrderPhoto(created.id, imageFiles);
+        } catch (err) {
+          // Non-blocking: work order is created even if uploads fail
+        }
+      }
+      if (created?.id && attachmentFiles.length) {
+        try {
+          await uploadWorkOrderAttachments(created.id, attachmentFiles);
+        } catch (err) {
+          // Non-blocking: work order is created even if uploads fail
+        }
+      }
       queryClient.invalidateQueries('workOrders');
       toast.success('Work order created successfully');
       navigate('/work-orders');
