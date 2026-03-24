@@ -8,14 +8,17 @@ const normalizeVendor = (vendor) => {
   };
 };
 
-export async function fetchVendors() {
-  const response = await axiosInstance.get('/vendors');
+export async function fetchVendors(params = {}) {
+  const response = await axiosInstance.get('/vendors', { params, suppressToast: true });
   const payload = response.data?.data;
-  if (Array.isArray(payload)) return payload.map(normalizeVendor);
+  if (Array.isArray(payload)) {
+    const vendors = payload.map(normalizeVendor);
+    return { vendors, pagination: { total: vendors.length, page: 1, limit: vendors.length, totalPages: 1 } };
+  }
   if (Array.isArray(payload?.vendors)) {
     return { ...payload, vendors: payload.vendors.map(normalizeVendor) };
   }
-  return payload;
+  return { vendors: [], pagination: { total: 0, page: 1, limit: params.limit || 20, totalPages: 1 } };
 }
 
 export async function getVendorById(id) {

@@ -21,7 +21,16 @@ const VendorsPage = () => {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
 
-  const { data: vendorsResponse = [], isLoading } = useQuery('vendors', fetchVendors);
+  const { data: vendorsResponse = {}, isLoading } = useQuery(
+    ['vendors', { page, pageSize, searchTerm, selectedCategory, sortBy }],
+    () => fetchVendors({
+      page,
+      limit: pageSize,
+      search: searchTerm || undefined,
+      category: selectedCategory === 'All Categories' ? undefined : selectedCategory,
+      sort: sortBy
+    })
+  );
   const { data: vendorAnalytics } = useQuery(['vendor-analytics', 30], () => fetchVendorAnalytics(30));
   const [hasLoaded, setHasLoaded] = useState(false);
 
@@ -30,11 +39,7 @@ const VendorsPage = () => {
   }, [isLoading]);
 
   const vendors = useMemo(() => {
-    const list = Array.isArray(vendorsResponse)
-      ? vendorsResponse
-      : Array.isArray(vendorsResponse?.vendors)
-        ? vendorsResponse.vendors
-        : [];
+    const list = Array.isArray(vendorsResponse?.vendors) ? vendorsResponse.vendors : [];
     const now = new Date();
     return list.map((vendor) => {
       const start = vendor.contractStartDate ? new Date(vendor.contractStartDate) : null;
@@ -66,40 +71,11 @@ const VendorsPage = () => {
   }, [vendors]);
 
   // Filter and sort vendors
-  const filteredVendors = useMemo(() => {
-    let result = vendors;
-
-    // Filter by search term
-    if (searchTerm) {
-      const search = searchTerm.toLowerCase();
-      result = result.filter(
-        (v) =>
-          v.name.toLowerCase().includes(search) ||
-          v.email.toLowerCase().includes(search) ||
-          v.phone.includes(search)
-      );
-    }
-
-    // Filter by category
-    if (selectedCategory !== 'All Categories') {
-      result = result.filter((v) => v.category === selectedCategory);
-    }
-
-    // Sort
-    if (sortBy === 'rating') {
-      result = result.sort((a, b) => b.rating - a.rating);
-    } else if (sortBy === 'spend') {
-      result = result.sort((a, b) => b.monthlySpend - a.monthlySpend);
-    } else {
-      result = result.sort((a, b) => a.name.localeCompare(b.name));
-    }
-
-    return result;
-  }, [vendors, searchTerm, selectedCategory, sortBy]);
+  const filteredVendors = useMemo(() => vendors, [vendors]);
 
   useEffect(() => {
     setPage(1);
-  }, [searchTerm, selectedCategory, sortBy, pageSize, vendors.length]);
+  }, [searchTerm, selectedCategory, sortBy, pageSize]);
 
   useEffect(() => {
     const searchParam = searchParams.get('search');
@@ -109,11 +85,10 @@ const VendorsPage = () => {
     }
   }, [searchParams]);
 
-  const totalItems = filteredVendors.length;
-  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
-  const currentPage = Math.min(page, totalPages);
-  const startIndex = (currentPage - 1) * pageSize;
-  const paginatedVendors = filteredVendors.slice(startIndex, startIndex + pageSize);
+  const totalItems = vendorsResponse?.pagination?.total || vendors.length;
+  const totalPages = vendorsResponse?.pagination?.totalPages || 1;
+  const currentPage = vendorsResponse?.pagination?.page || page;
+  const paginatedVendors = vendors;
 
   // Calculate KPI stats
   const stats = useMemo(() => {

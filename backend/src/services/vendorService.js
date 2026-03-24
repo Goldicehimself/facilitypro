@@ -2,14 +2,27 @@
 const Vendor = require('../models/Vendor');
 const { NotFoundError } = require('../utils/errorHandler');
 
-const getVendors = async (organizationId, filters = {}, page = 1, limit = 20) => {
+const getVendors = async (organizationId, filters = {}, page = 1, limit = 20, sort = 'name') => {
   const skip = (page - 1) * limit;
   const scopedFilters = { ...filters, organization: organizationId };
+
+  if (filters.search) {
+    const regex = new RegExp(filters.search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+    scopedFilters.$or = [{ name: regex }, { email: regex }, { phone: regex }];
+    delete scopedFilters.search;
+  }
+
+  const sortMap = {
+    rating: { rating: -1 },
+    spend: { monthlySpend: -1 },
+    name: { name: 1 }
+  };
+  const sortValue = sortMap[sort] || sortMap.name;
   
   const query = Vendor.find(scopedFilters)
     .skip(skip)
     .limit(limit)
-    .sort({ name: 1 });
+    .sort(sortValue);
 
   const [vendors, total] = await Promise.all([
     query.exec(),

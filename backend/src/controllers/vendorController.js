@@ -5,14 +5,21 @@ const response = require('../utils/response');
 
 const getVendors = async (req, res, next) => {
   try {
-    const { page = 1, limit = 20, category, active } = req.query;
+    const { page = 1, limit = 20, category, active, search, sort = 'name' } = req.query;
     const filters = {};
     const organizationId = req.user.organization;
     
     if (category) filters.category = category;
     if (active !== undefined) filters.active = active === 'true';
+    if (search) filters.search = search;
 
-    const result = await vendorService.getVendors(organizationId, filters, parseInt(page), parseInt(limit));
+    const result = await vendorService.getVendors(
+      organizationId,
+      filters,
+      parseInt(page),
+      parseInt(limit),
+      sort
+    );
     response.success(res, 'Vendors retrieved successfully', result);
   } catch (error) {
     next(error);
