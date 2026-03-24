@@ -11,9 +11,10 @@ import {
   Settings,
   MoreVertical,
   Edit,
-  Eye
+  Eye,
+  Plus
 } from 'lucide-react';
-import { getInventoryItems, getInventorySummary, updateInventoryItem } from '../../api/inventory';
+import { getInventoryItems, getInventorySummary, updateInventoryItem, createInventoryItem } from '../../api/inventory';
 import { formatCurrency } from '@/utils/formatters';
 
 const Inventory = () => {
@@ -27,8 +28,19 @@ const Inventory = () => {
   const [locationFilter, setLocationFilter] = useState('all');
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [editForm, setEditForm] = useState({});
+  const [createForm, setCreateForm] = useState({
+    item: '',
+    partNumber: '',
+    category: '',
+    location: '',
+    currentStock: 0,
+    reorderPoint: 0,
+    unitCost: 0,
+    status: 'in-stock'
+  });
 
   const { data } = useQuery(
     ['inventory', { currentPage, itemsPerPage, searchTerm, statusFilter, categoryFilter, locationFilter }],
@@ -75,6 +87,13 @@ const Inventory = () => {
     }
   });
 
+  const createMutation = useMutation((payload) => createInventoryItem(payload), {
+    onSuccess: () => {
+      queryClient.invalidateQueries('inventory');
+      queryClient.invalidateQueries('inventorySummary');
+    }
+  });
+
   const handleEdit = (item) => {
     setSelectedItem(item);
     setEditForm({
@@ -114,8 +133,19 @@ const Inventory = () => {
   const handleCloseModals = () => {
     setViewModalOpen(false);
     setEditModalOpen(false);
+    setCreateModalOpen(false);
     setSelectedItem(null);
     setEditForm({});
+    setCreateForm({
+      item: '',
+      partNumber: '',
+      category: '',
+      location: '',
+      currentStock: 0,
+      reorderPoint: 0,
+      unitCost: 0,
+      status: 'in-stock'
+    });
   };
 
   const getStatusIcon = (status) => {
@@ -155,6 +185,21 @@ const Inventory = () => {
       default:
         return 'bg-gray-100 text-gray-800 dark:bg-zinc-800 dark:text-zinc-200';
     }
+  };
+
+  const handleCreate = async () => {
+    if (!createForm.item.trim()) return;
+    await createMutation.mutateAsync({
+      item: createForm.item.trim(),
+      partNumber: createForm.partNumber || undefined,
+      category: createForm.category || undefined,
+      location: createForm.location || undefined,
+      currentStock: Number(createForm.currentStock) || 0,
+      reorderPoint: Number(createForm.reorderPoint) || 0,
+      unitCost: Number(createForm.unitCost) || 0,
+      status: createForm.status || 'in-stock'
+    });
+    handleCloseModals();
   };
 
   return (
@@ -238,6 +283,13 @@ const Inventory = () => {
             </div>
 
             <div className="flex gap-3">
+              <button
+                onClick={() => setCreateModalOpen(true)}
+                className="px-4 py-2 rounded-lg bg-blue-700 text-white font-medium hover:bg-blue-800 shadow-sm hover:shadow-md transition-all duration-200 active:scale-95 flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Add Item
+              </button>
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
@@ -374,7 +426,7 @@ const Inventory = () => {
 
           {/* Pagination Info */}
           <div className="flex items-center justify-between mt-6 pt-6 border-t dark:border-zinc-700">
-            <p className="text-gray-600 dark:text-zinc-400">Rows per page: {itemsPerPage} v</p>
+            <p className="text-gray-600 dark:text-zinc-400">Rows per page: {itemsPerPage}</p>
             <div className="flex gap-2">
               <button
                 onClick={() => handlePageChange(currentPage - 1)}
@@ -426,6 +478,109 @@ const Inventory = () => {
         </div>
       </div>
     </div>
+    {createModalOpen && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+        <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-xl w-full max-w-2xl p-6 border border-gray-200 dark:border-zinc-700">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-zinc-100">Add Inventory Item</h3>
+            <button
+              onClick={handleCloseModals}
+              className="text-gray-500 hover:text-gray-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+            >
+              ✕
+            </button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-1">Item Name</label>
+              <input
+                value={createForm.item}
+                onChange={(e) => setCreateForm((f) => ({ ...f, item: e.target.value }))}
+                className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 border-gray-300 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-1">Part Number</label>
+              <input
+                value={createForm.partNumber}
+                onChange={(e) => setCreateForm((f) => ({ ...f, partNumber: e.target.value }))}
+                className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 border-gray-300 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-1">Category</label>
+              <input
+                value={createForm.category}
+                onChange={(e) => setCreateForm((f) => ({ ...f, category: e.target.value }))}
+                className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 border-gray-300 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-1">Location</label>
+              <input
+                value={createForm.location}
+                onChange={(e) => setCreateForm((f) => ({ ...f, location: e.target.value }))}
+                className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 border-gray-300 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-1">Current Stock</label>
+              <input
+                type="number"
+                value={createForm.currentStock}
+                onChange={(e) => setCreateForm((f) => ({ ...f, currentStock: e.target.value }))}
+                className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 border-gray-300 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-1">Reorder Point</label>
+              <input
+                type="number"
+                value={createForm.reorderPoint}
+                onChange={(e) => setCreateForm((f) => ({ ...f, reorderPoint: e.target.value }))}
+                className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 border-gray-300 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-1">Unit Cost</label>
+              <input
+                type="number"
+                value={createForm.unitCost}
+                onChange={(e) => setCreateForm((f) => ({ ...f, unitCost: e.target.value }))}
+                className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 border-gray-300 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-1">Status</label>
+              <select
+                value={createForm.status}
+                onChange={(e) => setCreateForm((f) => ({ ...f, status: e.target.value }))}
+                className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 border-gray-300 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="in-stock">In Stock</option>
+                <option value="low-stock">Low Stock</option>
+                <option value="out-of-stock">Out of Stock</option>
+              </select>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 mt-6">
+            <button
+              onClick={handleCloseModals}
+              className="px-4 py-2 border border-gray-300 dark:border-zinc-700 rounded-lg text-gray-700 dark:text-zinc-200 hover:bg-gray-100 dark:hover:bg-zinc-800"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleCreate}
+              disabled={createMutation.isLoading}
+              className="px-4 py-2 rounded-lg bg-blue-700 text-white hover:bg-blue-800 disabled:opacity-60"
+            >
+              {createMutation.isLoading ? 'Saving...' : 'Save Item'}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
   );
 };
 

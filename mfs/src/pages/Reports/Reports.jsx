@@ -42,7 +42,7 @@ import {
   AlertCircle,
   CheckCircle,
   Clock,
-  DollarSign,
+  Banknote,
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { fetchReports, exportReport, fetchReportWarnings } from '../../api/reports';
@@ -342,7 +342,7 @@ const ReportsPage = () => {
                   </Typography>
                 </Box>
                 <Avatar sx={{ bgcolor: '#d9770620', width: 42, height: 42, color: '#d97706' }}>
-                  <DollarSign size={18} />
+                  <Banknote size={18} />
                 </Avatar>
               </Box>
               <Divider sx={{ my: 1.5 }} />
@@ -416,7 +416,7 @@ const ReportsPage = () => {
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Avatar sx={{ bgcolor: '#d9770620', color: '#d97706', width: 36, height: 36 }}>
-                    <DollarSign size={16} />
+                    <Banknote size={16} />
                   </Avatar>
                   <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.primary', fontSize: '0.95rem' }}>Cost Breakdown</Typography>
                 </Box>
