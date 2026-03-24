@@ -96,6 +96,14 @@ const registerOrganization = async ({
     status: 'pending'
   });
 
+  const trialEndsAt = new Date(Date.now() + constants.TRIAL_DAYS * 24 * 60 * 60 * 1000);
+  organization.settings = organization.settings || {};
+  organization.settings.billing = {
+    ...(organization.settings.billing || {}),
+    trialEndsAt,
+    status: 'trialing'
+  };
+
   await organization.save();
 
   const user = new User({

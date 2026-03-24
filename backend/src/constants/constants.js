@@ -89,5 +89,7 @@ module.exports = {
     'workorder.status_changed',
     'workorder.overdue',
     'pm.due'
-  ]
+  ],
+
+  TRIAL_DAYS: 14
 };

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { AlertCircle, Clock } from 'lucide-react';
 import { toast } from 'react-toastify';
 
@@ -114,22 +114,37 @@ const LeaveCenter = () => {
     }
   };
 
+  const loadLeaves = useCallback(async (activeRef) => {
+    setLoading(true);
+    try {
+      const [myLeaves, pending] = await Promise.all([
+        fetchMyLeaves(),
+        user && ['facility_manager', 'admin'].includes(user.role) ? fetchPendingLeaves() : Promise.resolve([]),
+      ]);
+      if (activeRef && !activeRef.current) return;
+      setLeaveRequests(Array.isArray(myLeaves) ? myLeaves : []);
+      setPendingApprovals(Array.isArray(pending) ? pending : []);
+    } finally {
+      if (activeRef && !activeRef.current) return;
+      setLoading(false);
+    }
+  }, [user]);
+
   useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      try {
-        const [myLeaves, pending] = await Promise.all([
-          fetchMyLeaves(),
-          user && ['facility_manager', 'admin'].includes(user.role) ? fetchPendingLeaves() : Promise.resolve([]),
-        ]);
-        setLeaveRequests(Array.isArray(myLeaves) ? myLeaves : []);
-        setPendingApprovals(Array.isArray(pending) ? pending : []);
-      } finally {
-        setLoading(false);
+    const activeRef = { current: true };
+    loadLeaves(activeRef);
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        loadLeaves(activeRef);
       }
     };
-    load();
-  }, [user]);
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      activeRef.current = false;
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [loadLeaves]);
 
   const canApprove = useMemo(() => user && ['facility_manager', 'admin'].includes(user.role), [user]);
 
@@ -142,6 +157,8 @@ const LeaveCenter = () => {
       toast.success('Leave approved');
       setPendingApprovals((prev) => prev.filter((item) => item._id !== request._id));
       setDecisionNotes((prev) => ({ ...prev, [request._id]: '' }));
+      const refreshed = await fetchMyLeaves();
+      setLeaveRequests(Array.isArray(refreshed) ? refreshed : []);
     } catch (error) {
       // handled by interceptor
     }
@@ -150,10 +167,16 @@ const LeaveCenter = () => {
   const handleReject = async (request) => {
     try {
       const note = decisionNotes[request._id] || '';
+      if (!note.trim()) {
+        toast.error('Rejection note is required.');
+        return;
+      }
       await rejectLeave(request._id, note);
       toast.success('Leave rejected');
       setPendingApprovals((prev) => prev.filter((item) => item._id !== request._id));
       setDecisionNotes((prev) => ({ ...prev, [request._id]: '' }));
+      const refreshed = await fetchMyLeaves();
+      setLeaveRequests(Array.isArray(refreshed) ? refreshed : []);
     } catch (error) {
       // handled by interceptor
     }
@@ -166,6 +189,11 @@ const LeaveCenter = () => {
         <p className="text-gray-600 dark:text-gray-400">
           Submit leave requests, track progress, and see updates from your manager.
         </p>
+        <div className="mt-3">
+          <Button variant="outline" size="sm" onClick={() => loadLeaves()}>
+            Refresh
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">

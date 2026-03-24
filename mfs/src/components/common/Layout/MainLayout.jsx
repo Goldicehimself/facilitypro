@@ -5,6 +5,7 @@ import { useAuth } from "../../../contexts/AuthContext";
 import { getWorkOrders } from "../../../api/workOrders";
 import { getAssets } from "../../../api/assets";
 import { fetchVendors } from "../../../api/vendors";
+import { getOrgSettings } from "../../../api/org";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -30,6 +31,7 @@ const MainLayout = ({ children }) => {
     assets: [],
     vendors: []
   });
+  const [trialDaysRemaining, setTrialDaysRemaining] = useState(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     const saved = localStorage.getItem("mp_sidebar_collapsed");
     return saved === "true";
@@ -94,6 +96,40 @@ const MainLayout = ({ children }) => {
       clearTimeout(timer);
     };
   }, [globalSearch]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadTrial = async () => {
+      if (!['admin', 'facility_manager'].includes(user?.role)) {
+        if (isMounted) setTrialDaysRemaining(null);
+        return;
+      }
+      try {
+        const response = await getOrgSettings();
+        const settings = response?.settings || response || {};
+        const billing = settings?.billing || {};
+        const trialEndsAt = billing?.trialEndsAt;
+        const status = billing?.status || 'trialing';
+        if (!trialEndsAt || status !== 'trialing') {
+          if (isMounted) setTrialDaysRemaining(null);
+          return;
+        }
+        const diffMs = new Date(trialEndsAt).getTime() - Date.now();
+        const days = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+        if (days < 0) {
+          if (isMounted) setTrialDaysRemaining(null);
+          return;
+        }
+        if (isMounted) setTrialDaysRemaining(days);
+      } catch (e) {
+        if (isMounted) setTrialDaysRemaining(null);
+      }
+    };
+    loadTrial();
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.role]);
 
   const getRoleDisplay = (role) => {
     const roles = {
@@ -259,6 +295,14 @@ const MainLayout = ({ children }) => {
 
         {/* Right: Notifications + User */}
         <div className="flex items-center gap-3 relative">
+          {trialDaysRemaining !== null && (
+            <div className="flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-900">
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+              {trialDaysRemaining === 0
+                ? 'Trial ends today'
+                : `Trial: ${trialDaysRemaining} days left`}
+            </div>
+          )}
           {/* Notifications */}
           <NotificationDropdown />
 

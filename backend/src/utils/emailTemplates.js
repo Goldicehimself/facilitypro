@@ -3,9 +3,32 @@ const fs = require('fs');
 const path = require('path');
 const logger = require('./logger');
 
+const resolveTemplateDir = (rawPath) => {
+  if (!rawPath) return null;
+  if (path.isAbsolute(rawPath)) {
+    return rawPath;
+  }
+
+  const trimmed = rawPath.replace(/^([./\\])+/, '');
+  const withoutBackendPrefix = trimmed.replace(/^backend[\\/]/, '');
+
+  const candidates = [
+    path.resolve(process.cwd(), rawPath),
+    path.resolve(process.cwd(), trimmed),
+    path.resolve(__dirname, '../../../', rawPath),
+    path.resolve(__dirname, '../../../', trimmed),
+    path.resolve(__dirname, '../../../', withoutBackendPrefix),
+    path.resolve(__dirname, '../../../../', rawPath),
+    path.resolve(__dirname, '../../../../', trimmed),
+    path.resolve(__dirname, '../../../../', withoutBackendPrefix)
+  ];
+
+  return candidates.find((candidate) => fs.existsSync(candidate)) || candidates[0];
+};
+
 const getTemplatesDir = () => {
   if (process.env.EMAIL_TEMPLATES_DIR) {
-    return process.env.EMAIL_TEMPLATES_DIR;
+    return resolveTemplateDir(process.env.EMAIL_TEMPLATES_DIR);
   }
   return path.resolve(__dirname, '../../../public/email-templates');
 };

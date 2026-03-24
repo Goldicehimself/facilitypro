@@ -40,6 +40,9 @@ const shouldSendInAppNotification = async (organizationId, userId, notificationT
       'workorder_due_soon': settings.notifyWoOverdue, // Map due soon to overdue setting
       'maintenance_due_soon': settings.notifyPmDue,
       'service_request_created': settings.notifyWoCreated, // Map to work order created for now
+      'leave_request_submitted': true,
+      'leave_approved': true,
+      'leave_rejected': true,
       'technician_message': true, // Always allow admin messages
       'admin_reply': true // Always allow admin replies
     };

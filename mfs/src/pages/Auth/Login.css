@@ -266,3 +266,33 @@
     gap: 10px;
   }
 }
+@media (max-width: 640px) {
+  .auth-page {
+    align-items: flex-start;
+    padding: 20px 14px 28px;
+  }
+
+  .auth-card {
+    border-radius: 14px;
+    box-shadow: 0 16px 32px rgba(15, 23, 42, 0.08);
+  }
+
+  .auth-brand {
+    margin-bottom: 12px;
+  }
+
+  .auth-logo-mark {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+  }
+
+  .auth-header {
+    margin-bottom: 16px;
+  }
+
+  .auth-header h1 {
+    font-size: 20px;
+  }
+}
+

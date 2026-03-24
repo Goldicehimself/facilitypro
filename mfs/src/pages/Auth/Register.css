@@ -85,3 +85,10 @@
   color: #475569;
   margin-top: 2px;
 }
+@media (max-width: 360px) {
+  .auth-tabs {
+    grid-template-columns: 1fr;
+  }
+}
+
+

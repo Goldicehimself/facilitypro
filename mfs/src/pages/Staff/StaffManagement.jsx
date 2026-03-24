@@ -162,6 +162,7 @@ export default function StaffManagement() {
   const [managementView, setManagementView] = useState('staff');
   const [leaveRequests, setLeaveRequests] = useState([]);
   const [pendingLeaveRequests, setPendingLeaveRequests] = useState([]);
+  const [approvedLeaves, setApprovedLeaves] = useState([]);
   const [leaveFilters, setLeaveFilters] = useState({
     status: 'all',
     type: 'all',
@@ -192,12 +193,33 @@ export default function StaffManagement() {
       } catch (error) {
         if (active) setWorkOrders([]);
       }
+      try {
+        const approved = await fetchAllLeaves({ status: 'approved' });
+        if (active) setApprovedLeaves(Array.isArray(approved) ? approved : []);
+      } catch (error) {
+        if (active) setApprovedLeaves([]);
+      }
     };
     load();
     return () => {
       active = false;
     };
   }, []);
+
+  const onLeaveStaffIds = useMemo(() => {
+    const now = new Date();
+    return new Set(
+      approvedLeaves
+        .filter((leave) => {
+          const start = leave.startDate ? new Date(leave.startDate) : null;
+          const end = leave.endDate ? new Date(leave.endDate) : null;
+          if (!start || !end || Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return false;
+          return start <= now && now <= end;
+        })
+        .map((leave) => leave.staff?._id || leave.staff?.id || leave.staff)
+        .filter(Boolean)
+    );
+  }, [approvedLeaves]);
 
   const normalizedStaff = useMemo(() => {
     return staffMembers.map((member) => {
@@ -227,7 +249,7 @@ export default function StaffManagement() {
         name,
         role: member.role || 'staff',
         department: member.department || 'General',
-        status: member.active === false ? 'on_leave' : 'active',
+        status: onLeaveStaffIds.has(id) ? 'on_leave' : (member.active === false ? 'inactive' : 'active'),
         avatar: member.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name)}`,
         email: member.email || '—',
         phone: member.phone || '—',
@@ -243,7 +265,7 @@ export default function StaffManagement() {
         joinDate: member.createdAt
       };
     });
-  }, [staffMembers]);
+  }, [staffMembers, onLeaveStaffIds]);
 
   const kpi = useMemo(() => {
     const totalStaff = normalizedStaff.length;
@@ -356,7 +378,7 @@ export default function StaffManagement() {
   const loadLeaves = async () => {
     setLeaveLoading(true);
     try {
-      const [pending, all] = await Promise.all([
+      const [pending, all, approved] = await Promise.all([
         fetchPendingLeaves(),
         fetchAllLeaves({
           status: leaveFilters.status !== 'all' ? leaveFilters.status : undefined,
@@ -365,9 +387,11 @@ export default function StaffManagement() {
           from: leaveFilters.from || undefined,
           to: leaveFilters.to || undefined,
         }),
+        fetchAllLeaves({ status: 'approved' }),
       ]);
       setPendingLeaveRequests(Array.isArray(pending) ? pending : []);
       setLeaveRequests(Array.isArray(all) ? all : []);
+      setApprovedLeaves(Array.isArray(approved) ? approved : []);
     } catch (error) {
       // handled by interceptor
     } finally {
@@ -396,6 +420,10 @@ export default function StaffManagement() {
   const handleRejectLeave = async (request) => {
     try {
       const note = decisionNotes[request._id] || '';
+      if (!note.trim()) {
+        toast.error('Rejection note is required.');
+        return;
+      }
       await rejectLeave(request._id, note);
       toast.success('Leave rejected');
       setPendingLeaveRequests((prev) => prev.filter((r) => r._id !== request._id));
@@ -630,6 +658,9 @@ export default function StaffManagement() {
                     </div>
                     <p className="text-xs text-gray-600 dark:text-gray-400">
                       {formatDate(request.startDate)} - {formatDate(request.endDate)}
+                    </p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                      Reason: {request.reason || '—'}
                     </p>
                     <div>
                       <label className="text-xs font-medium text-gray-600 dark:text-gray-300">
@@ -1212,4 +1243,5 @@ export default function StaffManagement() {
     </div>
   );
 }
+
 

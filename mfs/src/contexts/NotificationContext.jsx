@@ -19,18 +19,23 @@ export const useNotifications = () => {
 export const NotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [locallyReadIds, setLocallyReadIds] = useState(() => new Set());
 
   const normalizeNotifications = (items = []) =>
-    items.map((n) => ({
-      id: n._id || n.id,
-      type: n.type,
-      title: n.title,
-      message: n.message,
-      timestamp: n.createdAt || n.timestamp,
-      read: !!n.read,
-      actionUrl: n.link || n.actionUrl,
-      metadata: n.metadata || {}
-    }));
+    items.map((n) => {
+      const id = n._id || n.id;
+      const locallyRead = locallyReadIds.has(id);
+      return {
+        id,
+        type: n.type,
+        title: n.title,
+        message: n.message,
+        timestamp: n.createdAt || n.timestamp,
+        read: locallyRead ? true : !!n.read,
+        actionUrl: n.link || n.actionUrl,
+        metadata: n.metadata || {}
+      };
+    });
 
   const refreshNotifications = useCallback(async () => {
     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
@@ -47,7 +52,7 @@ export const NotificationProvider = ({ children }) => {
     } catch (error) {
       // Silently ignore to avoid noise
     }
-  }, []);
+  }, [locallyReadIds]);
 
   useEffect(() => {
     refreshNotifications();
@@ -65,6 +70,7 @@ export const NotificationProvider = ({ children }) => {
       // ignore
     }
 
+    setLocallyReadIds(prev => new Set(prev).add(id));
     setNotifications(prev =>
       prev.map(notification =>
         notification.id === id ? { ...notification, read: true } : notification
@@ -83,6 +89,11 @@ export const NotificationProvider = ({ children }) => {
       // ignore
     }
 
+    setLocallyReadIds(prev => {
+      const next = new Set(prev);
+      notifications.forEach((n) => next.add(n.id));
+      return next;
+    });
     setNotifications(prev =>
       prev.map(notification => ({ ...notification, read: true }))
     );

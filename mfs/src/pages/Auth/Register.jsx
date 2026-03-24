@@ -234,7 +234,7 @@ const Register = () => {
 
         <div className="auth-header">
           <h1>Create Account</h1>
-          <p>Join our facility management platform to get started</p>
+          <p>Start your 14-day free trial or join your team in minutes.</p>
         </div>
 
         {serverError && <div className="auth-error">{serverError}</div>}

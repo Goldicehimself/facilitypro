@@ -7,6 +7,7 @@ export const PRICING_PLANS = [
     monthly: 19000,
     description: 'For small teams getting started',
     features: [
+      '14-day free trial',
       '5 seats included',
       'NGN 4,000 per extra seat',
       'Work orders, assets, vendors',
@@ -23,6 +24,7 @@ export const PRICING_PLANS = [
     monthly: 39000,
     description: 'Best for growing teams',
     features: [
+      '14-day free trial',
       '10 seats included',
       'NGN 4,000 per extra seat',
       'Advanced reporting',
@@ -58,3 +60,8 @@ export const getPlanById = (planId) =>
 
 export const formatNgn = (amount) =>
   `NGN ${Number(amount || 0).toLocaleString('en-NG')}`;
+
+export const formatNgnParts = (amount) => ({
+  currency: '₦',
+  amount: Number(amount || 0).toLocaleString('en-NG')
+});

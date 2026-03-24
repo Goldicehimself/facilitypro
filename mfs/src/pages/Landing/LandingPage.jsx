@@ -1,32 +1,22 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import {
   CheckCircle,
+  ClipboardList,
   Wrench,
   Building2,
   Users,
   BarChart3,
   ShieldCheck,
+  CalendarDays,
   Menu,
   X,
-  Sun,
-  Moon,
-  Settings,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion, useReducedMotion, useMotionValue, useTransform, useSpring } from 'framer-motion';
-import { useTheme } from '../../contexts/ThemeContext';
-import { PRICING_PLANS, formatNgn } from '../../data/pricing';
+import { PRICING_PLANS, formatNgnParts } from '../../data/pricing';
 
 // Optimized variants created by tools/generate-screenshots.js
-const DashboardWebpSrcSet = [480,768,1024,1440].map(w => `${new URL(`../../assets/screenshots/optimized/elaadmin-dashboard-template-${w}.webp`, import.meta.url).href} ${w}w`).join(', ');
-const DashboardPngFallback = new URL('../../assets/screenshots/optimized/elaadmin-dashboard-template-1024.png', import.meta.url).href;
-const DashboardLarge = new URL('../../assets/screenshots/optimized/elaadmin-dashboard-template-1440.png', import.meta.url).href;
-
-const WorkWebpSrcSet = [480,768,1024,1440].map(w => `${new URL(`../../assets/screenshots/optimized/work-order-${w}.webp`, import.meta.url).href} ${w}w`).join(', ');
-const WorkPngFallback = new URL('../../assets/screenshots/optimized/work-order-1024.png', import.meta.url).href;
-const WorkLarge = new URL('../../assets/screenshots/optimized/work-order-1440.png', import.meta.url).href;
-
 const CalendarWebpSrcSet = [480,768,1024,1440].map(w => `${new URL(`../../assets/screenshots/optimized/2-2-calendar-png-image-${w}.webp`, import.meta.url).href} ${w}w`).join(', ');
 const CalendarPngFallback = new URL('../../assets/screenshots/optimized/2-2-calendar-png-image-768.png', import.meta.url).href;
 const CalendarLarge = new URL('../../assets/screenshots/optimized/2-2-calendar-png-image-1440.png', import.meta.url).href;
@@ -41,8 +31,20 @@ const CenterImageSrcSet = [640, 960, 1280, 1600]
 const LandingPage = () => {
   const navigate = useNavigate();
   const reduceMotion = useReducedMotion();
-  const { resolvedTheme, toggleTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [workOrderStatus, setWorkOrderStatus] = useState('in_progress');
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setWorkOrderStatus((prev) => (prev === 'in_progress' ? 'completed' : 'in_progress'));
+    }, 3200);
+    return () => clearInterval(timer);
+  }, []);
+
+  const workOrderStatusLabel = workOrderStatus === 'completed' ? 'Completed' : 'In progress';
+  const workOrderStatusClass = workOrderStatus === 'completed'
+    ? 'text-emerald-700 bg-emerald-100'
+    : 'text-amber-700 bg-amber-100';
 
  // Parallax motion values
   const rawMouseX = useMotionValue(0);
@@ -81,6 +83,99 @@ const LandingPage = () => {
     "Finance Teams",
   ];
 
+  const featureHighlights = [
+    { icon: ClipboardList, title: "Work Orders", desc: "Create, assign, and track work orders with full visibility." },
+    { icon: CalendarDays, title: "Preventive Maintenance", desc: "Schedule PMs and reduce downtime with automated reminders." },
+    { icon: Wrench, title: "Asset Lifecycle", desc: "Track assets, warranties, and service history in one place." },
+    { icon: Users, title: "Vendor Management", desc: "Manage vendors, contracts, and performance metrics." },
+    { icon: BarChart3, title: "Reporting", desc: "Dashboards for costs, SLA performance, and trends." },
+    { icon: ShieldCheck, title: "Security", desc: "Role-based access and audit-ready workflows." },
+  ];
+
+  const howItWorks = [
+    { step: "01", title: "Set up your org", desc: "Create your organization and invite your team." },
+    { step: "02", title: "Add assets and locations", desc: "Import assets and define facilities with ease." },
+    { step: "03", title: "Run maintenance", desc: "Submit work orders and monitor progress end-to-end." },
+    { step: "04", title: "Optimize performance", desc: "Use analytics to reduce downtime and control costs." },
+  ];
+
+  const testimonials = [
+    {
+      name: "Ayo B.",
+      role: "Facility Manager, Nova Logistics",
+      quote: "We cut response time by 40% within the first month. The dashboards are clear and the team loves it."
+    },
+    {
+      name: "Diana K.",
+      role: "Operations Lead, Beacon Hospitals",
+      quote: "The preventive maintenance calendar alone paid for itself. Our equipment uptime is the best it has been."
+    },
+    {
+      name: "Michael J.",
+      role: "Finance Director, Crest Foods",
+      quote: "Cost tracking and approvals are finally centralized. Monthly reporting is now a 10-minute job."
+    },
+  ];
+
+  const integrations = [
+    "Email",
+    "Slack",
+    "Microsoft Teams",
+    "Zapier",
+    "Google Calendar",
+    "SharePoint",
+  ];
+
+  const faqs = [
+    {
+      q: "Is there a free trial?",
+      a: "Yes. Every account starts with a 14-day free trial. No credit card required."
+    },
+    {
+      q: "Can I invite my whole team?",
+      a: "Yes. Invite as many users as you need. Seats scale by plan."
+    },
+    {
+      q: "Do you support multiple locations?",
+      a: "Yes. You can manage multiple facilities and locations in a single account."
+    },
+    {
+      q: "Is my data secure?",
+      a: "We use role-based access and secure infrastructure to keep your data protected."
+    },
+  ];
+
+  const stats = [
+    { label: "faster response time", value: "42%" },
+    { label: "reduction in equipment downtime", value: "30%" },
+    { label: "work order visibility", value: "100%" },
+    { label: "Rated by facility teams", value: "4.8/5" },
+  ];
+
+
+  const roleHighlights = [
+    {
+      icon: Building2,
+      title: "Facility Managers",
+      desc: "Centralize work orders, PM schedules, and asset history."
+    },
+    {
+      icon: Wrench,
+      title: "Technicians",
+      desc: "Get clear assignments, checklists, and time tracking."
+    },
+    {
+      icon: Users,
+      title: "Vendors",
+      desc: "Coordinate vendors and approvals from one portal."
+    },
+    {
+      icon: BarChart3,
+      title: "Finance Teams",
+      desc: "Monitor spend, approvals, and cost drivers."
+    },
+  ];
+
   const rolesContainer = {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { staggerChildren: 0.12 } },
@@ -104,6 +199,11 @@ const LandingPage = () => {
   const cardItem = {
     hidden: { opacity: 0, y: 14 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } },
+  };
+
+  const floatIn = {
+    hidden: { opacity: 0, y: 18, scale: 0.98 },
+    visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.55, ease: 'easeOut' } },
   };
 
   return (
@@ -183,7 +283,7 @@ const LandingPage = () => {
           initial="hidden"
           animate="visible"
         >
-        <div className="mx-auto max-w-7xl px-6 py-28 grid lg:grid-cols-2 gap-14 items-center">
+        <div className="mx-auto max-w-7xl px-6 pt-14 pb-16 grid lg:grid-cols-2 gap-14 items-center">
 
           {/* Copy */}
           <div>
@@ -204,16 +304,16 @@ const LandingPage = () => {
 
             <div className="mt-10 flex flex-wrap gap-4">
               <Button size="lg" className="rounded-full px-6" style={{ backgroundColor: "var(--mp-brand)", color: "#fff" }} onClick={() => navigate("/register")}>
-                Start Free
+                Start 14-day Free Trial
               </Button>
 
-              <Button size="lg" variant="outline" className="rounded-full px-6" style={{ borderColor: "var(--mp-brand)", color: "var(--mp-brand)" }} onClick={() => navigate("/login")}>
+              <Button size="lg" variant="outline" className="rounded-full px-6" style={{ borderColor: "var(--mp-brand)", color: "var(--mp-brand)" }} onClick={() => navigate("/demo")}>
                 View Demo
               </Button>
             </div>
 
             <p className="mt-4 text-sm text-slate-500">
-              No credit card required · Secure · Role-based access
+              14-day free trial · No credit card required · Secure · Role-based access
             </p>
           </div>
 
@@ -262,43 +362,321 @@ const LandingPage = () => {
                   alt="Product demo"
                   className="w-full h-full object-cover rounded-md"
                   fetchpriority="high"
-                  decoding="async"
+                  loading="eager"
+                  decoding="sync"
                   width="1600"
                   height="1000"
                 />
               </motion.div>
-
               {/* Work order (hidden on small screens) */}
               <motion.div
                 style={{ x: workX, y: workY }}
-                className="hidden md:block absolute md:-left-10 md:-bottom-8 w-56 h-36 rounded-2xl shadow-md overflow-hidden border border-slate-100 bg-white"
+                className="hidden md:block absolute md:-left-12 md:-bottom-10 w-64 h-40 rounded-2xl shadow-lg border border-slate-100 bg-white"
               >
-                {!reduceMotion && (
-                  <motion.div
-                    className="absolute right-2 top-2 p-2 rounded-full bg-white/90"
-                    animate={{ rotate: 360 }}
-                    whileHover={{ rotate: 0 }} // ✅ ADDED
-                    transition={{ repeat: Infinity, duration: 4, ease: "linear" }}
-                  >
-                    <Settings className="h-4 w-4" />
-                  </motion.div>
-                )}
+                <div className="p-3 h-full flex flex-col justify-between">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="h-7 w-7 rounded-md flex items-center justify-center text-white" style={{ backgroundColor: "var(--mp-brand)" }}>
+                        <ClipboardList className="h-4 w-4" />
+                      </div>
+                      <div className="text-xs font-semibold text-slate-700">WO-3481</div>
+                    </div>
+                    <span className={`text-[10px] uppercase tracking-wide font-semibold px-2 py-0.5 rounded-full ${workOrderStatusClass}`}>{workOrderStatusLabel}</span>
+                  </div>
 
-                <picture>
-                  <source srcSet={WorkWebpSrcSet} type="image/webp" />
-                  <img
-                    src={WorkPngFallback}
-                    alt="Work order preview"
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                    decoding="async"
-                    width="224"
-                    height="144"
-                  />
-                </picture>
+                  <div className="mt-2">
+                    <div className="text-sm font-semibold text-slate-900">Air handler vibration</div>
+                    <div className="text-xs text-slate-500">HQ � Floor 3 � AHU-12</div>
+                  </div>
+
+                  <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
+                    <span>Assignee: K. Ade</span>
+                    <span>Due: Tomorrow</span>
+                  </div>
+                </div>
               </motion.div>
 
             </motion.div>
+          </div>
+        </div>
+      </motion.section>
+
+      {/* ================= FEATURE HIGHLIGHTS ================= */}
+      <motion.section
+        className="py-24"
+        variants={!reduceMotion ? sectionFade : undefined}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.2 }}
+      >
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="text-center max-w-2xl mx-auto">
+            <h2 className="text-3xl font-bold">Everything your facility team needs</h2>
+            <p className="mt-4 text-slate-600">
+              One platform to plan, execute, and report on maintenance operations.
+            </p>
+          </div>
+          <motion.div
+            className="mt-12 grid sm:grid-cols-2 lg:grid-cols-3 gap-6"
+            variants={!reduceMotion ? cardStagger : undefined}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.2 }}
+          >
+            {featureHighlights.map((feature) => (
+              <motion.div
+                key={feature.title}
+                className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+                variants={!reduceMotion ? cardItem : undefined}
+                whileHover={!reduceMotion ? { y: -6, boxShadow: '0 16px 34px rgba(2,6,23,0.12)' } : undefined}
+              >
+                <div className="h-10 w-10 rounded-lg flex items-center justify-center text-white mb-4" style={{ backgroundColor: "var(--mp-brand)" }}>
+                  <feature.icon className="h-5 w-5" />
+                </div>
+                <h3 className="text-lg font-semibold">{feature.title}</h3>
+                <p className="mt-2 text-sm text-slate-600">{feature.desc}</p>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </motion.section>
+
+      {/* ================= ROLE HIGHLIGHTS ================= */}
+      <motion.section
+        className="py-24 bg-slate-50"
+        variants={!reduceMotion ? sectionFade : undefined}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.2 }}
+      >
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="text-center max-w-2xl mx-auto">
+            <h2 className="text-3xl font-bold">Built for every role</h2>
+            <p className="mt-4 text-slate-600">
+              Clear workflows for managers, technicians, vendors, and finance teams.
+            </p>
+          </div>
+          <motion.div
+            className="mt-12 grid sm:grid-cols-2 lg:grid-cols-4 gap-6"
+            variants={!reduceMotion ? cardStagger : undefined}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.2 }}
+          >
+            {roleHighlights.map((role) => (
+              <motion.div
+                key={role.title}
+                className="rounded-2xl border border-slate-200 bg-white p-6"
+                variants={!reduceMotion ? cardItem : undefined}
+                whileHover={!reduceMotion ? { y: -6, boxShadow: '0 16px 34px rgba(2,6,23,0.12)' } : undefined}
+              >
+                <div className="h-10 w-10 rounded-lg flex items-center justify-center text-white mb-4" style={{ backgroundColor: "var(--mp-brand)" }}>
+                  <role.icon className="h-5 w-5" />
+                </div>
+                <h3 className="text-base font-semibold">{role.title}</h3>
+                <p className="mt-2 text-sm text-slate-600">{role.desc}</p>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </motion.section>
+
+      {/* ================= STATS ================= */}
+      <motion.section
+        className="py-24"
+        variants={!reduceMotion ? sectionFade : undefined}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.2 }}
+      >
+        <div className="mx-auto max-w-7xl px-6">
+          <motion.div
+            className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6"
+            variants={!reduceMotion ? cardStagger : undefined}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.2 }}
+          >
+            {stats.map((stat) => (
+              <motion.div
+                key={stat.label}
+                className="rounded-2xl border border-slate-200 bg-white p-6 text-center"
+                variants={!reduceMotion ? floatIn : undefined}
+              >
+                <div className="text-3xl font-bold">{stat.value}</div>
+                <div className="mt-2 text-sm text-slate-600">{stat.label}</div>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </motion.section>
+
+      {/* ================= HOW IT WORKS ================= */}
+      <motion.section
+        className="py-24 bg-slate-50"
+        variants={!reduceMotion ? sectionFade : undefined}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.2 }}
+      >
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="text-center max-w-2xl mx-auto">
+            <h2 className="text-3xl font-bold">How it works</h2>
+            <p className="mt-4 text-slate-600">
+              Launch in days, not months.
+            </p>
+          </div>
+          <motion.div
+            className="mt-12 grid md:grid-cols-2 lg:grid-cols-4 gap-6"
+            variants={!reduceMotion ? cardStagger : undefined}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.2 }}
+          >
+            {howItWorks.map((step) => (
+              <motion.div
+                key={step.step}
+                className="rounded-2xl border border-slate-200 bg-white p-6"
+                variants={!reduceMotion ? cardItem : undefined}
+              >
+                <div className="text-sm font-semibold text-slate-500">{step.step}</div>
+                <h3 className="mt-2 text-base font-semibold">{step.title}</h3>
+                <p className="mt-2 text-sm text-slate-600">{step.desc}</p>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </motion.section>
+
+      {/* ================= TESTIMONIALS ================= */}
+      <motion.section
+        className="py-24 bg-slate-50"
+        variants={!reduceMotion ? sectionFade : undefined}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.2 }}
+      >
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="text-center max-w-2xl mx-auto">
+            <h2 className="text-3xl font-bold">Loved by operations teams</h2>
+            <p className="mt-4 text-slate-600">
+              Real outcomes from teams running FacilityPro.
+            </p>
+          </div>
+          <motion.div
+            className="mt-12 grid md:grid-cols-3 gap-6"
+            variants={!reduceMotion ? cardStagger : undefined}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.2 }}
+          >
+            {testimonials.map((t) => (
+              <motion.div
+                key={t.name}
+                className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+                variants={!reduceMotion ? cardItem : undefined}
+                whileHover={!reduceMotion ? { y: -6, boxShadow: '0 16px 34px rgba(2,6,23,0.12)' } : undefined}
+              >
+                <p className="text-sm text-slate-600">"{t.quote}"</p>
+                <div className="mt-4 text-sm font-semibold">{t.name}</div>
+                <div className="text-xs text-slate-500">{t.role}</div>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </motion.section>
+
+      {/* ================= INTEGRATIONS ================= */}
+      <motion.section
+        className="py-24"
+        variants={!reduceMotion ? sectionFade : undefined}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.2 }}
+      >
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="text-center max-w-2xl mx-auto">
+            <h2 className="text-3xl font-bold">Integrations that fit your stack</h2>
+            <p className="mt-4 text-slate-600">
+              Connect FacilityPro with the tools your team already uses.
+            </p>
+          </div>
+          <motion.div
+            className="mt-10 flex flex-wrap justify-center gap-3"
+            variants={!reduceMotion ? cardStagger : undefined}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.2 }}
+          >
+            {integrations.map((item) => (
+              <motion.span
+                key={item}
+                className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600"
+                variants={!reduceMotion ? floatIn : undefined}
+                whileHover={!reduceMotion ? { y: -3, boxShadow: '0 10px 20px rgba(2,6,23,0.08)' } : undefined}
+              >
+                {item}
+              </motion.span>
+            ))}
+          </motion.div>
+        </div>
+      </motion.section>
+
+      {/* ================= FAQ ================= */}
+      <motion.section
+        className="py-24 bg-slate-50"
+        variants={!reduceMotion ? sectionFade : undefined}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.2 }}
+      >
+        <div className="mx-auto max-w-4xl px-6">
+          <div className="text-center max-w-2xl mx-auto">
+            <h2 className="text-3xl font-bold">Frequently asked questions</h2>
+            <p className="mt-4 text-slate-600">
+              Quick answers to the most common questions.
+            </p>
+          </div>
+          <motion.div
+            className="mt-10 grid gap-4"
+            variants={!reduceMotion ? cardStagger : undefined}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.2 }}
+          >
+            {faqs.map((item) => (
+              <motion.div
+                key={item.q}
+                className="rounded-2xl border border-slate-200 bg-white p-6"
+                variants={!reduceMotion ? cardItem : undefined}
+              >
+                <div className="font-semibold">{item.q}</div>
+                <div className="mt-2 text-sm text-slate-600">{item.a}</div>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </motion.section>
+
+      {/* ================= SPOTLIGHT IMAGE ================= */}
+      <motion.section
+        className="py-16"
+        variants={!reduceMotion ? sectionFade : undefined}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.2 }}
+      >
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+            <img
+              src="/media/optimized/center-image-1280.webp"
+              srcSet={CenterImageSrcSet}
+              sizes="(max-width: 1024px) 90vw, 1200px"
+              alt="Facility operations overview"
+              className="w-full h-[260px] sm:h-[320px] md:h-[460px] object-contain sm:object-cover rounded-2xl bg-slate-50"
+              loading="lazy"
+              decoding="async"
+            />
           </div>
         </div>
       </motion.section>
@@ -317,7 +695,7 @@ const LandingPage = () => {
               Simple, Transparent Pricing
             </h2>
             <p className="mt-4 text-slate-600">
-              Seat-based pricing with a 14-day Pro trial. Save 20% with annual billing.
+              Seat-based pricing with a 14-day free trial. Save 20% with annual billing.
             </p>
           </div>
 
@@ -364,12 +742,17 @@ const LandingPage = () => {
                 <div className="text-center">
                   <h3 className="text-xl font-bold">{plan.name}</h3>
                   <p className="text-slate-600 mt-1">{plan.description}</p>
-                  <div className="mt-4">
-                    <span className="text-4xl font-bold">
-                      {plan.id === "enterprise" ? "Custom" : formatNgn(plan.monthly)}
-                    </span>
-                    <span className="text-slate-600">{plan.id === "enterprise" ? "" : "/month"}</span>
-                  </div>
+                  {plan.id === "enterprise" ? (
+                    <div className="mt-4 text-4xl font-bold">Custom</div>
+                  ) : (
+                    <div className="mt-4 flex items-baseline justify-center gap-1">
+                      <span className="text-base font-semibold text-slate-600">₦</span>
+                      <span className="text-4xl font-bold tabular-nums">
+                        {formatNgnParts(plan.monthly).amount}
+                      </span>
+                      <span className="text-slate-600">/month</span>
+                    </div>
+                  )}
                 </div>
                 <ul className="mt-6 space-y-3">
                   {plan.features.map((feature, i) => (
@@ -524,6 +907,17 @@ const LandingPage = () => {
 };
 
 export default LandingPage;
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -70,14 +70,18 @@ const createLeaveRequest = async (req, res, next) => {
       await notificationService.createNotificationsForUsers(recipients, {
         organization: req.user.organization,
         title: 'New leave request',
-        message: `${staffName} submitted a leave request`,
+        message: `${staffName} submitted a ${leave.type} leave request`,
         type: 'leave_request_submitted',
         entityType: 'LeaveRequest',
         entityId: leave._id,
         link: '/leave-center',
         metadata: {
           staffId: req.user.id,
-          staffName
+          staffName,
+          leaveType: leave.type,
+          leaveReason: leave.reason,
+          startDate: leave.startDate,
+          endDate: leave.endDate
         }
       });
     }

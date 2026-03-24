@@ -10,7 +10,7 @@ export const fetchNotifications = async ({ page = 1, limit = 20, unread = false,
 };
 
 export const markNotificationRead = async (id) => {
-  const response = await axiosInstance.patch(`/notifications/${id}/read`, null, {
+  const response = await axiosInstance.patch(`/notifications/${id}/read`, {}, {
     suppressToast: true,
     suppressAuthRedirect: true,
   });
@@ -18,7 +18,7 @@ export const markNotificationRead = async (id) => {
 };
 
 export const markAllNotificationsRead = async () => {
-  const response = await axiosInstance.patch('/notifications/read-all', null, {
+  const response = await axiosInstance.patch('/notifications/read-all', {}, {
     suppressToast: true,
     suppressAuthRedirect: true,
   });

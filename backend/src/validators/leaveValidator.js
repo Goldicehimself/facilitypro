@@ -8,8 +8,12 @@ const createLeaveSchema = Joi.object({
   reason: Joi.string().required().min(3).max(500)
 });
 
-const decisionSchema = Joi.object({
-  note: Joi.string().optional().max(500)
+const approveDecisionSchema = Joi.object({
+  note: Joi.string().allow('').optional().max(500)
+});
+
+const rejectDecisionSchema = Joi.object({
+  note: Joi.string().trim().min(1).max(500).required()
 });
 
 const listLeaveQuerySchema = Joi.object({
@@ -22,6 +26,7 @@ const listLeaveQuerySchema = Joi.object({
 
 module.exports = {
   createLeaveSchema,
-  decisionSchema,
+  approveDecisionSchema,
+  rejectDecisionSchema,
   listLeaveQuerySchema
 };

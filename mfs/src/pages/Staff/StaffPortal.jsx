@@ -16,6 +16,7 @@ import {
 import GreetingBanner from '@/components/common/GreetingBanner';
 import { useAuth } from '../../contexts/AuthContext';
 import { getWorkOrders } from '../../api/workOrders';
+import { fetchMyLeaves } from '../../api/leave';
 
 const StaffPortal = () => {
   const { user } = useAuth();
@@ -27,6 +28,11 @@ const StaffPortal = () => {
   const { data: workOrders = [], isLoading } = useQuery(
     ['workOrders', { scope: 'staff' }],
     () => getWorkOrders()
+  );
+  const { data: myLeaves = [], isLoading: leavesLoading } = useQuery(
+    ['myLeaves', user?.id],
+    () => fetchMyLeaves(),
+    { enabled: !!user }
   );
 
   const workOrdersList = Array.isArray(workOrders)
@@ -66,6 +72,29 @@ const StaffPortal = () => {
     );
   }, [myWorkOrders]);
 
+  const leaveSummary = useMemo(() => {
+    const list = Array.isArray(myLeaves) ? myLeaves : [];
+    return list.reduce(
+      (acc, leave) => {
+        acc.total += 1;
+        if (leave.status === 'approved') acc.approved += 1;
+        if (leave.status === 'pending') acc.pending += 1;
+        if (leave.status === 'rejected') acc.rejected += 1;
+        return acc;
+      },
+      { total: 0, approved: 0, pending: 0, rejected: 0 }
+    );
+  }, [myLeaves]);
+
+  const nextLeave = useMemo(() => {
+    const list = Array.isArray(myLeaves) ? myLeaves : [];
+    const now = new Date();
+    const upcoming = list
+      .filter((leave) => leave.startDate && new Date(leave.startDate) >= now)
+      .sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+    return upcoming[0] || null;
+  }, [myLeaves]);
+
   const formatDate = (dateString) => {
     if (!dateString) return 'TBD';
     const date = new Date(dateString);
@@ -100,9 +129,60 @@ const StaffPortal = () => {
           </p>
         </div>
         <Button onClick={() => navigate('/leave-center')} className="bg-blue-700 hover:bg-blue-800">
-          Go to Leave Center
+          <span className="inline-flex items-center gap-2">
+            Go to Leave Center
+            {leaveSummary.pending > 0 && (
+              <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-white/90 px-1.5 py-0.5 text-xs font-semibold text-blue-700">
+                {leaveSummary.pending}
+              </span>
+            )}
+          </span>
         </Button>
       </div>
+
+      <Card>
+        <CardHeader>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Leave Tracking</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Summary of your leave requests and approvals.
+              </p>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => navigate('/leave-center')}>
+              View Details
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {leavesLoading ? (
+            <p className="text-sm text-gray-600 dark:text-gray-400">Loading leave requests...</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-4">
+                <p className="text-sm text-gray-500 dark:text-gray-400">Pending</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">{leaveSummary.pending}</p>
+              </div>
+              <div className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-4">
+                <p className="text-sm text-gray-500 dark:text-gray-400">Approved</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">{leaveSummary.approved}</p>
+              </div>
+              <div className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-4">
+                <p className="text-sm text-gray-500 dark:text-gray-400">Rejected</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">{leaveSummary.rejected}</p>
+              </div>
+              <div className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-4">
+                <p className="text-sm text-gray-500 dark:text-gray-400">Next Leave</p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                  {nextLeave
+                    ? `${formatDate(nextLeave.startDate)} to ${formatDate(nextLeave.endDate)}`
+                    : 'None scheduled'}
+                </p>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>

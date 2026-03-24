@@ -182,6 +182,11 @@ const NotificationDropdown = () => {
                             Note: {notification.metadata.assignmentNote}
                           </p>
                         )}
+                        {notification.metadata?.leaveReason && (
+                          <p className="text-xs text-indigo-600 dark:text-indigo-300 mt-1 line-clamp-2">
+                            Reason: {notification.metadata.leaveReason}
+                          </p>
+                        )}
                         <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
                           {formatTime(notification.timestamp)}
                         </p>
