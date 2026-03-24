@@ -8,6 +8,7 @@ const { renderTemplate } = require('../utils/emailTemplates');
 const Organization = require('../models/Organization');
 const User = require('../models/User');
 const Notification = require('../models/Notification');
+const logger = require('../utils/logger');
 
 const getSupportEmail = (organization) => {
   const orgSupport = organization?.settings?.companyProfile?.supportEmail;
@@ -66,12 +67,9 @@ const createLeaveRequest = async (req, res, next) => {
       ['admin', 'facility_manager'],
       req.user.organization
     );
-    console.log('Leave created:', leave._id);
-    console.log('Recipients found:', recipients.length, recipients);
     
     if (recipients.length > 0) {
       const staffName = [req.user?.firstName, req.user?.lastName].filter(Boolean).join(' ').trim() || req.user?.email || 'Staff member';
-      console.log('Creating notifications for recipients:', recipients);
       const payload = {
         organization: req.user.organization,
         title: 'New leave request',
@@ -91,10 +89,7 @@ const createLeaveRequest = async (req, res, next) => {
         }
       };
       const notifications = await notificationService.createNotificationsForUsers(recipients, payload, { force: true });
-      console.log('Notifications created successfully:', notifications?.length || 0);
-      if (notifications && notifications.length > 0) {
-        console.log('First notification:', notifications[0]);
-      } else {
+      if (!notifications || notifications.length === 0) {
         try {
           const docs = recipients.map((userId) => ({
             ...payload,
@@ -102,17 +97,16 @@ const createLeaveRequest = async (req, res, next) => {
             dedupeKey: `leave-request-${leave._id}-${userId}`
           }));
           await Notification.insertMany(docs, { ordered: false });
-          console.log('Fallback insertMany completed for leave notifications.');
+          logger.warn('[leave notifications] fallback insertMany used', `leave=${leave._id}`);
         } catch (err) {
-          console.error('Fallback insertMany failed:', err?.message || err);
+          logger.error('[leave notifications] fallback insertMany failed', err?.message || err);
         }
       }
     } else {
-      console.log('No recipients found for notifications');
+      logger.warn('[leave notifications] no recipients found', `org=${req.user.organization}`);
     }
     response.created(res, 'Leave request submitted', leave);
   } catch (error) {
-    console.error('Error creating leave request:', error);
     next(error);
   }
 };
@@ -205,3 +199,4 @@ module.exports = {
   approveLeave,
   rejectLeave
 };
+
