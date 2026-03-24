@@ -80,6 +80,7 @@ const createLeaveRequest = async (req, res, next) => {
         entityType: 'LeaveRequest',
         entityId: leave._id,
         link: '/leave-center',
+        dedupeKey: `leave-request-${leave._id}`,
         metadata: {
           staffId: req.user.id,
           staffName,
@@ -95,7 +96,11 @@ const createLeaveRequest = async (req, res, next) => {
         console.log('First notification:', notifications[0]);
       } else {
         try {
-          const docs = recipients.map((userId) => ({ ...payload, user: userId }));
+          const docs = recipients.map((userId) => ({
+            ...payload,
+            user: userId,
+            dedupeKey: `leave-request-${leave._id}-${userId}`
+          }));
           await Notification.insertMany(docs, { ordered: false });
           console.log('Fallback insertMany completed for leave notifications.');
         } catch (err) {
@@ -152,7 +157,8 @@ const approveLeave = async (req, res, next) => {
       type: 'leave_approved',
       entityType: 'LeaveRequest',
       entityId: leave._id,
-      link: '/leave-center'
+      link: '/leave-center',
+      dedupeKey: `leave-approved-${leave._id}-${leave.staff}`
     };
     const approveNote = await notificationService.createNotification(approvePayload, { force: true });
     if (!approveNote) {
@@ -177,7 +183,8 @@ const rejectLeave = async (req, res, next) => {
       type: 'leave_rejected',
       entityType: 'LeaveRequest',
       entityId: leave._id,
-      link: '/leave-center'
+      link: '/leave-center',
+      dedupeKey: `leave-rejected-${leave._id}-${leave.staff}`
     };
     const rejectNote = await notificationService.createNotification(rejectPayload, { force: true });
     if (!rejectNote) {
