@@ -59,22 +59,7 @@ const schema = yup.object({
   vendorAddress: yup.string().optional(),
   vendorCity: yup.string().optional(),
   vendorState: yup.string().optional(),
-  vendorZipCode: yup.string().optional(),
-  vendorContractStartDate: yup.string().optional(),
-  vendorContractEndDate: yup.string().optional(),
-  vendorMonthlySpend: yup
-    .number()
-    .transform((val, original) => (original === '' || original === null ? undefined : val))
-    .optional(),
-  vendorRating: yup
-    .number()
-    .transform((val, original) => (original === '' || original === null ? undefined : val))
-    .min(0)
-    .max(5)
-    .optional(),
-  vendorStatus: yup.string().optional(),
   vendorServices: yup.string().optional(),
-  vendorNotes: yup.string().optional(),
 }).test(
   'org-or-invite',
   'Organization code or invite code is required',
@@ -135,7 +120,6 @@ const Register = () => {
     'IT Support',
     'Other',
   ];
-  const vendorStatuses = ['active', 'inactive', 'suspended'];
 
   useEffect(() => {
     const currentOrgCode = (orgCode || '').trim().toUpperCase();
@@ -192,14 +176,7 @@ const Register = () => {
       vendorAddress,
       vendorCity,
       vendorState,
-      vendorZipCode,
-      vendorContractStartDate,
-      vendorContractEndDate,
-      vendorMonthlySpend,
-      vendorRating,
-      vendorStatus,
       vendorServices,
-      vendorNotes,
     } = data;
     if ((submitMode === 'join' || inviteCode) && !isEmailAllowedByPolicy(email, orgSecurityPolicy)) {
       toast.error('This organization restricts invites to approved email domains.');
@@ -216,16 +193,9 @@ const Register = () => {
         address: vendorAddress,
         city: vendorCity,
         state: vendorState,
-        zipCode: vendorZipCode,
-        contractStartDate: vendorContractStartDate || undefined,
-        contractEndDate: vendorContractEndDate || undefined,
-        monthlySpend: typeof vendorMonthlySpend === 'number' ? vendorMonthlySpend : undefined,
-        rating: typeof vendorRating === 'number' ? vendorRating : undefined,
-        status: vendorStatus || 'active',
         services: vendorServices
           ? vendorServices.split(',').map((s) => s.trim()).filter(Boolean)
           : undefined,
-        notes: vendorNotes
       }
       : undefined;
     const result = await registerUser({
@@ -706,55 +676,8 @@ const Register = () => {
               </div>
 
               <div className="auth-field">
-                <label htmlFor="vendor-zip">Zip Code</label>
-                <input id="vendor-zip" placeholder="Zip Code" {...register('vendorZipCode')} />
-              </div>
-
-              <div className="auth-field">
-                <label htmlFor="vendor-contract-start">Contract Start Date</label>
-                <input id="vendor-contract-start" type="date" {...register('vendorContractStartDate')} />
-              </div>
-
-              <div className="auth-field">
-                <label htmlFor="vendor-contract-end">Contract End Date</label>
-                <input id="vendor-contract-end" type="date" {...register('vendorContractEndDate')} />
-              </div>
-
-              <div className="auth-field">
-                <label htmlFor="vendor-monthly-spend">Monthly Spend</label>
-                <input id="vendor-monthly-spend" type="number" placeholder="0.00" {...register('vendorMonthlySpend')} />
-              </div>
-
-              <div className="auth-field">
-                <label htmlFor="vendor-rating">Rating (0-5)</label>
-                <input id="vendor-rating" type="number" step="0.5" min="0" max="5" {...register('vendorRating')} />
-              </div>
-
-              <div className="auth-field">
-                <label htmlFor="vendor-status">Status</label>
-                <Controller
-                  name="vendorStatus"
-                  control={control}
-                  render={({ field }) => (
-                    <select id="vendor-status" className="auth-select" {...field}>
-                      {vendorStatuses.map((status) => (
-                        <option key={status} value={status}>
-                          {status.charAt(0).toUpperCase() + status.slice(1)}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                />
-              </div>
-
-              <div className="auth-field">
                 <label htmlFor="vendor-services">Services (comma separated)</label>
                 <input id="vendor-services" placeholder="Maintenance, Installation, Repair" {...register('vendorServices')} />
-              </div>
-
-              <div className="auth-field">
-                <label htmlFor="vendor-notes">Notes</label>
-                <input id="vendor-notes" placeholder="Optional notes" {...register('vendorNotes')} />
               </div>
             </>
           )}
