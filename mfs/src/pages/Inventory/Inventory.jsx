@@ -219,6 +219,7 @@ const Inventory = () => {
     || (createForm.type === 'PART' && !createForm.partNumber.trim());
 
   return (
+    <>
     <div className="space-y-6">
       {/* Header */}
       <div className="bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-950 dark:to-blue-950 rounded-lg p-6 border border-indigo-200 dark:border-indigo-800">
@@ -626,6 +627,7 @@ const Inventory = () => {
         </div>
       </div>
     )}
+    </>
   );
 };
 
