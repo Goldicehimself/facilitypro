@@ -34,11 +34,13 @@ const Inventory = () => {
   const [createForm, setCreateForm] = useState({
     item: '',
     partNumber: '',
+    type: 'PART',
     category: '',
     location: '',
     currentStock: 0,
     reorderPoint: 0,
     unitCost: 0,
+    unit: 'pcs',
     status: 'in-stock'
   });
 
@@ -99,11 +101,13 @@ const Inventory = () => {
     setEditForm({
       item: item.item,
       partNumber: item.partNumber,
+      type: item.type,
       category: item.category,
       location: item.location,
       currentStock: item.currentStock,
       reorderPoint: item.reorderPoint,
       unitCost: item.unitCost,
+      unit: item.unit,
     });
     setEditModalOpen(true);
   };
@@ -120,11 +124,13 @@ const Inventory = () => {
       payload: {
         item: editForm.item || selectedItem.item,
         partNumber: editForm.partNumber || selectedItem.partNumber,
+        type: editForm.type || selectedItem.type,
         category: editForm.category || selectedItem.category,
         location: editForm.location || selectedItem.location,
         currentStock: Number(editForm.currentStock) || 0,
         reorderPoint: Number(editForm.reorderPoint) || 0,
         unitCost: Number(editForm.unitCost) || 0,
+        unit: editForm.unit || selectedItem.unit,
       }
     });
     handleCloseModals();
@@ -139,11 +145,13 @@ const Inventory = () => {
     setCreateForm({
       item: '',
       partNumber: '',
+      type: 'PART',
       category: '',
       location: '',
       currentStock: 0,
       reorderPoint: 0,
       unitCost: 0,
+      unit: 'pcs',
       status: 'in-stock'
     });
   };
@@ -192,15 +200,23 @@ const Inventory = () => {
     await createMutation.mutateAsync({
       item: createForm.item.trim(),
       partNumber: createForm.partNumber || undefined,
+      type: createForm.type,
       category: createForm.category || undefined,
       location: createForm.location || undefined,
       currentStock: Number(createForm.currentStock) || 0,
       reorderPoint: Number(createForm.reorderPoint) || 0,
       unitCost: Number(createForm.unitCost) || 0,
+      unit: createForm.unit,
       status: createForm.status || 'in-stock'
     });
     handleCloseModals();
   };
+
+  const isCreateInvalid = !createForm.item.trim()
+    || !createForm.type
+    || !createForm.category
+    || !createForm.unit
+    || (createForm.type === 'PART' && !createForm.partNumber.trim());
 
   return (
     <div className="space-y-6">
@@ -500,6 +516,18 @@ const Inventory = () => {
               />
             </div>
             <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-1">Type</label>
+              <select
+                value={createForm.type}
+                onChange={(e) => setCreateForm((f) => ({ ...f, type: e.target.value }))}
+                className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 border-gray-300 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="PART">PART</option>
+                <option value="CONSUMABLE">CONSUMABLE</option>
+                <option value="TOOL">TOOL</option>
+              </select>
+            </div>
+            <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-1">Part Number</label>
               <input
                 value={createForm.partNumber}
@@ -509,11 +537,16 @@ const Inventory = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-1">Category</label>
-              <input
+              <select
                 value={createForm.category}
                 onChange={(e) => setCreateForm((f) => ({ ...f, category: e.target.value }))}
                 className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 border-gray-300 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+              >
+                <option value="">Select category</option>
+                {['Electrical', 'Plumbing', 'HVAC', 'Mechanical', 'Cleaning', 'Safety', 'IT', 'General'].map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-1">Location</label>
@@ -551,6 +584,18 @@ const Inventory = () => {
               />
             </div>
             <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-1">Unit</label>
+              <select
+                value={createForm.unit}
+                onChange={(e) => setCreateForm((f) => ({ ...f, unit: e.target.value }))}
+                className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 border-gray-300 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {['pcs', 'boxes', 'liters', 'kg', 'meters', 'rolls', 'sets'].map((unit) => (
+                  <option key={unit} value={unit}>{unit}</option>
+                ))}
+              </select>
+            </div>
+            <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-1">Status</label>
               <select
                 value={createForm.status}
@@ -572,7 +617,7 @@ const Inventory = () => {
             </button>
             <button
               onClick={handleCreate}
-              disabled={createMutation.isLoading}
+              disabled={createMutation.isLoading || isCreateInvalid}
               className="px-4 py-2 rounded-lg bg-blue-700 text-white hover:bg-blue-800 disabled:opacity-60"
             >
               {createMutation.isLoading ? 'Saving...' : 'Save Item'}

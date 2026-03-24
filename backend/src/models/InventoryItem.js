@@ -11,8 +11,15 @@ const inventoryItemSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  type: {
+    type: String,
+    enum: ['PART', 'CONSUMABLE', 'TOOL'],
+    required: [true, 'Type is required']
+  },
   category: {
     type: String,
+    enum: ['Electrical', 'Plumbing', 'HVAC', 'Mechanical', 'Cleaning', 'Safety', 'IT', 'General'],
+    required: [true, 'Category is required'],
     trim: true
   },
   location: {
@@ -33,6 +40,11 @@ const inventoryItemSchema = new mongoose.Schema({
     type: Number,
     default: 0,
     min: 0
+  },
+  unit: {
+    type: String,
+    enum: ['pcs', 'boxes', 'liters', 'kg', 'meters', 'rolls', 'sets'],
+    required: [true, 'Unit is required']
   },
   usage30d: {
     type: Number,
