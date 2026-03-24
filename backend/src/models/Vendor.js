@@ -21,6 +21,12 @@ const vendorSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  services: [String],
+  status: {
+    type: String,
+    enum: ['active', 'inactive', 'suspended'],
+    default: 'active'
+  },
   specialties: [String],
   rating: {
     type: Number,
@@ -28,6 +34,14 @@ const vendorSchema = new mongoose.Schema({
     max: 5,
     default: 0
   },
+  monthlySpend: {
+    type: Number,
+    min: 0,
+    default: 0
+  },
+  contractStartDate: Date,
+  contractEndDate: Date,
+  lastServiceDate: Date,
   website: String,
   active: {
     type: Boolean,

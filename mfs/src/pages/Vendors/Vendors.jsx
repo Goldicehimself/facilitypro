@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery } from 'react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Search, Plus } from 'lucide-react';
-import { fetchVendors } from '../../api/vendors';
+import { fetchVendors, fetchVendorAnalytics } from '../../api/vendors';
 import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -22,6 +22,7 @@ const VendorsPage = () => {
   const [pageSize, setPageSize] = useState(5);
 
   const { data: vendorsResponse = [], isLoading } = useQuery('vendors', fetchVendors);
+  const { data: vendorAnalytics } = useQuery(['vendor-analytics', 30], () => fetchVendorAnalytics(30));
   const [hasLoaded, setHasLoaded] = useState(false);
 
   useEffect(() => {
@@ -29,9 +30,32 @@ const VendorsPage = () => {
   }, [isLoading]);
 
   const vendors = useMemo(() => {
-    if (Array.isArray(vendorsResponse)) return vendorsResponse;
-    if (Array.isArray(vendorsResponse?.vendors)) return vendorsResponse.vendors;
-    return [];
+    const list = Array.isArray(vendorsResponse)
+      ? vendorsResponse
+      : Array.isArray(vendorsResponse?.vendors)
+        ? vendorsResponse.vendors
+        : [];
+    const now = new Date();
+    return list.map((vendor) => {
+      const start = vendor.contractStartDate ? new Date(vendor.contractStartDate) : null;
+      const end = vendor.contractEndDate ? new Date(vendor.contractEndDate) : null;
+      let contractStatus = 'Active';
+      if (start && start > now) contractStatus = 'Pending';
+      if (end && end < now) contractStatus = 'Expired';
+      if (!start && !end && vendor.status && vendor.status !== 'active') {
+        contractStatus = 'Inactive';
+      }
+      const lastService = vendor.lastServiceDate
+        ? new Date(vendor.lastServiceDate).toLocaleDateString()
+        : '—';
+      return {
+        ...vendor,
+        contractStatus,
+        lastService,
+        monthlySpend: typeof vendor.monthlySpend === 'number' ? vendor.monthlySpend : 0,
+        rating: typeof vendor.rating === 'number' ? vendor.rating : 0
+      };
+    });
   }, [vendorsResponse]);
 
   // Categories from vendors data
@@ -93,15 +117,23 @@ const VendorsPage = () => {
 
   // Calculate KPI stats
   const stats = useMemo(() => {
+    const summary = vendorAnalytics?.summary;
+    if (summary) {
+      return summary;
+    }
     return {
       totalVendors: vendors.length,
       activeContracts: vendors.reduce((sum, v) => sum + (v.contractStatus === 'Active' ? 1 : 0), 0),
       averageRating: vendors.length > 0 
-        ? (vendors.reduce((sum, v) => sum + v.rating, 0) / vendors.length).toFixed(1)
+        ? (vendors.reduce((sum, v) => sum + v.rating, 0) / vendors.length)
         : 0,
       monthlySpend: vendors.reduce((sum, v) => sum + v.monthlySpend, 0),
+      totalVendorsTrend: 0,
+      activeContractsTrend: 0,
+      averageRatingTrend: 0,
+      monthlySpendTrend: 0
     };
-  }, [vendors]);
+  }, [vendors, vendorAnalytics]);
 
 
   return (

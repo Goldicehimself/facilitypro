@@ -1,5 +1,6 @@
 // Vendor Controller
 const vendorService = require('../services/vendorService');
+const vendorAnalyticsService = require('../services/vendorAnalyticsService');
 const response = require('../utils/response');
 
 const getVendors = async (req, res, next) => {
@@ -64,11 +65,23 @@ const deleteVendor = async (req, res, next) => {
   }
 };
 
+const getVendorAnalytics = async (req, res, next) => {
+  try {
+    const { range = 30 } = req.query;
+    const parsedRange = Math.max(parseInt(range, 10) || 30, 1);
+    const result = await vendorAnalyticsService.getAnalytics(req.user.organization, parsedRange);
+    response.success(res, 'Vendor analytics retrieved successfully', result);
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getVendors,
   getVendorById,
   createVendor,
   updateVendor,
   deleteVendor,
-  importVendors
+  importVendors,
+  getVendorAnalytics
 };

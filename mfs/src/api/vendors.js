@@ -37,6 +37,13 @@ export async function deleteVendor(id) {
   await axiosInstance.delete(`/vendors/${id}`);
 }
 
+export async function fetchVendorAnalytics(rangeDays = 30) {
+  const response = await axiosInstance.get('/vendors/analytics', {
+    params: { range: rangeDays }
+  });
+  return response.data?.data;
+}
+
 export async function importVendors(vendors) {
   const response = await axiosInstance.post('/vendors/import', { vendors });
   return response.data?.data;

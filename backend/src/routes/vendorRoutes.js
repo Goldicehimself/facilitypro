@@ -14,6 +14,7 @@ const { uploadSingle } = require('../middleware/cloudinaryUpload');
 const uploadVendorDocumentFile = uploadSingle('facilitypro/vendor-documents', 'raw');
 
 router.get('/', protect, requireScope('vendors:read'), vendorController.getVendors);
+router.get('/analytics', protect, requireScope('vendors:read'), vendorController.getVendorAnalytics);
 router.post('/import', protect, requireScope('vendors:write'), validateRequest(vendorImportSchema), vendorController.importVendors);
 router.get('/:id', protect, requireScope('vendors:read'), vendorController.getVendorById);
 router.post('/', protect, requireScope('vendors:write'), vendorController.createVendor);

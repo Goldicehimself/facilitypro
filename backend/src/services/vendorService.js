@@ -65,6 +65,12 @@ const importVendors = async (organizationId, vendors = []) => {
   const valid = [];
   const errors = [];
 
+  const parseDate = (value) => {
+    if (!value) return undefined;
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? undefined : date;
+  };
+
   vendors.forEach((v, idx) => {
     const row = idx + 1;
     if (!v?.name) {
@@ -86,6 +92,12 @@ const importVendors = async (organizationId, vendors = []) => {
       zipCode: v.zipCode,
       contactPerson: v.contactPerson,
       rating: typeof v.rating === 'number' ? v.rating : undefined,
+      services: Array.isArray(v.services) ? v.services : undefined,
+      status: v.status,
+      monthlySpend: typeof v.monthlySpend === 'number' ? v.monthlySpend : undefined,
+      contractStartDate: parseDate(v.contractStartDate),
+      contractEndDate: parseDate(v.contractEndDate),
+      lastServiceDate: parseDate(v.lastServiceDate),
       notes: v.notes,
       organization: organizationId
     });

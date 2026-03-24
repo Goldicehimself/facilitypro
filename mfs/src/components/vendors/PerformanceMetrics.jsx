@@ -37,36 +37,52 @@ const MetricCard = ({ label, value, trend, trendLabel, trendTone }) => {
 const PerformanceMetrics = ({ stats }) => {
   const averageRating = stats.averageRating || 0;
   const monthlySpend = stats.monthlySpend || 0;
+  const getTrend = (value) => {
+    if (value === null || value === undefined) {
+      return { label: '—', tone: 'neutral', dir: 'up' };
+    }
+    const rounded = Math.round(value * 10) / 10;
+    return {
+      label: `${rounded >= 0 ? '+' : ''}${rounded}`,
+      tone: rounded >= 0 ? 'up' : 'down',
+      dir: rounded >= 0 ? 'up' : 'down'
+    };
+  };
+
+  const totalVendorsTrend = getTrend(stats.totalVendorsTrend);
+  const activeContractsTrend = getTrend(stats.activeContractsTrend);
+  const averageRatingTrend = getTrend(stats.averageRatingTrend);
+  const monthlySpendTrend = getTrend(stats.monthlySpendTrend);
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <MetricCard
         label="Total Vendors"
         value={stats.totalVendors}
-        trend="up"
-        trendLabel="+8%"
-        trendTone="up"
+        trend={totalVendorsTrend.dir}
+        trendLabel={totalVendorsTrend.label}
+        trendTone={totalVendorsTrend.tone}
       />
       <MetricCard
         label="Active Contracts"
         value={stats.activeContracts}
-        trend="up"
-        trendLabel="+3%"
-        trendTone="up"
+        trend={activeContractsTrend.dir}
+        trendLabel={activeContractsTrend.label}
+        trendTone={activeContractsTrend.tone}
       />
       <MetricCard
         label="Average Rating"
         value={averageRating}
-        trend="up"
-        trendLabel="+0.2"
-        trendTone="neutral"
+        trend={averageRatingTrend.dir}
+        trendLabel={averageRatingTrend.label}
+        trendTone={averageRatingTrend.tone}
       />
       <MetricCard
         label="Monthly Spend"
         value={formatCurrency(monthlySpend)}
-        trend="down"
-        trendLabel="-3%"
-        trendTone="down"
+        trend={monthlySpendTrend.dir}
+        trendLabel={monthlySpendTrend.label}
+        trendTone={monthlySpendTrend.tone}
       />
     </div>
   );
