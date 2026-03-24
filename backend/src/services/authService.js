@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const User = require('../models/User');
 const Organization = require('../models/Organization');
+const Vendor = require('../models/Vendor');
 const constants = require('../constants/constants');
 const { ValidationError, AuthenticationError, ConflictError, BadRequestError } = require('../utils/errorHandler');
 const { normalizeSettings } = require('./orgService');
@@ -188,7 +189,8 @@ const register = async ({
   orgCode,
   inviteCode,
   phone,
-  gender
+  gender,
+  vendorProfile
 }) => {
   if (!orgCode && !inviteCode) {
     throw new ValidationError('orgCode or inviteCode is required');
@@ -261,6 +263,33 @@ const register = async ({
   });
 
   await user.save();
+
+  if (assignedRole === constants.ROLES.VENDOR) {
+    const existingVendor = await Vendor.findOne({ organization: organization._id, email: user.email });
+    if (!existingVendor) {
+      const profile = vendorProfile || {};
+      const vendorName = profile.name || `${firstName} ${lastName}`.trim() || user.email;
+      await Vendor.create({
+        name: vendorName,
+        contactPerson: profile.contactPerson || `${firstName} ${lastName}`.trim(),
+        email: user.email,
+        phone: profile.phone || phone,
+        category: profile.category,
+        address: profile.address,
+        city: profile.city,
+        state: profile.state,
+        zipCode: profile.zipCode,
+        services: Array.isArray(profile.services) ? profile.services : undefined,
+        rating: typeof profile.rating === 'number' ? profile.rating : undefined,
+        monthlySpend: typeof profile.monthlySpend === 'number' ? profile.monthlySpend : undefined,
+        contractStartDate: profile.contractStartDate ? new Date(profile.contractStartDate) : undefined,
+        contractEndDate: profile.contractEndDate ? new Date(profile.contractEndDate) : undefined,
+        status: profile.status || 'active',
+        notes: profile.notes,
+        organization: organization._id
+      });
+    }
+  }
 
   const token = generateToken(user);
   const userResponse = user.toObject();

@@ -301,6 +301,7 @@ export const AuthProvider = ({ children }) => {
           gender: userData.gender,
           phoneCountryCode: userData.phoneCountryCode || getDialCode(userData.phone),
         };
+        if (userData.vendorProfile) payload.vendorProfile = userData.vendorProfile;
         if (userData.orgCode) payload.orgCode = userData.orgCode;
         if (userData.inviteCode) payload.inviteCode = userData.inviteCode;
         response = await axiosInstance.post('/auth/register', payload, { suppressToast: true });

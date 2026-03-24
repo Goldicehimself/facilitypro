@@ -11,7 +11,23 @@ const registerSchema = Joi.object({
   inviteCode: Joi.string().alphanum().min(8).max(12).empty(''),
   phone: Joi.string().optional(),
   gender: Joi.string().valid('male', 'female', 'other').optional(),
-  department: Joi.string().optional()
+  department: Joi.string().optional(),
+  vendorProfile: Joi.object({
+    name: Joi.string().min(2).max(120).required(),
+    category: Joi.string().min(2).max(120).required(),
+    contactPerson: Joi.string().optional().allow('', null),
+    address: Joi.string().optional().allow('', null),
+    city: Joi.string().optional().allow('', null),
+    state: Joi.string().optional().allow('', null),
+    zipCode: Joi.string().optional().allow('', null),
+    contractStartDate: Joi.date().optional(),
+    contractEndDate: Joi.date().optional(),
+    rating: Joi.number().min(0).max(5).optional(),
+    monthlySpend: Joi.number().min(0).optional(),
+    status: Joi.string().valid('active', 'inactive', 'suspended').optional(),
+    services: Joi.array().items(Joi.string().min(1)).optional(),
+    notes: Joi.string().optional().max(500)
+  }).when('role', { is: 'vendor', then: Joi.required() })
 }).xor('orgCode', 'inviteCode');
 
 const registerOrgSchema = Joi.object({
