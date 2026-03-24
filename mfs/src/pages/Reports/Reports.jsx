@@ -55,10 +55,25 @@ const ReportsPage = () => {
   const [timeRange, setTimeRange] = useState('Last 30 days');
   const [activeFilter, setActiveFilter] = useState('All Status');
 
-  const { data: reports = {} } = useQuery('reports', fetchReports);
+  const rangeDays = useMemo(() => {
+    switch (timeRange) {
+      case 'Last 7 days':
+        return 7;
+      case 'Last 90 days':
+        return 90;
+      case 'Last Year':
+        return 365;
+      case 'Last 30 days':
+      default:
+        return 30;
+    }
+  }, [timeRange]);
+
+  const { data: reports = {} } = useQuery(['reports', rangeDays], () => fetchReports(rangeDays));
   const { data: reportWarnings = [] } = useQuery('report-warnings', fetchReportWarnings);
   const [dismissedWarnings, setDismissedWarnings] = useState([]);
   const [scheduling, setScheduling] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   const {
     summary = {},
@@ -69,10 +84,14 @@ const ReportsPage = () => {
   } = reports;
 
   const safeSummary = {
-    totalWorkOrders: 10,
+    totalWorkOrders: 0,
+    totalWorkOrdersTrend: 0,
     completionRate: 0,
+    completionRateTrend: 0,
     avgResponseTime: 0,
+    avgResponseTimeTrend: 0,
     totalCosts: 0,
+    totalCostsTrend: 0,
     ...summary,
   };
 
@@ -88,8 +107,39 @@ const ReportsPage = () => {
     ...assetPerformance,
   };
 
+  const getFilenameFromHeaders = (headers) => {
+    const contentDisposition = headers?.['content-disposition'] || headers?.['Content-Disposition'];
+    if (!contentDisposition) return null;
+    const match = contentDisposition.match(/filename="([^"]+)"/i);
+    return match ? match[1] : null;
+  };
+
   const handleExportReport = async () => {
-    await exportReport('pdf');
+    try {
+      setExporting(true);
+      const response = await exportReport('pdf', rangeDays);
+      if (!response) {
+        toast.error('Failed to export report.');
+        return;
+      }
+      const filename = getFilenameFromHeaders(response.headers) || `report_${rangeDays}_days.pdf`;
+      const blob = new Blob([response.data], {
+        type: response.headers?.['content-type'] || 'application/pdf'
+      });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success('Report exported.');
+    } catch (error) {
+      toast.error('Failed to export report.');
+    } finally {
+      setExporting(false);
+    }
   };
 
   const currentWarning = useMemo(
@@ -119,14 +169,20 @@ const ReportsPage = () => {
     setDismissedWarnings((prev) => [...prev, currentWarning.id]);
   };
 
-  const getTrendColor = (value) => {
-    return value >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400';
+  const formatTrend = (value) => `${value >= 0 ? '+' : ''}${Math.round(value)}%`;
+  const formatCurrencyShort = (value) => {
+    const numeric = Number(value) || 0;
+    if (Math.abs(numeric) >= 1000) {
+      return `NGN ${(numeric / 1000).toFixed(1)}K`;
+    }
+    return `NGN ${numeric.toFixed(0)}`;
   };
 
-  const getTrendBgColor = (value) => {
-    return value >= 0
-      ? 'bg-emerald-100 dark:bg-emerald-900'
-      : 'bg-rose-100 dark:bg-rose-900';
+  const costColors = {
+    preventive: '#4f46e5',
+    corrective: '#f59e0b',
+    emergency: '#ef4444',
+    other: '#6b7280'
   };
 
   return (
@@ -159,10 +215,11 @@ const ReportsPage = () => {
             variant="contained" 
             size="small" 
             startIcon={<Download size={14} />} 
-            onClick={() => alert(`Exporting report for ${timeRange}...`)}
+            onClick={handleExportReport}
+            disabled={exporting}
             sx={{ fontWeight: 600, textTransform: 'none', fontSize: '0.85rem' }}
           >
-            Export Report
+            {exporting ? 'Exporting...' : 'Export Report'}
           </Button>
         </Box>
       </Box>
@@ -189,14 +246,14 @@ const ReportsPage = () => {
               <Divider sx={{ my: 1.5 }} />
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Chip
-                  label="+8%"
+                  label={formatTrend(safeSummary.totalWorkOrdersTrend)}
                   size="small"
-                  color="success"
+                  color={safeSummary.totalWorkOrdersTrend >= 0 ? 'success' : 'error'}
                   variant="filled"
                   sx={{ fontWeight: 700, fontSize: '0.75rem' }}
                 />
                 <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, fontSize: '0.75rem' }}>
-                  Last 30 days
+                  {timeRange}
                 </Typography>
               </Box>
             </CardContent>
@@ -223,14 +280,14 @@ const ReportsPage = () => {
               <Divider sx={{ my: 1.5 }} />
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Chip
-                  label="+3%"
+                  label={formatTrend(safeSummary.completionRateTrend)}
                   size="small"
-                  color="success"
+                  color={safeSummary.completionRateTrend >= 0 ? 'success' : 'error'}
                   variant="filled"
                   sx={{ fontWeight: 700, fontSize: '0.75rem' }}
                 />
                 <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, fontSize: '0.75rem' }}>
-                  Last 30 days
+                  {timeRange}
                 </Typography>
               </Box>
             </CardContent>
@@ -257,14 +314,14 @@ const ReportsPage = () => {
               <Divider sx={{ my: 1.5 }} />
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Chip
-                  label="-12%"
+                  label={formatTrend(safeSummary.avgResponseTimeTrend)}
                   size="small"
-                  color="error"
+                  color={safeSummary.avgResponseTimeTrend >= 0 ? 'success' : 'error'}
                   variant="filled"
                   sx={{ fontWeight: 700, fontSize: '0.75rem' }}
                 />
                 <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, fontSize: '0.75rem' }}>
-                  Last 30 days
+                  {timeRange}
                 </Typography>
               </Box>
             </CardContent>
@@ -281,7 +338,7 @@ const ReportsPage = () => {
                     Total Costs
                   </Typography>
                   <Typography variant="h5" sx={{ fontWeight: 800, color: 'text.primary' }}>
-                    ₦{(safeSummary.totalCosts / 1000).toFixed(1)}K
+                    {formatCurrencyShort(safeSummary.totalCosts)}
                   </Typography>
                 </Box>
                 <Avatar sx={{ bgcolor: '#d9770620', width: 42, height: 42, color: '#d97706' }}>
@@ -291,14 +348,14 @@ const ReportsPage = () => {
               <Divider sx={{ my: 1.5 }} />
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Chip
-                  label="+3%"
+                  label={formatTrend(safeSummary.totalCostsTrend)}
                   size="small"
-                  color="success"
+                  color={safeSummary.totalCostsTrend >= 0 ? 'success' : 'error'}
                   variant="filled"
                   sx={{ fontWeight: 700, fontSize: '0.75rem' }}
                 />
                 <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, fontSize: '0.75rem' }}>
-                  Last 30 days
+                  {timeRange}
                 </Typography>
               </Box>
             </CardContent>
@@ -385,7 +442,7 @@ const ReportsPage = () => {
                     dataKey="value"
                   >
                     {costBreakdown.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
+                      <Cell key={`cell-${index}`} fill={costColors[entry.name] || costColors.other} />
                     ))}
                   </Pie>
                   <Tooltip
@@ -400,7 +457,7 @@ const ReportsPage = () => {
                   <Legend
                     verticalAlign="bottom"
                     height={36}
-                    formatter={(value, entry) => `${value}: ₦${(entry.payload.value / 1000).toFixed(0)}K`}
+                    formatter={(value, entry) => `${value}: ${formatCurrencyShort(entry.payload.value)}`}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -477,7 +534,7 @@ const ReportsPage = () => {
                   <Chip label={`${safeAssetPerformance.repairTrend >= 0 ? '+' : ''}${safeAssetPerformance.repairTrend}%`} size="small" color={safeAssetPerformance.repairTrend >= 0 ? 'success' : 'error'} variant="outlined" sx={{ fontWeight: 700, fontSize: '0.7rem' }} />
                 </Box>
                 <Typography variant="h4" sx={{ fontWeight: 800, color: 'text.primary' }}>
-                  ₦{(safeAssetPerformance.repairCosts / 1000).toFixed(1)}K
+                  {formatCurrencyShort(safeAssetPerformance.repairCosts)}
                 </Typography>
               </Box>
             </CardContent>
@@ -614,4 +671,8 @@ const ReportsPage = () => {
 };
 
 export default ReportsPage;
+
+
+
+
 

@@ -34,6 +34,7 @@
     "multer": "^2.0.2",
     "nanoid": "^5.0.7",
     "nodemailer": "^8.0.1",
+    "pdfkit": "^0.14.0",
     "react-international-phone": "^4.7.0",
     "redis": "^5.11.0",
     "slugify": "^1.6.6",

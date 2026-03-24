@@ -90,6 +90,21 @@ const assetSchema = new mongoose.Schema({
     enum: Object.values(constants.ASSET_STATUS),
     default: constants.ASSET_STATUS.ACTIVE
   },
+  statusHistory: [{
+    status: {
+      type: String,
+      enum: Object.values(constants.ASSET_STATUS),
+      required: true
+    },
+    changedAt: {
+      type: Date,
+      default: Date.now
+    },
+    changedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    }
+  }],
   condition: {
     type: String,
     enum: ['excellent', 'good', 'fair', 'poor'],

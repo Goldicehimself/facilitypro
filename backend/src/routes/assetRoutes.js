@@ -15,6 +15,7 @@ router.get('/', protect, requireScope('assets:read'), assetController.getAssets)
 router.get('/lookup', protect, requireScope('assets:read'), assetController.getAssetByCode);
 router.get('/import/template', protect, requireScope('assets:read'), assetController.downloadImportTemplate);
 router.get('/:id', protect, requireScope('assets:read'), assetController.getAssetById);
+router.get('/:id/history', protect, requireScope('assets:read'), assetController.getAssetHistory);
 router.post(
   '/',
   protect,

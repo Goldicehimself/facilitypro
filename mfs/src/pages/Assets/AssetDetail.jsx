@@ -10,10 +10,10 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import Modal from '../../components/common/Modal';
-import { deleteAsset, getAsset, updateAsset, uploadAssetImage } from '../../api/assets';
+import { deleteAsset, getAsset, updateAsset, uploadAssetImage, getAssetHistory } from '../../api/assets';
 import { getWorkOrders } from '../../api/workOrders';
 import MaintenanceTimeline from '../../components/assets/MaintenanceTimeline';
-import { formatCurrency } from '@/utils/formatters';
+import { formatCurrency, formatDate } from '@/utils/formatters';
 import AssetImage from '../../components/assets/AssetImage';
 import { toast } from 'react-toastify';
 
@@ -31,6 +31,9 @@ const AssetDetail = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [viewerOpen, setViewerOpen] = useState(false);
   const [relatedWOs, setRelatedWOs] = useState([]);
+  const [statusHistory, setStatusHistory] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyFilter, setHistoryFilter] = useState('all');
 
   // Edit Asset Modal state
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -255,6 +258,20 @@ const AssetDetail = () => {
           setSelectedImage((res && (res.imageUrls && res.imageUrls.length > 0) ? res.imageUrls[0] : res?.imageUrl) || '/placeholder-asset.svg');
         }
 
+        setHistoryLoading(true);
+        try {
+          const history = await getAssetHistory(id);
+          if (mounted) {
+            setStatusHistory(Array.isArray(history) ? history : []);
+          }
+        } catch (err) {
+          if (mounted && Array.isArray(res?.statusHistory)) {
+            setStatusHistory(res.statusHistory);
+          }
+        } finally {
+          if (mounted) setHistoryLoading(false);
+        }
+
         // Load related work orders
         try {
           const wos = await getWorkOrders();
@@ -298,6 +315,19 @@ const AssetDetail = () => {
   }
 
   const images = (asset.imageUrls && asset.imageUrls.length > 0) ? asset.imageUrls : [asset.imageUrl || '/placeholder-asset.svg'];
+
+  const statusChipColor = (status) => {
+    if (status === 'active') return 'success';
+    if (status === 'maintenance') return 'warning';
+    if (status === 'retired') return 'default';
+    if (status === 'inactive') return 'default';
+    return 'default';
+  };
+
+  const filteredStatusHistory = statusHistory.filter((entry) => {
+    if (historyFilter === 'all') return true;
+    return entry?.status === historyFilter;
+  });
 
   return (
     <Box sx={{ bgcolor: isDark ? '#0b1120' : '#f8fafc', minHeight: '100vh', pb: 4 }}>
@@ -550,6 +580,68 @@ const AssetDetail = () => {
             <div style={{ marginTop: 8 }}>
               <MaintenanceTimeline items={asset.maintenanceHistory} />
             </div>
+          </Paper>
+
+          <Paper sx={{ 
+            p: 3, 
+            mb: 3,
+            bgcolor: isDark ? '#0f172a' : 'white',
+            border: isDark ? '1px solid #1f2937' : '1px solid #e2e8f0',
+            borderRadius: 2
+          }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Typography variant="h6" sx={{ fontWeight: 700, color: isDark ? '#e2e8f0' : '#1e293b' }}>Status History</Typography>
+              <Stack direction="row" spacing={1}>
+                {[
+                  { label: 'All', value: 'all' },
+                  { label: 'Inactive', value: 'inactive' },
+                  { label: 'Retired', value: 'retired' }
+                ].map((filter) => (
+                  <Chip
+                    key={filter.value}
+                    label={filter.label}
+                    clickable
+                    size="small"
+                    color={historyFilter === filter.value ? 'primary' : 'default'}
+                    variant={historyFilter === filter.value ? 'filled' : 'outlined'}
+                    onClick={() => setHistoryFilter(filter.value)}
+                    sx={{ fontWeight: 600 }}
+                  />
+                ))}
+              </Stack>
+            </Box>
+            {historyLoading ? (
+              <Typography variant="body2" color="text.secondary">Loading history...</Typography>
+            ) : filteredStatusHistory.length === 0 ? (
+              <Typography variant="body2" color="text.secondary">No status history yet.</Typography>
+            ) : (
+              <Stack spacing={1}>
+                {filteredStatusHistory.map((entry, idx) => (
+                  <Paper
+                    key={`${entry._id || entry.changedAt || idx}`}
+                    sx={{
+                      p: 1.5,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      bgcolor: isDark ? '#0b1220' : '#f8fafc',
+                      border: isDark ? '1px solid #1f2937' : '1px solid #e2e8f0'
+                    }}
+                    elevation={0}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Chip label={String(entry.status || '').toUpperCase()} size="small" color={statusChipColor(entry.status)} />
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                        {formatDate(entry.changedAt, 'datetime')}
+                      </Typography>
+                    </Box>
+                    <Typography variant="caption" color="text.secondary">
+                      {entry.changedBy?.email || entry.changedBy?.name || 'System'}
+                    </Typography>
+                  </Paper>
+                ))}
+              </Stack>
+            )}
           </Paper>
 
           {/* Edit Schedule Modal & Parts Modal will be rendered below */}

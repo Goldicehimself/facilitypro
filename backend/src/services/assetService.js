@@ -53,13 +53,46 @@ const getAssetByCode = async (organizationId, code) => {
 
 const createAsset = async (organizationId, assetData) => {
   assetData.organization = organizationId;
+  if (!Array.isArray(assetData.statusHistory) || assetData.statusHistory.length === 0) {
+    assetData.statusHistory = [{
+      status: assetData.status || 'active',
+      changedAt: new Date(),
+      changedBy: assetData.changedBy
+    }];
+  }
   const asset = new Asset(assetData);
   await asset.save();
   return asset;
 };
 
-const updateAsset = async (organizationId, id, updateData) => {
-  const asset = await Asset.findOneAndUpdate({ _id: id, organization: organizationId }, updateData, {
+const updateAsset = async (organizationId, id, updateData, userId) => {
+  const existing = await Asset.findOne({ _id: id, organization: organizationId }).select('status statusHistory');
+  if (!existing) {
+    throw new NotFoundError('Asset');
+  }
+
+  const { statusHistory, ...restUpdateData } = updateData || {};
+  const updateOps = { $set: { ...restUpdateData } };
+
+  if (updateData.status && updateData.status !== existing.status) {
+    updateOps.$push = {
+      statusHistory: {
+        status: updateData.status,
+        changedAt: new Date(),
+        changedBy: userId
+      }
+    };
+  } else if (!Array.isArray(existing.statusHistory) || existing.statusHistory.length === 0) {
+    updateOps.$push = {
+      statusHistory: {
+        status: existing.status || updateData.status || 'active',
+        changedAt: new Date(),
+        changedBy: userId
+      }
+    };
+  }
+
+  const asset = await Asset.findOneAndUpdate({ _id: id, organization: organizationId }, updateOps, {
     new: true,
     runValidators: true
   });
@@ -77,16 +110,37 @@ const deleteAsset = async (organizationId, id) => {
   return asset;
 };
 
-const bulkUpdateAssetStatus = async (organizationId, ids = [], status) => {
+const bulkUpdateAssetStatus = async (organizationId, ids = [], status, userId) => {
   const scopedFilters = { organization: organizationId };
   if (Array.isArray(ids) && ids.length > 0) {
     scopedFilters._id = { $in: ids };
   }
 
-  const result = await Asset.updateMany(scopedFilters, {
-    status,
-    updatedAt: new Date()
-  });
+  const targets = await Asset.find(scopedFilters).select('_id status');
+  const now = new Date();
+
+  const operations = targets
+    .filter((asset) => asset.status !== status)
+    .map((asset) => ({
+      updateOne: {
+        filter: { _id: asset._id, organization: organizationId },
+        update: {
+          $set: { status, updatedAt: now },
+          $push: {
+            statusHistory: {
+              status,
+              changedAt: now,
+              changedBy: userId
+            }
+          }
+        }
+      }
+    }));
+
+  let result = { modifiedCount: 0 };
+  if (operations.length) {
+    result = await Asset.bulkWrite(operations);
+  }
   const updatedAssets = await Asset.find(scopedFilters);
 
   return {
@@ -124,12 +178,14 @@ const importAssets = async (organizationId, assets = []) => {
   const valid = [];
   const errors = [];
 
+  const now = new Date();
   assets.forEach((asset, idx) => {
     const row = idx + 1;
     if (!asset?.name) {
       errors.push(`Row ${row}: Asset name is required`);
       return;
     }
+    const status = asset.status || 'active';
     valid.push({
       name: asset.name,
       assetNumber: asset.assetNumber,
@@ -141,10 +197,14 @@ const importAssets = async (organizationId, assets = []) => {
       modelNumber: asset.modelNumber,
       purchaseDate: asset.purchaseDate,
       purchasePrice: asset.purchasePrice,
-      status: asset.status,
+      status,
       qrCode: asset.qrCode,
       department: asset.department,
-      organization: organizationId
+      organization: organizationId,
+      statusHistory: [{
+        status,
+        changedAt: now
+      }]
     });
   });
 

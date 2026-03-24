@@ -2,6 +2,7 @@
 const assetService = require('../services/assetService');
 const response = require('../utils/response');
 const activityService = require('../services/activityService');
+const Asset = require('../models/Asset');
 const User = require('../models/User');
 const { ValidationError } = require('../utils/errorHandler');
 const { uploadBuffer } = require('../services/cloudinaryService');
@@ -209,6 +210,24 @@ const getAssetById = async (req, res, next) => {
   }
 };
 
+const getAssetHistory = async (req, res, next) => {
+  try {
+    const asset = await Asset.findOne({ _id: req.params.id, organization: req.user.organization })
+      .select('statusHistory')
+      .populate('statusHistory.changedBy', 'name email');
+    if (!asset) {
+      throw new ValidationError('Asset not found');
+    }
+    const history = Array.isArray(asset.statusHistory) ? asset.statusHistory : [];
+    const sorted = history
+      .slice()
+      .sort((a, b) => new Date(b.changedAt) - new Date(a.changedAt));
+    response.success(res, 'Asset history retrieved successfully', sorted);
+  } catch (error) {
+    next(error);
+  }
+};
+
 const getAssetByCode = async (req, res, next) => {
   try {
     const code = String(req.query.code || '').trim();
@@ -226,6 +245,7 @@ const createAsset = async (req, res, next) => {
   try {
     const assetData = normalizeAssetPayload(req.body);
     assetData.organization = req.user.organization;
+    assetData.changedBy = req.user.id;
     await ensureOwnerInOrg(req.user.organization, assetData.owner);
     if (req.file) {
       assetData.imageUrl = req.file.path;
@@ -258,7 +278,7 @@ const updateAsset = async (req, res, next) => {
       updateData.imageUrls = [req.file.path];
       updateData.images = [req.file.path];
     }
-    const asset = await assetService.updateAsset(req.user.organization, req.params.id, updateData);
+    const asset = await assetService.updateAsset(req.user.organization, req.params.id, updateData, req.user.id);
     activityService.broadcast({
       type: 'asset_updated',
       message: `${asset.name || 'Asset'} updated`,
@@ -383,7 +403,7 @@ const downloadImportTemplate = async (req, res) => {
 const bulkUpdateAssetStatus = async (req, res, next) => {
   try {
     const { ids = [], status } = req.body;
-    const result = await assetService.bulkUpdateAssetStatus(req.user.organization, ids, status);
+    const result = await assetService.bulkUpdateAssetStatus(req.user.organization, ids, status, req.user.id);
     activityService.broadcast({
       type: 'asset_bulk_status',
       message: `Updated ${result.updatedCount} assets to ${status}`,
@@ -402,6 +422,7 @@ const bulkUpdateAssetStatus = async (req, res, next) => {
 module.exports = {
   getAssets,
   getAssetById,
+  getAssetHistory,
   getAssetByCode,
   createAsset,
   updateAsset,
