@@ -83,7 +83,7 @@ const createLeaveRequest = async (req, res, next) => {
           startDate: leave.startDate,
           endDate: leave.endDate
         }
-      });
+      }, { force: true });
     }
     response.created(res, 'Leave request submitted', leave);
   } catch (error) {
@@ -132,7 +132,7 @@ const approveLeave = async (req, res, next) => {
       entityType: 'LeaveRequest',
       entityId: leave._id,
       link: '/leave-center'
-    });
+    }, { force: true });
     await sendLeaveDecisionEmail(req.user.organization, leave.staff, 'approved');
     response.success(res, 'Leave approved', leave);
   } catch (error) {
@@ -153,7 +153,7 @@ const rejectLeave = async (req, res, next) => {
       entityType: 'LeaveRequest',
       entityId: leave._id,
       link: '/leave-center'
-    });
+    }, { force: true });
     await sendLeaveDecisionEmail(req.user.organization, leave.staff, 'rejected');
     response.success(res, 'Leave rejected', leave);
   } catch (error) {
