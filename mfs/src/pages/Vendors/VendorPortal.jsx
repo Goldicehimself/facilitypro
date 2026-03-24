@@ -12,6 +12,7 @@ import { getWorkOrders, updateWorkOrderStatus } from '@/api/workOrders';
 import { createServiceRequest, getServiceRequests } from '@/api/serviceRequests';
 import { getInvoices } from '@/api/finance';
 import { formatCurrency } from '@/utils/formatters';
+import { toast } from 'react-toastify';
 
 const VendorPortal = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -908,13 +909,13 @@ const VendorPortal = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Button 
-                    onClick={() => alert('Starting chat support session...')}
+                    onClick={() => toast.info('Chat support is coming soon.')}
                     className="bg-blue-700 hover:bg-blue-800 text-white w-full">
                     <MessageSquare className="h-4 w-4 mr-2" />
                     Start Chat Support
                   </Button>
                   <Button 
-                    onClick={() => alert('Opening FAQs...')}
+                    onClick={() => toast.info('FAQs are coming soon.')}
                     variant="outline" 
                     className="w-full">
                     <FileText className="h-4 w-4 mr-2" />
