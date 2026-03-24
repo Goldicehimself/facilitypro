@@ -89,8 +89,9 @@ const filterUsersByPreferences = async (organizationId, userIds, notificationTyp
 
 const createNotification = async (payload, options = {}) => {
   try {
+    const force = options.force || (payload?.type && String(payload.type).startsWith('leave_'));
     // Check if user should receive this notification
-    if (!options.force) {
+    if (!force) {
       const shouldSend = await shouldSendInAppNotification(payload.organization, payload.user, payload.type);
       if (!shouldSend) return null;
     }
@@ -108,16 +109,17 @@ const createNotificationsForUsers = async (userIds, payload, options = {}) => {
   if (!userIds || userIds.length === 0) return [];
 
   // Filter users based on preferences
-  const allowedUserIds = options.force
+  const force = options.force || (payload?.type && String(payload.type).startsWith('leave_'));
+  const allowedUserIds = force
     ? userIds
     : await filterUsersByPreferences(payload.organization, userIds, payload.type);
-  if (!options.force && allowedUserIds.length === 0) return [];
+  if (!force && allowedUserIds.length === 0) return [];
 
   const notifications = [];
 
   for (const userId of allowedUserIds) {
     try {
-      const notification = await createNotification({ ...payload, user: userId }, options);
+      const notification = await createNotification({ ...payload, user: userId }, { ...options, force });
       if (notification) {
         notifications.push(notification);
       }
