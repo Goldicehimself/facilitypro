@@ -262,6 +262,10 @@ const register = async ({
     active: false
   });
 
+  if (assignedRole === constants.ROLES.VENDOR && !vendorProfile) {
+    throw new ValidationError('Vendor profile is required for vendor registrations');
+  }
+
   await user.save();
 
   if (assignedRole === constants.ROLES.VENDOR) {
@@ -355,7 +359,7 @@ const register = async ({
   };
 };
 
-const createInviteCode = async ({ organizationId, role, expiresAt, createdBy, inviteEmail, inviter }) => {
+const createInviteCode = async ({ organizationId, role, expiresAt, createdBy, inviteEmail, inviter, message }) => {
   if (!organizationId) throw new ValidationError('Organization is required');
   if (!role) throw new ValidationError('Role is required');
 
@@ -372,6 +376,7 @@ const createInviteCode = async ({ organizationId, role, expiresAt, createdBy, in
     code,
     role,
     expiresAt: expiresAt || null,
+    message: message || undefined,
     createdBy
   });
 
@@ -380,6 +385,12 @@ const createInviteCode = async ({ organizationId, role, expiresAt, createdBy, in
   if (inviteEmail) {
   const emailBaseUrl = getEmailBaseUrl();
   const inviteLink = `${emailBaseUrl}/register?invite=${code}`;
+    const inviteMessageBlock = message
+      ? `<tr><td style="font-family:Arial,Helvetica,sans-serif; font-size:14px; line-height:1.6; color:#334155; padding-bottom:16px;"><strong>Message from inviter:</strong><br />${message}</td></tr>`
+      : '';
+    const inviteExpiresBlock = expiresAt
+      ? `<tr><td style="font-family:Arial,Helvetica,sans-serif; font-size:12px; line-height:1.6; color:#64748b; padding-top:12px;">This invite expires on ${new Date(expiresAt).toLocaleDateString()}.</td></tr>`
+      : '';
     const inviteHtml = renderTemplate('facilitypro-invite.html', {
       recipient_name: inviteEmail,
       org_name: organization.name,
@@ -388,6 +399,8 @@ const createInviteCode = async ({ organizationId, role, expiresAt, createdBy, in
       invite_url: inviteLink,
       org_code: organization.orgCode,
       recipient_email: inviteEmail,
+      invite_message_block: inviteMessageBlock,
+      invite_expires_block: inviteExpiresBlock,
       support_email: getSupportEmail(organization),
       year: new Date().getFullYear()
     });
@@ -397,13 +410,17 @@ const createInviteCode = async ({ organizationId, role, expiresAt, createdBy, in
       text: [
         `You have been invited to join ${organization.name} on FacilityPro.`,
         `Role: ${getRoleLabel(role)}`,
+        message ? `Message: ${message}` : null,
+        expiresAt ? `Invite expires on: ${new Date(expiresAt).toLocaleDateString()}` : null,
         '',
         'Accept the invite:',
         inviteLink
-      ].join('\n'),
+      ].filter(Boolean).join('\n'),
       html: inviteHtml || [
         `<p>You have been invited to join <strong>${organization.name}</strong> on FacilityPro.</p>`,
         `<p>Role: ${getRoleLabel(role)}</p>`,
+        message ? `<p><strong>Message:</strong> ${message}</p>` : '',
+        expiresAt ? `<p><strong>Invite expires on:</strong> ${new Date(expiresAt).toLocaleDateString()}</p>` : '',
         `<p><a href="${inviteLink}">Accept invite</a></p>`
       ].join('')
     });

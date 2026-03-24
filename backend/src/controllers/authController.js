@@ -42,6 +42,7 @@ const createInvite = async (req, res, next) => {
       expiresAt: payload.expiresAt,
       createdBy: req.user.id,
       inviteEmail: payload.email,
+      message: payload.message,
       inviter: {
         name: inviterName || inviterUser?.email,
         email: inviterUser?.email

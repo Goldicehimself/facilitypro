@@ -30,8 +30,8 @@ export const revokeInvite = async (code) => {
   return response.data?.data;
 };
 
-export const createInvite = async ({ role, expiresAt } = {}) => {
-  const response = await axiosInstance.post('/auth/invite', { role, expiresAt });
+export const createInvite = async ({ role, expiresAt, email, message } = {}) => {
+  const response = await axiosInstance.post('/auth/invite', { role, expiresAt, email, message });
   return response.data?.data;
 };
 

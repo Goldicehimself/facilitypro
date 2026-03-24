@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { createVendor, getVendorById, updateVendor } from '@/api/vendors';
+import { createInvite } from '@/api/org';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatCurrency } from '@/utils/formatters';
 
@@ -40,6 +41,9 @@ const VendorForm = () => {
 
   const [services, setServices] = useState([]);
   const [newService, setNewService] = useState('');
+  const [sendInvite, setSendInvite] = useState(false);
+  const [inviteExpiresAt, setInviteExpiresAt] = useState('');
+  const [inviteMessage, setInviteMessage] = useState('');
 
   const categories = [
     'HVAC',
@@ -148,6 +152,19 @@ const VendorForm = () => {
         await updateVendor(id, payload);
       } else {
         await createVendor(payload);
+        if (sendInvite && formData.email) {
+          try {
+            await createInvite({
+              role: 'vendor',
+              email: formData.email,
+              expiresAt: inviteExpiresAt || undefined,
+              message: inviteMessage || undefined
+            });
+            toast.success('Invite sent to vendor email.');
+          } catch (inviteError) {
+            toast.warning('Vendor created, but invite could not be sent.');
+          }
+        }
       }
 
       toast.success(`Vendor ${isEdit ? 'updated' : 'created'} successfully!`);
@@ -156,6 +173,8 @@ const VendorForm = () => {
       toast.error(`Failed to ${isEdit ? 'update' : 'create'} vendor: ${error.message}`);
     } finally {
       setLoading(false);
+      setInviteExpiresAt('');
+      setInviteMessage('');
     }
   };
 
@@ -620,13 +639,50 @@ const VendorForm = () => {
                   Edit Vendor
                 </Button>
               ) : (
-                <Button
-                  type="submit"
-                  disabled={loading}
-                  className="flex-1 bg-blue-700 hover:bg-blue-800 text-white"
-                >
-                  {loading ? 'Saving...' : isEdit ? 'Update Vendor' : 'Create Vendor'}
-                </Button>
+                <div className="flex flex-1 flex-col gap-3">
+                  {!isEdit && (
+                    <div className="space-y-2">
+                      <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                        <input
+                          type="checkbox"
+                          checked={sendInvite}
+                          onChange={(e) => setSendInvite(e.target.checked)}
+                        />
+                        Send invite to vendor email
+                      </label>
+                      {sendInvite && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Invite Expiration</label>
+                            <Input
+                              type="date"
+                              value={inviteExpiresAt}
+                              onChange={(e) => setInviteExpiresAt(e.target.value)}
+                              className="w-full"
+                            />
+                          </div>
+                          <div className="md:col-span-2">
+                            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Custom Message</label>
+                            <textarea
+                              value={inviteMessage}
+                              onChange={(e) => setInviteMessage(e.target.value)}
+                              placeholder="Optional message to the vendor"
+                              rows={3}
+                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  <Button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full bg-blue-700 hover:bg-blue-800 text-white"
+                  >
+                    {loading ? 'Saving...' : isEdit ? 'Update Vendor' : 'Create Vendor'}
+                  </Button>
+                </div>
               )}
             </div>
           </form>

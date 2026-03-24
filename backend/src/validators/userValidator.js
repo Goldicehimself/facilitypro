@@ -44,7 +44,8 @@ const registerOrgSchema = Joi.object({
 const inviteSchema = Joi.object({
   role: Joi.string().required().valid('facility_manager', 'technician', 'staff', 'vendor', 'finance', 'procurement'),
   expiresAt: Joi.date().optional(),
-  email: Joi.string().email().optional()
+  email: Joi.string().email().optional(),
+  message: Joi.string().max(500).optional()
 });
 
 const loginSchema = Joi.object({

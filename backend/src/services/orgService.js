@@ -441,6 +441,13 @@ const getPublicSecurityPolicy = async ({ orgCode, inviteCode } = {}) => {
   if (org.status !== 'active') throw new ValidationError('Organization is disabled');
 
   const settings = normalizeSettings(org);
+  if (normalizedInviteCode) {
+    const invite = (org.invites || []).find((inv) => inv.code === normalizedInviteCode);
+    return {
+      securityPolicy: settings.securityPolicy,
+      inviteRole: invite?.role || null
+    };
+  }
   return { securityPolicy: settings.securityPolicy };
 };
 

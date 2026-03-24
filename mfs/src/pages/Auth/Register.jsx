@@ -99,6 +99,7 @@ const Register = () => {
   const [showOrgCode, setShowOrgCode] = useState(false);
   const [orgSecurityPolicy, setOrgSecurityPolicy] = useState({ restrictInviteDomains: false, allowedInviteDomains: [] });
   const [policyLoaded, setPolicyLoaded] = useState(false);
+  const [inviteRole, setInviteRole] = useState(null);
 
   const {
     register,
@@ -154,10 +155,12 @@ const Register = () => {
         });
         if (!isMounted) return;
         setOrgSecurityPolicy(data?.securityPolicy || { restrictInviteDomains: false, allowedInviteDomains: [] });
+        setInviteRole(data?.inviteRole || null);
         setPolicyLoaded(true);
       } catch {
         if (!isMounted) return;
         setOrgSecurityPolicy({ restrictInviteDomains: false, allowedInviteDomains: [] });
+        setInviteRole(null);
         setPolicyLoaded(false);
       }
     };
@@ -204,7 +207,7 @@ const Register = () => {
     }
 
     setLoading(true);
-    const shouldSendVendorProfile = role === 'vendor' || (!!vendorName && !!vendorCategory);
+    const shouldSendVendorProfile = role === 'vendor' || inviteRole === 'vendor' || (!!vendorName && !!vendorCategory);
     const vendorProfile = shouldSendVendorProfile
       ? {
         name: vendorName,
@@ -649,7 +652,7 @@ const Register = () => {
             </div>
           )}
 
-          {mode === 'join' && (roleValue === 'vendor' || inviteCode) && (
+          {mode === 'join' && (roleValue === 'vendor' || inviteRole === 'vendor') && (
             <>
               <div className="auth-field">
                 <label htmlFor="vendor-name">Vendor Name</label>

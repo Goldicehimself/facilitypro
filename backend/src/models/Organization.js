@@ -10,6 +10,7 @@ const inviteSchema = new mongoose.Schema({
   code: { type: String, required: true },
   role: { type: String, required: true },
   expiresAt: { type: Date, default: null },
+  message: { type: String, trim: true },
   usedAt: { type: Date, default: null },
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   usedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
