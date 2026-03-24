@@ -161,8 +161,10 @@ const markAllRead = async (organizationId, userId) => {
 
 const getRoleUserIds = async (roles = [], organizationId) => {
   if (!roles.length) return [];
-  const users = await User.find({ role: { $in: roles }, organization: organizationId }).select('_id');
-  return users.map((u) => u._id);
+  console.log('Getting users with roles:', roles, 'in organization:', organizationId);
+  const users = await User.find({ role: { $in: roles }, organization: organizationId }).select('_id role email firstName lastName active');
+  console.log('Found users:', users.map(u => ({ id: u._id, role: u.role, email: u.email, active: u.active })));
+  return users.filter(u => u.active).map((u) => u._id);
 };
 
 const ensureDueSoonNotifications = async (user, days = 7) => {

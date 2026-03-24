@@ -65,9 +65,13 @@ const createLeaveRequest = async (req, res, next) => {
       ['admin', 'facility_manager'],
       req.user.organization
     );
+    console.log('Leave created:', leave._id);
+    console.log('Recipients found:', recipients.length, recipients);
+    
     if (recipients.length > 0) {
       const staffName = [req.user?.firstName, req.user?.lastName].filter(Boolean).join(' ').trim() || req.user?.email || 'Staff member';
-      await notificationService.createNotificationsForUsers(recipients, {
+      console.log('Creating notifications for recipients:', recipients);
+      const notifications = await notificationService.createNotificationsForUsers(recipients, {
         organization: req.user.organization,
         title: 'New leave request',
         message: `${staffName} submitted a ${leave.type} leave request`,
@@ -84,9 +88,16 @@ const createLeaveRequest = async (req, res, next) => {
           endDate: leave.endDate
         }
       }, { force: true });
+      console.log('Notifications created successfully:', notifications?.length || 0);
+      if (notifications && notifications.length > 0) {
+        console.log('First notification:', notifications[0]);
+      }
+    } else {
+      console.log('No recipients found for notifications');
     }
     response.created(res, 'Leave request submitted', leave);
   } catch (error) {
+    console.error('Error creating leave request:', error);
     next(error);
   }
 };
