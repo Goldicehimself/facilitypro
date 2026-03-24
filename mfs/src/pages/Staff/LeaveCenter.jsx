@@ -15,6 +15,9 @@ const LeaveCenter = () => {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [decisionNotes, setDecisionNotes] = useState({});
+  const [leaveSubmitState, setLeaveSubmitState] = useState('idle');
+  const [approveState, setApproveState] = useState({});
+  const [rejectState, setRejectState] = useState({});
   const [newLeave, setNewLeave] = useState({
     type: 'Annual',
     startDate: '',
@@ -90,6 +93,7 @@ const LeaveCenter = () => {
     }
 
     try {
+      setLeaveSubmitState('loading');
       const created = await createLeave({
         type: newLeave.type,
         startDate: newLeave.startDate,
@@ -109,8 +113,11 @@ const LeaveCenter = () => {
         type: 'pending',
       });
       toast.success('Leave request submitted');
+      setLeaveSubmitState('done');
+      setTimeout(() => setLeaveSubmitState('idle'), 2000);
     } catch (error) {
       // handled by interceptor
+      setLeaveSubmitState('idle');
     }
   };
 
@@ -153,14 +160,18 @@ const LeaveCenter = () => {
   const handleApprove = async (request) => {
     try {
       const note = decisionNotes[request._id] || '';
+      setApproveState((prev) => ({ ...prev, [request._id]: 'loading' }));
       await approveLeave(request._id, note);
       toast.success('Leave approved');
       setPendingApprovals((prev) => prev.filter((item) => item._id !== request._id));
       setDecisionNotes((prev) => ({ ...prev, [request._id]: '' }));
       const refreshed = await fetchMyLeaves();
       setLeaveRequests(Array.isArray(refreshed) ? refreshed : []);
+      setApproveState((prev) => ({ ...prev, [request._id]: 'done' }));
+      setTimeout(() => setApproveState((prev) => ({ ...prev, [request._id]: 'idle' })), 2000);
     } catch (error) {
       // handled by interceptor
+      setApproveState((prev) => ({ ...prev, [request._id]: 'idle' }));
     }
   };
 
@@ -171,14 +182,18 @@ const LeaveCenter = () => {
         toast.error('Rejection note is required.');
         return;
       }
+      setRejectState((prev) => ({ ...prev, [request._id]: 'loading' }));
       await rejectLeave(request._id, note);
       toast.success('Leave rejected');
       setPendingApprovals((prev) => prev.filter((item) => item._id !== request._id));
       setDecisionNotes((prev) => ({ ...prev, [request._id]: '' }));
       const refreshed = await fetchMyLeaves();
       setLeaveRequests(Array.isArray(refreshed) ? refreshed : []);
+      setRejectState((prev) => ({ ...prev, [request._id]: 'done' }));
+      setTimeout(() => setRejectState((prev) => ({ ...prev, [request._id]: 'idle' })), 2000);
     } catch (error) {
       // handled by interceptor
+      setRejectState((prev) => ({ ...prev, [request._id]: 'idle' }));
     }
   };
 
@@ -286,8 +301,8 @@ const LeaveCenter = () => {
                         placeholder="Add brief context for your manager."
                       />
                     </div>
-                    <Button type="submit" className="w-full bg-blue-700 hover:bg-blue-800">
-                      Submit Leave Request
+                    <Button type="submit" className="w-full bg-blue-700 hover:bg-blue-800" disabled={leaveSubmitState === 'loading'}>
+                      {leaveSubmitState === 'loading' ? 'Sending...' : leaveSubmitState === 'done' ? 'Sent' : 'Submit Leave Request'}
                     </Button>
                   </form>
                 ) : (
@@ -462,15 +477,25 @@ const LeaveCenter = () => {
                     <Button
                       className="bg-emerald-600 hover:bg-emerald-700"
                       onClick={() => handleApprove(request)}
+                      disabled={approveState[request._id] === 'loading'}
                     >
-                      Approve
+                      {approveState[request._id] === 'loading'
+                        ? 'Approving...'
+                        : approveState[request._id] === 'done'
+                          ? 'Approved'
+                          : 'Approve'}
                     </Button>
                     <Button
                       variant="outline"
                       className="border-rose-200 text-rose-700 hover:bg-rose-50"
                       onClick={() => handleReject(request)}
+                      disabled={rejectState[request._id] === 'loading'}
                     >
-                      Reject
+                      {rejectState[request._id] === 'loading'
+                        ? 'Rejecting...'
+                        : rejectState[request._id] === 'done'
+                          ? 'Rejected'
+                          : 'Reject'}
                     </Button>
                   </div>
                 </div>

@@ -171,6 +171,8 @@ export default function StaffManagement() {
     to: '',
   });
   const [decisionNotes, setDecisionNotes] = useState({});
+  const [approveState, setApproveState] = useState({});
+  const [rejectState, setRejectState] = useState({});
   const [leaveLoading, setLeaveLoading] = useState(false);
   const [certActionLoading, setCertActionLoading] = useState(false);
 
@@ -407,13 +409,17 @@ export default function StaffManagement() {
   const handleApproveLeave = async (request) => {
     try {
       const note = decisionNotes[request._id] || '';
+      setApproveState((prev) => ({ ...prev, [request._id]: 'loading' }));
       await approveLeave(request._id, note);
       toast.success('Leave approved');
       setPendingLeaveRequests((prev) => prev.filter((r) => r._id !== request._id));
       setDecisionNotes((prev) => ({ ...prev, [request._id]: '' }));
       loadLeaves();
+      setApproveState((prev) => ({ ...prev, [request._id]: 'done' }));
+      setTimeout(() => setApproveState((prev) => ({ ...prev, [request._id]: 'idle' })), 2000);
     } catch (error) {
       // handled by interceptor
+      setApproveState((prev) => ({ ...prev, [request._id]: 'idle' }));
     }
   };
 
@@ -424,13 +430,17 @@ export default function StaffManagement() {
         toast.error('Rejection note is required.');
         return;
       }
+      setRejectState((prev) => ({ ...prev, [request._id]: 'loading' }));
       await rejectLeave(request._id, note);
       toast.success('Leave rejected');
       setPendingLeaveRequests((prev) => prev.filter((r) => r._id !== request._id));
       setDecisionNotes((prev) => ({ ...prev, [request._id]: '' }));
       loadLeaves();
+      setRejectState((prev) => ({ ...prev, [request._id]: 'done' }));
+      setTimeout(() => setRejectState((prev) => ({ ...prev, [request._id]: 'idle' })), 2000);
     } catch (error) {
       // handled by interceptor
+      setRejectState((prev) => ({ ...prev, [request._id]: 'idle' }));
     }
   };
 
@@ -676,21 +686,31 @@ export default function StaffManagement() {
                       />
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      <Button
-                        size="sm"
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                        onClick={() => handleApproveLeave(request)}
-                      >
-                        Approve
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="border-rose-300 text-rose-700 hover:bg-rose-50 dark:border-rose-500/60 dark:text-rose-300 dark:hover:bg-rose-900/30"
-                        onClick={() => handleRejectLeave(request)}
-                      >
-                        Reject
-                      </Button>
+                    <Button
+                      size="sm"
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                      onClick={() => handleApproveLeave(request)}
+                      disabled={approveState[request._id] === 'loading'}
+                    >
+                      {approveState[request._id] === 'loading'
+                        ? 'Approving...'
+                        : approveState[request._id] === 'done'
+                          ? 'Approved'
+                          : 'Approve'}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-rose-300 text-rose-700 hover:bg-rose-50 dark:border-rose-500/60 dark:text-rose-300 dark:hover:bg-rose-900/30"
+                      onClick={() => handleRejectLeave(request)}
+                      disabled={rejectState[request._id] === 'loading'}
+                    >
+                      {rejectState[request._id] === 'loading'
+                        ? 'Rejecting...'
+                        : rejectState[request._id] === 'done'
+                          ? 'Rejected'
+                          : 'Reject'}
+                    </Button>
                     </div>
                   </div>
                 ))}
