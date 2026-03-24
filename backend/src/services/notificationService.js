@@ -113,15 +113,21 @@ const createNotificationsForUsers = async (userIds, payload, options = {}) => {
     : await filterUsersByPreferences(payload.organization, userIds, payload.type);
   if (!options.force && allowedUserIds.length === 0) return [];
 
-  const docs = allowedUserIds.map((userId) => ({ ...payload, user: userId }));
-  try {
-    return await Notification.insertMany(docs, { ordered: false });
-  } catch (error) {
-    if (error.code === 11000) {
-      return [];
+  const notifications = [];
+
+  for (const userId of allowedUserIds) {
+    try {
+      const notification = await createNotification({ ...payload, user: userId }, options);
+      if (notification) {
+        notifications.push(notification);
+      }
+    } catch (error) {
+      // continue on error to avoid blocking other users; log for diagnosis
+      logger.error('Failed to create individual notification', { userId, error: error.message || error });
     }
-    throw error;
   }
+
+  return notifications;
 };
 
 const getNotifications = async (organizationId, userId, page = 1, limit = 20, unreadOnly = false) => {
