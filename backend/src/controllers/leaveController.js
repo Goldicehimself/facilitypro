@@ -7,6 +7,7 @@ const { sendEmail } = require('../utils/email');
 const { renderTemplate } = require('../utils/emailTemplates');
 const Organization = require('../models/Organization');
 const User = require('../models/User');
+const Notification = require('../models/Notification');
 
 const getSupportEmail = (organization) => {
   const orgSupport = organization?.settings?.companyProfile?.supportEmail;
@@ -71,7 +72,7 @@ const createLeaveRequest = async (req, res, next) => {
     if (recipients.length > 0) {
       const staffName = [req.user?.firstName, req.user?.lastName].filter(Boolean).join(' ').trim() || req.user?.email || 'Staff member';
       console.log('Creating notifications for recipients:', recipients);
-      const notifications = await notificationService.createNotificationsForUsers(recipients, {
+      const payload = {
         organization: req.user.organization,
         title: 'New leave request',
         message: `${staffName} submitted a ${leave.type} leave request`,
@@ -87,10 +88,19 @@ const createLeaveRequest = async (req, res, next) => {
           startDate: leave.startDate,
           endDate: leave.endDate
         }
-      }, { force: true });
+      };
+      const notifications = await notificationService.createNotificationsForUsers(recipients, payload, { force: true });
       console.log('Notifications created successfully:', notifications?.length || 0);
       if (notifications && notifications.length > 0) {
         console.log('First notification:', notifications[0]);
+      } else {
+        try {
+          const docs = recipients.map((userId) => ({ ...payload, user: userId }));
+          await Notification.insertMany(docs, { ordered: false });
+          console.log('Fallback insertMany completed for leave notifications.');
+        } catch (err) {
+          console.error('Fallback insertMany failed:', err?.message || err);
+        }
       }
     } else {
       console.log('No recipients found for notifications');
@@ -134,7 +144,7 @@ const approveLeave = async (req, res, next) => {
   try {
     const payload = req.validatedData || req.body;
     const leave = await leaveService.approveLeave(req.user.organization, req.params.id, req.user.id, payload?.note);
-    await notificationService.createNotification({
+    const approvePayload = {
       user: leave.staff,
       organization: req.user.organization,
       title: 'Leave request approved',
@@ -143,7 +153,11 @@ const approveLeave = async (req, res, next) => {
       entityType: 'LeaveRequest',
       entityId: leave._id,
       link: '/leave-center'
-    }, { force: true });
+    };
+    const approveNote = await notificationService.createNotification(approvePayload, { force: true });
+    if (!approveNote) {
+      await Notification.create(approvePayload);
+    }
     await sendLeaveDecisionEmail(req.user.organization, leave.staff, 'approved');
     response.success(res, 'Leave approved', leave);
   } catch (error) {
@@ -155,7 +169,7 @@ const rejectLeave = async (req, res, next) => {
   try {
     const payload = req.validatedData || req.body;
     const leave = await leaveService.rejectLeave(req.user.organization, req.params.id, req.user.id, payload?.note);
-    await notificationService.createNotification({
+    const rejectPayload = {
       user: leave.staff,
       organization: req.user.organization,
       title: 'Leave request rejected',
@@ -164,7 +178,11 @@ const rejectLeave = async (req, res, next) => {
       entityType: 'LeaveRequest',
       entityId: leave._id,
       link: '/leave-center'
-    }, { force: true });
+    };
+    const rejectNote = await notificationService.createNotification(rejectPayload, { force: true });
+    if (!rejectNote) {
+      await Notification.create(rejectPayload);
+    }
     await sendLeaveDecisionEmail(req.user.organization, leave.staff, 'rejected');
     response.success(res, 'Leave rejected', leave);
   } catch (error) {
