@@ -6,7 +6,7 @@ const activityService = require('../services/activityService');
 const constants = require('../constants/constants');
 const User = require('../models/User');
 const Asset = require('../models/Asset');
-const { ValidationError } = require('../utils/errorHandler');
+const { ValidationError, AuthorizationError } = require('../utils/errorHandler');
 
 const ensureUserInOrg = async (organizationId, userId) => {
   if (!userId) return;
@@ -170,6 +170,19 @@ const assignServiceRequest = async (req, res, next) => {
 
 const updateServiceRequestStatus = async (req, res, next) => {
   try {
+    const role = req.user?.role;
+    if (![constants.ROLES.ADMIN, constants.ROLES.FACILITY_MANAGER, constants.ROLES.TECHNICIAN].includes(role)) {
+      throw new AuthorizationError('Insufficient permissions');
+    }
+
+    if (role === constants.ROLES.TECHNICIAN) {
+      const existing = await serviceRequestService.getServiceRequestById(req.user.organization, req.params.id);
+      const assigneeId = resolveUserId(existing?.assignee);
+      if (!assigneeId || String(assigneeId) !== String(req.user.id)) {
+        throw new AuthorizationError('Only the assigned technician can update this service request');
+      }
+    }
+
     const request = await serviceRequestService.updateServiceRequestStatus(
       req.user.organization,
       req.params.id,

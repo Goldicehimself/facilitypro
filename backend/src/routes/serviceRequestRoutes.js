@@ -49,7 +49,6 @@ router.post(
 router.patch(
   '/:id/status',
   protect,
-  authorize(constants.ROLES.ADMIN, constants.ROLES.FACILITY_MANAGER),
   requireScope('service-requests:write'),
   validateRequest(updateServiceRequestStatusSchema),
   serviceRequestController.updateServiceRequestStatus
