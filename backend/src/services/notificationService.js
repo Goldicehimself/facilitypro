@@ -303,17 +303,14 @@ const notifyAdminsAndManagers = async (organizationId, sender, message, meta = {
   const notifications = [];
   for (const userId of recipients) {
     try {
-      const notification = await createNotification({ ...payload, user: userId }, { force: true });
-      if (notification) {
-        notifications.push(notification);
-        debug.created += 1;
-      } else {
-        debug.skipped.push(String(userId));
-      }
+      const notification = await Notification.create({ ...payload, user: userId });
+      notifications.push(notification);
+      debug.created += 1;
     } catch (error) {
       debug.errors.push({
         userId: String(userId),
-        message: error?.message || String(error)
+        message: error?.message || String(error),
+        code: error?.code || undefined
       });
     }
   }
