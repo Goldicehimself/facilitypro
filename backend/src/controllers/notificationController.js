@@ -111,11 +111,35 @@ const debugNotifications = async (req, res, next) => {
   }
 };
 
+const debugRecipients = async (req, res, next) => {
+  try {
+    const role = req.user?.role;
+    if (![constants.ROLES.ADMIN, constants.ROLES.FACILITY_MANAGER].includes(role)) {
+      throw new AuthorizationError('Insufficient permissions');
+    }
+
+    const orgId = req.user.organization;
+    const recipients = await notificationService.getRoleUserIds(
+      [constants.ROLES.ADMIN, constants.ROLES.FACILITY_MANAGER],
+      orgId
+    );
+
+    response.success(res, 'Debug recipients', {
+      orgId,
+      count: recipients.length,
+      recipients
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getNotifications,
   markNotificationRead,
   markAllNotificationsRead,
   sendTechnicianMessage,
   sendReplyToUser,
-  debugNotifications
+  debugNotifications,
+  debugRecipients
 };
