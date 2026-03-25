@@ -274,7 +274,14 @@ const notifyAdminsAndManagers = async (organizationId, sender, message, meta = {
     [constants.ROLES.ADMIN, constants.ROLES.FACILITY_MANAGER],
     organizationId
   );
-  if (!recipients.length) return [];
+  const debug = {
+    recipients: recipients.map((id) => String(id)),
+    created: 0,
+    skipped: [],
+    errors: []
+  };
+  if (!recipients.length) return { notifications: [], debug };
+
   const senderName = [sender?.firstName, sender?.lastName].filter(Boolean).join(' ').trim() || sender?.email || 'Technician';
   const payload = {
     organization: organizationId,
@@ -292,7 +299,26 @@ const notifyAdminsAndManagers = async (organizationId, sender, message, meta = {
       ...meta
     }
   };
-  return createNotificationsForUsers(recipients, payload, { force: true });
+
+  const notifications = [];
+  for (const userId of recipients) {
+    try {
+      const notification = await createNotification({ ...payload, user: userId }, { force: true });
+      if (notification) {
+        notifications.push(notification);
+        debug.created += 1;
+      } else {
+        debug.skipped.push(String(userId));
+      }
+    } catch (error) {
+      debug.errors.push({
+        userId: String(userId),
+        message: error?.message || String(error)
+      });
+    }
+  }
+
+  return { notifications, debug };
 };
 
 const notifyUser = async (organizationId, recipientId, sender, message, meta = {}) => {

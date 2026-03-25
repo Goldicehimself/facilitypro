@@ -47,12 +47,21 @@ const sendTechnicianMessage = async (req, res, next) => {
     if (!message || !String(message).trim()) {
       return response.badRequest(res, 'Message is required');
     }
-    const notifications = await notificationService.notifyAdminsAndManagers(
+    const result = await notificationService.notifyAdminsAndManagers(
       req.user.organization,
       req.user,
       String(message).trim()
     );
-    response.success(res, 'Message sent', { sent: notifications.length });
+    const notifications = Array.isArray(result) ? result : result.notifications || [];
+    const debug = Array.isArray(result) ? null : result.debug || null;
+    response.success(res, 'Message sent', {
+      sent: notifications.length,
+      debug: {
+        senderId: req.user.id,
+        organization: req.user.organization,
+        ...(debug || {})
+      }
+    });
   } catch (error) {
     next(error);
   }
