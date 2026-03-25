@@ -42,13 +42,13 @@ const Messages = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">Messages</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">Technician messages sent to admin/facility managers.</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => setShowUnread((v) => !v)}>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <Button variant="outline" onClick={() => setShowUnread((v) => !v)} className="w-full sm:w-auto">
             <Filter className="h-4 w-4 mr-2" />
             {showUnread ? 'Showing Unread' : 'Showing All'}
           </Button>
@@ -56,6 +56,7 @@ const Messages = () => {
             variant="outline"
             onClick={() => markAllMutation.mutate()}
             disabled={markAllMutation.isLoading}
+            className="w-full sm:w-auto"
           >
             Mark All Read
           </Button>
@@ -75,7 +76,7 @@ const Messages = () => {
           {notifications.map((message) => (
             <Card key={message._id || message.id} className="border">
               <CardContent className="p-5">
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                   <div className="flex items-start gap-3">
                     <div className={`h-10 w-10 rounded-full flex items-center justify-center ${message.read ? 'bg-slate-100 dark:bg-slate-800' : 'bg-emerald-100 dark:bg-emerald-900/40'}`}>
                       {message.read ? <MailOpen className="h-5 w-5 text-slate-600" /> : <Mail className="h-5 w-5 text-emerald-600" />}
@@ -90,7 +91,7 @@ const Messages = () => {
                       <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
                         {message.message}
                       </p>
-                      <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400 mt-3">
+                      <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mt-3">
                         <span className="inline-flex items-center gap-1">
                           <User className="h-3.5 w-3.5" />
                           {message.metadata?.senderName || 'Technician'}
@@ -112,7 +113,7 @@ const Messages = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                     {message.metadata?.senderId && (
                       <Button
                         variant="outline"
@@ -124,6 +125,7 @@ const Messages = () => {
                           });
                           setReplyOpen(true);
                         }}
+                        className="w-full sm:w-auto"
                       >
                         <Reply className="h-4 w-4 mr-1" />
                         Reply
@@ -135,6 +137,7 @@ const Messages = () => {
                         size="sm"
                         onClick={() => markReadMutation.mutate(message._id || message.id)}
                         disabled={markReadMutation.isLoading}
+                        className="w-full sm:w-auto"
                       >
                         Mark Read
                       </Button>
@@ -158,7 +161,7 @@ const Messages = () => {
                 Send an in-app reply.
               </p>
             </div>
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-3">
               <textarea
                 value={replyMessage}
                 onChange={(e) => setReplyMessage(e.target.value)}
@@ -166,7 +169,7 @@ const Messages = () => {
                 className="w-full h-32 p-3 rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
-            <div className="flex gap-3 px-6 pb-6">
+            <div className="flex flex-col gap-3 px-6 pb-6 sm:flex-row">
               <Button variant="outline" className="flex-1" onClick={() => setReplyOpen(false)}>
                 Cancel
               </Button>

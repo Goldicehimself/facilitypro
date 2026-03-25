@@ -395,7 +395,7 @@ const VendorPortal = () => {
       <GreetingBanner subtitle="Review assigned work orders, requests, and invoices." />
       {/* Header */}
       <div className="bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-950 dark:to-blue-950 rounded-lg p-6 border border-indigo-200 dark:border-indigo-800">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold text-indigo-900 dark:text-indigo-100">Vendor Portal</h1>
             <p className="text-indigo-700 dark:text-indigo-300 mt-1">
@@ -403,7 +403,7 @@ const VendorPortal = () => {
             </p>
           </div>
           <div className="flex items-center gap-4">
-            <div className="text-right">
+            <div className="text-left sm:text-right">
               <p className="text-sm text-indigo-700 dark:text-indigo-400">Your Rating</p>
               <div className="flex items-center gap-1 mt-1">
                 <span className="text-2xl font-bold text-indigo-900 dark:text-indigo-100">
@@ -456,7 +456,7 @@ const VendorPortal = () => {
         <CardContent className="p-0">
           {/* Tab Navigation */}
           <div className="border-b border-gray-200 dark:border-gray-700">
-            <div className="flex gap-0 p-4">
+            <div className="flex gap-0 p-2 sm:p-4 overflow-x-auto">
               {[
                 { id: 'overview', label: 'My Work Orders' },
                 { id: 'requests', label: 'Service Requests' },
@@ -468,7 +468,7 @@ const VendorPortal = () => {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
+                  className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors whitespace-nowrap ${
                     activeTab === tab.id
                       ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
                       : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300'
@@ -485,7 +485,7 @@ const VendorPortal = () => {
             {/* Work Orders Tab */}
             {activeTab === 'overview' && (
               <div className="space-y-3">
-                <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-4 flex items-start gap-3">
+                <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-4 flex flex-col sm:flex-row items-start gap-3">
                   <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
                   <div>
                     <p className="font-medium text-amber-900 dark:text-amber-100 text-sm">Read-Only Access</p>
@@ -499,9 +499,9 @@ const VendorPortal = () => {
                     key={wo.id}
                     className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-indigo-400 dark:hover:border-indigo-600 transition-colors"
                   >
-                    <div className="flex items-start justify-between gap-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                       <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-3">
+                        <div className="flex items-center gap-3 mb-3 flex-wrap">
                           <h3 className="font-semibold text-gray-900 dark:text-white">{wo.title}</h3>
                           <Badge className={getStatusColor(wo.status)}>
                             {getStatusLabel(wo.status)}
@@ -519,7 +519,7 @@ const VendorPortal = () => {
                           </Badge>
                         </div>
                         <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{wo.description}</p>
-                        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm text-gray-600 dark:text-gray-400 mb-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 text-sm text-gray-600 dark:text-gray-400 mb-3">
                           <div>
                             <p className="text-xs text-gray-500 dark:text-gray-500">Location</p>
                             <p className="font-medium text-gray-900 dark:text-white">{wo.location}</p>
@@ -549,18 +549,18 @@ const VendorPortal = () => {
                           <span>{wo.attachmentsCount} attachments</span>
                         </div>
                       </div>
-                      <div className="flex flex-col gap-2">
+                      <div className="flex flex-col gap-2 sm:flex-row">
                         <Button
                           variant="outline"
                           size="sm"
-                          className="whitespace-nowrap"
+                          className="whitespace-nowrap w-full sm:w-auto"
                           onClick={() => handleOpenDetails(wo)}
                         >
                           <Eye className="h-4 w-4 mr-2" />
                           View Details
                         </Button>
                         <Button
-                          className="bg-blue-700 hover:bg-blue-800 text-white whitespace-nowrap"
+                          className="bg-blue-700 hover:bg-blue-800 text-white whitespace-nowrap w-full sm:w-auto"
                           size="sm"
                           onClick={() => handleOpenStatus(wo)}
                         >
@@ -576,8 +576,8 @@ const VendorPortal = () => {
             {/* Service Requests Tab */}
             {activeTab === 'requests' && (
               <div className="space-y-4">
-                <div className="bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800 rounded-lg p-4 mb-4 flex items-start justify-between">
-                  <div className="flex items-start gap-3 flex-1">
+                <div className="bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800 rounded-lg p-4 mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="flex flex-col sm:flex-row items-start gap-3 flex-1">
                     <MessageSquare className="h-5 w-5 text-indigo-600 dark:text-indigo-400 flex-shrink-0 mt-0.5" />
                     <div>
                       <p className="font-medium text-indigo-900 dark:text-indigo-100 text-sm">Request New Work</p>
@@ -587,7 +587,7 @@ const VendorPortal = () => {
                     </div>
                   </div>
                   <Button
-                    className="bg-blue-700 hover:bg-blue-800 text-white whitespace-nowrap ml-4"
+                    className="bg-blue-700 hover:bg-blue-800 text-white whitespace-nowrap w-full sm:w-auto sm:ml-4"
                     onClick={() => setRequestOpen(true)}
                   >
                     <Plus className="h-4 w-4 mr-2" />
@@ -615,7 +615,7 @@ const VendorPortal = () => {
                           : 'border-gray-200 dark:border-gray-700'
                       }`}
                     >
-                      <div className="flex items-start justify-between gap-4 mb-3">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4 mb-3">
                         <div>
                           <h3 className="font-semibold text-gray-900 dark:text-white">{req.title}</h3>
                           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{req.description}</p>
@@ -632,7 +632,7 @@ const VendorPortal = () => {
                           {getStatusLabel(req.status)}
                         </Badge>
                       </div>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600 dark:text-gray-400 mb-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm text-gray-600 dark:text-gray-400 mb-3 pt-3 border-t border-gray-200 dark:border-gray-700">
                         <div>
                           <p className="text-xs text-gray-500 dark:text-gray-500">Request Date</p>
                           <p className="font-medium text-gray-900 dark:text-white">
@@ -690,16 +690,16 @@ const VendorPortal = () => {
                       key={invoice.id}
                       className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-indigo-400 dark:hover:border-indigo-600 transition-colors"
                     >
-                      <div className="flex items-center justify-between gap-4">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                         <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
+                          <div className="flex items-center gap-3 mb-2 flex-wrap">
                             <h3 className="font-semibold text-gray-900 dark:text-white">{invoice.id}</h3>
                             <Badge className={getStatusColor(invoice.status)}>
                               {getStatusLabel(invoice.status)}
                             </Badge>
                           </div>
                           <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{invoice.description}</p>
-                          <div className="grid grid-cols-3 gap-4 text-sm text-gray-600 dark:text-gray-400">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm text-gray-600 dark:text-gray-400">
                             <div>
                               <p className="text-xs text-gray-500 dark:text-gray-500">Issue Date</p>
                               <p className="font-medium text-gray-900 dark:text-white">
@@ -720,7 +720,7 @@ const VendorPortal = () => {
                             </div>
                           </div>
                         </div>
-                        <Button variant="outline" size="sm" onClick={() => downloadInvoice(invoice)}>
+                        <Button variant="outline" size="sm" onClick={() => downloadInvoice(invoice)} className="w-full sm:w-auto">
                           <Download className="h-4 w-4 mr-2" />
                           Download
                         </Button>
@@ -734,9 +734,9 @@ const VendorPortal = () => {
             {/* Documents Tab */}
             {activeTab === 'documents' && (
               <div className="space-y-3">
-                <div className="flex justify-end">
+                <div className="flex sm:justify-end">
                   <Button
-                    className="bg-blue-700 hover:bg-blue-800 text-white"
+                    className="bg-blue-700 hover:bg-blue-800 text-white w-full sm:w-auto"
                     size="sm"
                     onClick={() => setDocUploadOpen(true)}
                   >
@@ -756,15 +756,15 @@ const VendorPortal = () => {
                   documents.map((doc) => (
                     <div
                       key={doc.id}
-                      className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-indigo-400 dark:hover:border-indigo-600 transition-colors flex items-center justify-between"
+                      className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-indigo-400 dark:hover:border-indigo-600 transition-colors flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
                     >
-                      <div className="flex items-center gap-4 flex-1">
+                      <div className="flex items-start gap-4 flex-1">
                         <div className="h-12 w-12 bg-indigo-100 dark:bg-indigo-900 rounded-lg flex items-center justify-center">
                           <FileText className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
                         </div>
                         <div>
                           <h3 className="font-semibold text-gray-900 dark:text-white">{doc.name}</h3>
-                          <div className="flex gap-4 text-sm text-gray-600 dark:text-gray-400 mt-1">
+                          <div className="flex flex-wrap gap-2 text-sm text-gray-600 dark:text-gray-400 mt-1">
                             <span>{doc.type}</span>
                             <span>|</span>
                             <span>{doc.uploadDate ? new Date(doc.uploadDate).toLocaleDateString() : 'â€”'}</span>
@@ -773,12 +773,13 @@ const VendorPortal = () => {
                           </div>
                         </div>
                       </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                       <Button
                         variant="outline"
                         size="sm"
                         disabled={!doc.url}
                         onClick={() => doc.url && window.open(doc.url, '_blank')}
+                        className="w-full sm:w-auto"
                       >
                         <Download className="h-4 w-4" />
                       </Button>
@@ -786,6 +787,7 @@ const VendorPortal = () => {
                         variant="outline"
                         size="sm"
                         onClick={() => openEditDocument(doc)}
+                        className="w-full sm:w-auto"
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
@@ -794,6 +796,7 @@ const VendorPortal = () => {
                         size="sm"
                         disabled={docDeletingId === doc.id}
                         onClick={() => handleDeleteDocument(doc.id)}
+                        className="w-full sm:w-auto"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -817,60 +820,60 @@ const VendorPortal = () => {
                   </p>
                 ) : (
                   <>
-                    <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-                      <h3 className="font-semibold text-gray-900 dark:text-white mb-4">On-Time Completion</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-3 sm:p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                      <h3 className="font-semibold text-gray-900 dark:text-white mb-3 text-sm">On-Time Completion</h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">This Month</p>
-                          <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
+                          <p className="text-xs text-gray-600 dark:text-gray-400">This Month</p>
+                          <p className="text-base font-bold text-emerald-600 dark:text-emerald-400">
                             {vendorPerformance.onTimeCompletion?.current ?? 'â€”'}%
                           </p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">Last Month</p>
-                          <p className="text-lg font-bold text-indigo-600 dark:text-indigo-400">
+                          <p className="text-xs text-gray-600 dark:text-gray-400">Last Month</p>
+                          <p className="text-base font-bold text-indigo-600 dark:text-indigo-400">
                             {vendorPerformance.onTimeCompletion?.previous ?? 'â€”'}%
                           </p>
                         </div>
                       </div>
                     </div>
 
-                    <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-                      <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Completion Time</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-3 sm:p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                      <h3 className="font-semibold text-gray-900 dark:text-white mb-3 text-sm">Completion Time</h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">Average</p>
-                          <p className="text-lg font-bold text-indigo-600 dark:text-indigo-400">
+                          <p className="text-xs text-gray-600 dark:text-gray-400">Average</p>
+                          <p className="text-base font-bold text-indigo-600 dark:text-indigo-400">
                             {vendorPerformance.completionTime?.averageHours ?? 'â€”'} hours
                           </p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">Fastest</p>
-                          <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
+                          <p className="text-xs text-gray-600 dark:text-gray-400">Fastest</p>
+                          <p className="text-base font-bold text-emerald-600 dark:text-emerald-400">
                             {vendorPerformance.completionTime?.fastestMinutes ?? 'â€”'} minutes
                           </p>
                         </div>
                       </div>
                     </div>
 
-                    <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-                      <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Work Order Totals</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="p-3 sm:p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                      <h3 className="font-semibold text-gray-900 dark:text-white mb-3 text-sm">Work Order Totals</h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         <div>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">Total</p>
-                          <p className="text-lg font-bold text-gray-900 dark:text-white">
+                          <p className="text-xs text-gray-600 dark:text-gray-400">Total</p>
+                          <p className="text-base font-bold text-gray-900 dark:text-white">
                             {vendorPerformance.totals?.total ?? 0}
                           </p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">Completed</p>
-                          <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
+                          <p className="text-xs text-gray-600 dark:text-gray-400">Completed</p>
+                          <p className="text-base font-bold text-emerald-600 dark:text-emerald-400">
                             {vendorPerformance.totals?.completed ?? 0}
                           </p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">Open</p>
-                          <p className="text-lg font-bold text-amber-600 dark:text-amber-400">
+                          <p className="text-xs text-gray-600 dark:text-gray-400">Open</p>
+                          <p className="text-base font-bold text-amber-600 dark:text-amber-400">
                             {vendorPerformance.totals?.open ?? 0}
                           </p>
                         </div>
@@ -977,7 +980,7 @@ const VendorPortal = () => {
               <p className="text-xs text-gray-500 dark:text-gray-400">Description</p>
               <p className="text-gray-700 dark:text-gray-300">{selectedWorkOrder.description}</p>
             </div>
-            <div className="flex justify-end gap-2">
+            <div className="flex flex-col sm:flex-row sm:justify-end gap-2">
               <Button variant="outline" onClick={() => setDetailsOpen(false)}>
                 Close
               </Button>
@@ -1012,7 +1015,7 @@ const VendorPortal = () => {
                 <option value="completed">Completed</option>
               </select>
             </div>
-            <div className="flex justify-end gap-2">
+            <div className="flex flex-col sm:flex-row sm:justify-end gap-2">
               <Button variant="outline" onClick={() => setStatusOpen(false)}>
                 Cancel
               </Button>
@@ -1026,7 +1029,7 @@ const VendorPortal = () => {
 
       {requestOpen && (
         <ModalShell title="New Service Request" onClose={() => setRequestOpen(false)}>
-          <form className="space-y-4" onSubmit={handleSubmitRequest}>
+          <form className="space-y-3" onSubmit={handleSubmitRequest}>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Title
@@ -1034,7 +1037,7 @@ const VendorPortal = () => {
               <input
                 value={requestForm.title}
                 onChange={(e) => handleRequestChange('title', e.target.value)}
-                className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-1.5 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 placeholder="Enter a short request title"
                 required
               />
@@ -1046,8 +1049,8 @@ const VendorPortal = () => {
               <textarea
                 value={requestForm.description}
                 onChange={(e) => handleRequestChange('description', e.target.value)}
-                rows={4}
-                className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                rows={3}
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-1.5 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 placeholder="Describe the work needed"
                 required
               />
@@ -1060,7 +1063,7 @@ const VendorPortal = () => {
                 <select
                   value={requestForm.priority}
                   onChange={(e) => handleRequestChange('priority', e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-1.5 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                   <option value="low">Low</option>
                   <option value="medium">Medium</option>
@@ -1077,18 +1080,18 @@ const VendorPortal = () => {
                   step="0.01"
                   value={requestForm.estimatedCost}
                   onChange={(e) => handleRequestChange('estimatedCost', e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-1.5 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   placeholder="0.00"
                 />
               </div>
             </div>
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => setRequestOpen(false)}>
+            <div className="flex flex-col sm:flex-row sm:justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setRequestOpen(false)} className="w-full sm:w-auto h-9 px-3 text-sm">
                 Cancel
               </Button>
               <Button
                 type="submit"
-                className="bg-blue-700 hover:bg-blue-800 text-white"
+                className="bg-blue-700 hover:bg-blue-800 text-white w-full sm:w-auto h-9 px-3 text-sm"
                 disabled={!requestForm.title.trim() || !requestForm.description.trim()}
               >
                 Submit Request
@@ -1124,7 +1127,7 @@ const VendorPortal = () => {
                 required
               />
             </div>
-            <div className="flex justify-end gap-2">
+            <div className="flex flex-col sm:flex-row sm:justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => setDocUploadOpen(false)}>
                 Cancel
               </Button>
@@ -1165,7 +1168,7 @@ const VendorPortal = () => {
                 placeholder="Optional"
               />
             </div>
-            <div className="flex justify-end gap-2">
+            <div className="flex flex-col sm:flex-row sm:justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => setDocEditOpen(false)}>
                 Cancel
               </Button>
@@ -1186,7 +1189,7 @@ const VendorPortal = () => {
             }
             navigate('/login');
           }}
-          className="bg-rose-600 hover:bg-rose-700 text-white gap-2"
+          className="bg-rose-600 hover:bg-rose-700 text-white gap-2 w-full sm:w-auto"
         >
           <LogOut className="h-4 w-4" />
           Sign Out

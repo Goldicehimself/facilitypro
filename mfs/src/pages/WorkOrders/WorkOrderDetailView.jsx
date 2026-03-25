@@ -240,7 +240,8 @@ export default function WorkOrderDetailView() {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+          <div className="flex flex-wrap items-center gap-2">
           <Badge variant={priorityVariant(normalized.priority)}>
             {String(normalized.priority).charAt(0).toUpperCase() +
               String(normalized.priority).slice(1)}{" "}
@@ -249,20 +250,25 @@ export default function WorkOrderDetailView() {
           <Badge variant={statusVariant(normalized.status)}>
             {statusLabel(normalized.status)}
           </Badge>
-          <Button
-            variant="outline"
-            onClick={() => handleStatus("cancelled")}
-            disabled={statusMut.isLoading}
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => deleteMut.mutate()}
-            disabled={deleteMut.isLoading}
-          >
-            Delete
-          </Button>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button
+              variant="outline"
+              onClick={() => handleStatus("cancelled")}
+              disabled={statusMut.isLoading}
+              className="w-full sm:w-auto"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => deleteMut.mutate()}
+              disabled={deleteMut.isLoading}
+              className="w-full sm:w-auto"
+            >
+              Delete
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -485,7 +491,7 @@ export default function WorkOrderDetailView() {
                   key={`${comment.text}-${index}`}
                   className="rounded-md border border-slate-200 p-3 text-sm dark:border-slate-700"
                 >
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <p className="font-semibold text-slate-900 dark:text-slate-100">
                       {comment.user?.name || "Unknown"}
                     </p>

@@ -115,7 +115,7 @@ const VendorsPage = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-950 dark:to-blue-950 rounded-lg p-6 border border-indigo-200 dark:border-indigo-800">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-indigo-900 dark:text-indigo-100">
               Vendors Management
@@ -125,16 +125,16 @@ const VendorsPage = () => {
             </p>
           </div>
           {canManage && (
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
               <Button
                 variant="outline"
-                className="border-indigo-300 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-600 dark:text-indigo-200 dark:hover:bg-indigo-900/30"
+                className="border-indigo-300 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-600 dark:text-indigo-200 dark:hover:bg-indigo-900/30 w-full sm:w-auto"
                 onClick={() => navigate('/vendors/import')}
               >
                 Import
               </Button>
               <Button
-                className="bg-blue-700 text-white hover:bg-blue-800"
+                className="bg-blue-700 text-white hover:bg-blue-800 w-full sm:w-auto"
                 onClick={() => navigate('/vendors/new')}
               >
                 <Plus className="h-4 w-4 mr-2" />
@@ -198,7 +198,7 @@ const VendorsPage = () => {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="ml-auto px-4 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full sm:w-auto sm:ml-auto px-4 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
                 <option value="name">Sort by Name</option>
                 <option value="rating">Sort by Rating</option>

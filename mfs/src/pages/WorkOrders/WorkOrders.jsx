@@ -285,6 +285,8 @@ export default function WorkOrders() {
     return <Badge className={`${variants[s] || variants.open} font-semibold`}>{icons[s]} {s.replace('_', ' ')}</Badge>;
   }
 
+  const pagedWorkOrders = displayedWorkOrders.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -319,7 +321,7 @@ export default function WorkOrders() {
               />
             </div>
 
-            <select className="h-10 px-3 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-zinc-100" value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(0); }}>
+            <select className="h-10 px-3 w-full sm:w-auto bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-zinc-100" value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(0); }}>
               <option value="all">All Status</option>
               <option value="open">Open</option>
               <option value="in_progress">In Progress</option>
@@ -327,7 +329,7 @@ export default function WorkOrders() {
               <option value="overdue">Overdue</option>
             </select>
 
-            <select className="h-10 px-3 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-zinc-100" value={priorityFilter} onChange={(e) => { setPriorityFilter(e.target.value); setPage(0); }}>
+            <select className="h-10 px-3 w-full sm:w-auto bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-zinc-100" value={priorityFilter} onChange={(e) => { setPriorityFilter(e.target.value); setPage(0); }}>
               <option value="all">All Priorities</option>
               <option value="critical">Critical</option>
               <option value="high">High</option>
@@ -335,39 +337,39 @@ export default function WorkOrders() {
               <option value="low">Low</option>
             </select>
 
-            <select className="h-10 px-3 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-zinc-100" value={categoryFilter} onChange={(e) => { setCategoryFilter(e.target.value); setPage(0); }}>
+            <select className="h-10 px-3 w-full sm:w-auto bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-zinc-100" value={categoryFilter} onChange={(e) => { setCategoryFilter(e.target.value); setPage(0); }}>
               <option value="all">All Categories</option>
               {categories.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
 
-            <select className="h-10 px-3 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-zinc-100" value={assigneeFilter} onChange={(e) => { setAssigneeFilter(e.target.value); setPage(0); }}>
+            <select className="h-10 px-3 w-full sm:w-auto bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-zinc-100" value={assigneeFilter} onChange={(e) => { setAssigneeFilter(e.target.value); setPage(0); }}>
               <option value="all">All Technicians</option>
               {assigneeOptions.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
             </select>
 
-            <Button className="bg-blue-700 hover:bg-blue-800 text-white flex items-center gap-2" onClick={() => navigate('/work-orders/new')}>
+            <Button className="bg-blue-700 hover:bg-blue-800 text-white flex items-center gap-2 w-full sm:w-auto" onClick={() => navigate('/work-orders/new')}>
               <Plus size={16} /> Create
             </Button>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            <select className="h-9 px-2 text-sm bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-zinc-100" value={dateRange} onChange={(e) => { setDateRange(e.target.value); setPage(0); }}>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+            <select className="h-9 px-2 text-sm w-full sm:w-auto bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-zinc-100" value={dateRange} onChange={(e) => { setDateRange(e.target.value); setPage(0); }}>
               <option value="7">Last 7 Days</option>
               <option value="30">Last 30 Days</option>
               <option value="90">Last 90 Days</option>
             </select>
 
-            <select className="h-9 px-2 text-sm bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-zinc-100" value={locationFilter} onChange={(e) => { setLocationFilter(e.target.value); setPage(0); }}>
+            <select className="h-9 px-2 text-sm w-full sm:w-auto bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-zinc-100" value={locationFilter} onChange={(e) => { setLocationFilter(e.target.value); setPage(0); }}>
               <option value="all">All Locations</option>
               {locations.map(l => <option key={l} value={l}>{l}</option>)}
             </select>
 
-            <Button variant="outline" size="sm" className="ml-auto text-zinc-700 dark:text-zinc-200" onClick={() => setBulkModalOpen(true)}>
+            <Button variant="outline" size="sm" className="sm:ml-auto text-zinc-700 dark:text-zinc-200 w-full sm:w-auto" onClick={() => setBulkModalOpen(true)}>
               Bulk Assign
             </Button>
 
             <Button
-              className="bg-blue-700 hover:bg-blue-800 text-white flex items-center gap-2"
+              className="bg-blue-700 hover:bg-blue-800 text-white flex items-center gap-2 w-full sm:w-auto"
               size="sm"
               onClick={handleExportCsv}
               disabled={exporting}
@@ -408,7 +410,99 @@ export default function WorkOrders() {
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto">
+            <div className="md:hidden">
+              <div className="flex items-center justify-between px-4 pt-4">
+                <label className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 accent-indigo-600"
+                    checked={selected.length === displayedWorkOrders.length && displayedWorkOrders.length > 0}
+                    onChange={(e) => {
+                      if (e.target.checked) setSelected(displayedWorkOrders.map(w => w.id));
+                      else setSelected([]);
+                    }}
+                  />
+                  Select all on page
+                </label>
+                <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                  {selected.length} selected
+                </span>
+              </div>
+              <div className="space-y-3 p-4">
+                {pagedWorkOrders.map((wo) => (
+                  <div
+                    key={wo.id}
+                    className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-4 shadow-sm"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-xs uppercase tracking-wide text-zinc-400">Work Order</p>
+                        <p className="font-semibold text-indigo-600 dark:text-indigo-400 text-sm">
+                          {wo.woNumber}
+                        </p>
+                        <p className="text-sm text-zinc-900 dark:text-zinc-100 mt-1 line-clamp-2">
+                          {wo.title || wo.description}
+                        </p>
+                      </div>
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 accent-indigo-600 mt-1"
+                        checked={selectAllMode || selected.includes(wo.id)}
+                        onChange={() => {
+                          if (selectAllMode) {
+                            setSelectAllMode(false);
+                            const pageIds = pagedWorkOrders.map(w => w.id);
+                            setSelected(pageIds.filter(id => id !== wo.id));
+                          } else {
+                            setSelected(prev => prev.includes(wo.id) ? prev.filter(x => x !== wo.id) : [...prev, wo.id]);
+                          }
+                        }}
+                      />
+                    </div>
+
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {statusBadge(wo.status)}
+                      {priorityBadge(wo.priority)}
+                    </div>
+
+                    <div className="mt-3 grid grid-cols-1 gap-2 text-xs text-zinc-600 dark:text-zinc-400">
+                      <div>
+                        <span className="font-semibold text-zinc-500 dark:text-zinc-300">Assigned:</span>{' '}
+                        {wo.assignedTo ? wo.assignedTo.name : 'Unassigned'}
+                      </div>
+                      <div>
+                        <span className="font-semibold text-zinc-500 dark:text-zinc-300">Due:</span>{' '}
+                        {wo.dueDate ? new Date(wo.dueDate).toLocaleDateString() : '—'}
+                      </div>
+                    </div>
+
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/work-orders/${wo.id}`, { state: { workOrder: wo } })}
+                        className="text-xs text-zinc-700 dark:text-zinc-200 flex-1"
+                      >
+                        <Eye size={14} /> View
+                      </Button>
+                      {(wo.status === 'open' || wo.status === 'in_progress' || wo.status === 'overdue') && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-xs text-zinc-700 dark:text-zinc-200 flex-1"
+                          onClick={() => statusMutation.mutate({ id: wo.id, status: 'cancelled' })}
+                          disabled={statusMutation.isLoading && updatingId === wo.id}
+                        >
+                          Cancel
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-50 dark:bg-zinc-800 border-b border-gray-200 dark:border-zinc-700">
                   <tr>
@@ -427,7 +521,7 @@ export default function WorkOrders() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-zinc-700">
-                  {displayedWorkOrders.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((wo) => (
+                  {pagedWorkOrders.map((wo) => (
                     <tr key={wo.id} className="hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors border-l-4" style={{borderLeftColor: wo.priority === 'critical' ? '#ef4444' : wo.priority === 'high' ? '#f97316' : wo.priority === 'medium' ? '#3b82f6' : '#10b981'}}>
                       <td className="px-4 py-3"><input type="checkbox" className="h-4 w-4 accent-indigo-600" checked={selectAllMode || selected.includes(wo.id)} onChange={() => {
                         if (selectAllMode) {
@@ -480,7 +574,7 @@ export default function WorkOrders() {
             </div>
 
             {/* Pagination */}
-            <div className="p-4 border-t border-gray-200 dark:border-zinc-700 flex items-center justify-between flex-wrap gap-3">
+            <div className="p-4 border-t border-gray-200 dark:border-zinc-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div className="text-sm text-gray-600 dark:text-gray-400">
                 Showing {(page * rowsPerPage) + 1}-{Math.min((page + 1) * rowsPerPage, displayedWorkOrders.length)} of {displayedWorkOrders.length}
               </div>

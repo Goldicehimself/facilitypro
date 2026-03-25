@@ -299,10 +299,10 @@ const Inventory = () => {
               />
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 w-full lg:w-auto">
               <button
                 onClick={() => setCreateModalOpen(true)}
-                className="px-4 py-2 rounded-lg bg-blue-700 text-white font-medium hover:bg-blue-800 shadow-sm hover:shadow-md transition-all duration-200 active:scale-95 flex items-center gap-2"
+                className="px-4 py-2 rounded-lg bg-blue-700 text-white font-medium hover:bg-blue-800 shadow-sm hover:shadow-md transition-all duration-200 active:scale-95 flex items-center gap-2 w-full sm:w-auto justify-center"
               >
                 <Plus className="w-4 h-4" />
                 Add Item
@@ -310,7 +310,7 @@ const Inventory = () => {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-4 py-2 border border-gray-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-zinc-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200"
+                className="px-4 py-2 border border-gray-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-zinc-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200 w-full sm:w-auto"
               >
                 <option value="all">All Status</option>
                 <option value="in-stock">In Stock</option>
@@ -320,7 +320,7 @@ const Inventory = () => {
               <select
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value)}
-                className="px-4 py-2 border border-gray-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-zinc-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200"
+                className="px-4 py-2 border border-gray-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-zinc-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200 w-full sm:w-auto"
               >
                 <option value="all">All Categories</option>
                 {categories.map((category) => (
@@ -332,7 +332,7 @@ const Inventory = () => {
               <select
                 value={locationFilter}
                 onChange={(e) => setLocationFilter(e.target.value)}
-                className="px-4 py-2 border border-gray-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-zinc-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200"
+                className="px-4 py-2 border border-gray-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-zinc-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200 w-full sm:w-auto"
               >
                 <option value="all">All Locations</option>
                 {locations.map((location) => (
@@ -341,14 +341,14 @@ const Inventory = () => {
                   </option>
                 ))}
               </select>
-              <button className="p-2 border border-gray-300 dark:border-zinc-700 rounded-lg hover:bg-indigo-50 dark:hover:bg-zinc-800 hover:border-indigo-400 cursor-pointer transition-all duration-200 active:scale-95">
+              <button className="p-2 border border-gray-300 dark:border-zinc-700 rounded-lg hover:bg-indigo-50 dark:hover:bg-zinc-800 hover:border-indigo-400 cursor-pointer transition-all duration-200 active:scale-95 w-full sm:w-auto flex items-center justify-center">
                 <Settings className="w-5 h-5 text-indigo-600 dark:text-indigo-300" />
               </button>
             </div>
           </div>
 
           {/* Results Info */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-2">
             <p className="text-gray-600 dark:text-zinc-400 mb-2 sm:mb-0">
               Showing {pagination.total === 0 ? 0 : startIndex + 1}-{startIndex + inventoryItems.length} of {pagination.total} items
             </p>
@@ -371,7 +371,67 @@ const Inventory = () => {
           </div>
 
           {/* Table */}
-          <div className="overflow-x-auto">
+          <div className="md:hidden space-y-3">
+            {inventoryItems.map((item) => (
+              <div
+                key={item.id}
+                className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-4 shadow-sm"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-gray-900 dark:text-zinc-100">{item.item}</p>
+                    <p className="text-xs text-gray-500 dark:text-zinc-400">Part #: {item.partNumber || '—'}</p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <span className="inline-block px-3 py-1 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200 text-xs">
+                        {item.category || 'Uncategorized'}
+                      </span>
+                      <span className={`px-3 py-1 rounded-full text-xs ${getStatusColor(item.status)}`}>
+                        {getStatusText(item.status)}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleEdit(item)}
+                      className="p-2 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 rounded transition-all duration-200"
+                      title="Edit"
+                    >
+                      <Edit className="w-4 h-4 text-indigo-600 dark:text-indigo-300" />
+                    </button>
+                    <button
+                      onClick={() => handleView(item)}
+                      className="p-2 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded transition-all duration-200"
+                      title="View"
+                    >
+                      <Eye className="w-4 h-4 text-slate-600 dark:text-slate-300" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-gray-600 dark:text-zinc-400">
+                  <div>
+                    <span className="font-semibold text-gray-500 dark:text-zinc-300">Location:</span> {item.location || '—'}
+                  </div>
+                  <div>
+                    <span className="font-semibold text-gray-500 dark:text-zinc-300">Stock:</span> {item.currentStock}
+                  </div>
+                  <div>
+                    <span className="font-semibold text-gray-500 dark:text-zinc-300">Reorder:</span> {item.reorderPoint}
+                  </div>
+                  <div>
+                    <span className="font-semibold text-gray-500 dark:text-zinc-300">Unit Cost:</span> {formatCurrency(Number(item.unitCost || 0))}
+                  </div>
+                </div>
+
+                <div className="mt-2 text-xs text-gray-600 dark:text-zinc-400">
+                  <span className="font-semibold text-gray-500 dark:text-zinc-300">Usage (30d):</span>{' '}
+                  {typeof item.usage30d === 'number' ? `${item.usage30d} units` : (item.usage30d || '—')}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b bg-gray-50 dark:bg-zinc-900">
@@ -442,9 +502,9 @@ const Inventory = () => {
           </div>
 
           {/* Pagination Info */}
-          <div className="flex items-center justify-between mt-6 pt-6 border-t dark:border-zinc-700">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-6 pt-6 border-t dark:border-zinc-700">
             <p className="text-gray-600 dark:text-zinc-400">Rows per page: {itemsPerPage}</p>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}

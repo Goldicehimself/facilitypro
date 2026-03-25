@@ -188,7 +188,7 @@ const ReportsPage = () => {
   return (
     <Container maxWidth="xl" sx={{ minHeight: '100vh', background: isDark ? 'linear-gradient(135deg, #0b1120 0%, #111827 100%)' : 'linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%)', py: 4 }}>
       {/* Header */}
-      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+      <Box sx={{ mb: 4, display: 'flex', flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', md: 'flex-start' }, gap: { xs: 2, md: 4 } }}>
         <Box>
           <Typography variant="h4" sx={{ fontWeight: 800, mb: 0.5, color: 'text.primary' }}>
             Reports & Analytics
@@ -197,8 +197,8 @@ const ReportsPage = () => {
             Monitor maintenance performance and analyze operational trends
           </Typography>
         </Box>
-        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-          <FormControl size="small" sx={{ minWidth: 120 }}>
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap', width: { xs: '100%', md: 'auto' } }}>
+          <FormControl size="small" sx={{ minWidth: 160, flex: { xs: '1 1 100%', sm: '0 0 auto' } }}>
             <InputLabel>Time Range</InputLabel>
             <Select
               value={timeRange}
@@ -217,7 +217,7 @@ const ReportsPage = () => {
             startIcon={<Download size={14} />} 
             onClick={handleExportReport}
             disabled={exporting}
-            sx={{ fontWeight: 600, textTransform: 'none', fontSize: '0.85rem' }}
+            sx={{ fontWeight: 600, textTransform: 'none', fontSize: '0.85rem', width: { xs: '100%', sm: 'auto' } }}
           >
             {exporting ? 'Exporting...' : 'Export Report'}
           </Button>

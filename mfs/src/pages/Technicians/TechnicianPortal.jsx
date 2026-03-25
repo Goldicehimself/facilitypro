@@ -182,7 +182,7 @@ const WorkOrderCard = ({ order, onViewDetails, onStart, onComplete, updating }) 
             </div>
 
             {/* Status & Dates */}
-            <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
               <div>
                 <p className="text-gray-600 dark:text-gray-400">Status</p>
                 <Badge className={`${statusColor} border mt-1`}>
@@ -199,7 +199,7 @@ const WorkOrderCard = ({ order, onViewDetails, onStart, onComplete, updating }) 
             </div>
 
             {/* Hours & Asset */}
-            <div className="grid grid-cols-2 gap-3 text-sm bg-gray-50 dark:bg-zinc-800 p-2 rounded">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm bg-gray-50 dark:bg-zinc-800 p-2 rounded">
               <div>
                 <p className="text-gray-600 dark:text-gray-400 text-xs">Est. Hours</p>
                 <p className="font-semibold text-gray-900 dark:text-white">{order.estimatedHours}h</p>
@@ -417,7 +417,7 @@ const TechnicianDetailsCard = ({ technician, metrics, onDeleteCertificate }) => 
   return (
     <Card className="bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20 border-indigo-200 dark:border-indigo-800">
       <CardContent className="p-6">
-        <div className="flex items-start justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex gap-4">
             <ProtectedImage
               src={technician.avatar}
@@ -444,7 +444,7 @@ const TechnicianDetailsCard = ({ technician, metrics, onDeleteCertificate }) => 
           </div>
 
           <div className="text-right">
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
               <Button variant="outline" size="sm" onClick={handleMessage} disabled={!technician.email}>
                 <MessageSquare className="h-4 w-4" />
               </Button>
@@ -458,7 +458,7 @@ const TechnicianDetailsCard = ({ technician, metrics, onDeleteCertificate }) => 
         <Separator className="my-4" />
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-3 gap-4 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
           <div>
             <p className="text-sm text-gray-600 dark:text-gray-400">On-Time Rate</p>
             <p className="text-xl font-bold text-emerald-600">{technician.onTimeCompletion}%</p>
@@ -979,7 +979,7 @@ export default function TechnicianPortal() {
   const canCompleteOrder = selectedOrder?.status === 'in_progress' || selectedOrder?.status === 'in-progress';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 p-4 sm:p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         <GreetingBanner subtitle="Here’s your workload and priorities for today." />
         {/* Technician Details */}
@@ -1230,7 +1230,7 @@ export default function TechnicianPortal() {
                   <Separator />
 
                   {/* Details Grid */}
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm text-gray-600 dark:text-gray-400">Location</p>
                       <p className="font-semibold text-gray-900 dark:text-white">{selectedOrder.location}</p>
@@ -1276,7 +1276,7 @@ export default function TechnicianPortal() {
                   {/* Required Parts & Materials */}
                   <div>
                     <p className="font-semibold text-gray-900 dark:text-white mb-2">Required Parts & Materials</p>
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {((selectedOrder.parts || selectedOrder.materials) || []).map((part, idx) => (
                         <div key={idx} className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-zinc-800 rounded">
                           <Wrench className="h-4 w-4 text-indigo-600" />
@@ -1435,7 +1435,7 @@ export default function TechnicianPortal() {
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-zinc-800">
+                  <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-200 dark:border-zinc-800">
                     <Button
                       variant="outline"
                       className="flex-1"
@@ -1531,7 +1531,7 @@ export default function TechnicianPortal() {
                     </div>
                   </div>
                 </div>
-                <div className="flex gap-3 p-6 border-t border-gray-200 dark:border-zinc-800">
+                <div className="flex flex-col sm:flex-row gap-3 p-6 border-t border-gray-200 dark:border-zinc-800">
                   <Button
                     variant="outline"
                     className="flex-1"
@@ -1586,7 +1586,7 @@ export default function TechnicianPortal() {
                     />
                   </div>
                 </div>
-                <div className="flex gap-3 p-6 border-t border-gray-200 dark:border-zinc-800">
+                <div className="flex flex-col sm:flex-row gap-3 p-6 border-t border-gray-200 dark:border-zinc-800">
                   <Button
                     variant="outline"
                     className="flex-1"
@@ -1668,7 +1668,7 @@ export default function TechnicianPortal() {
                     />
                   </div>
                 </div>
-                <div className="flex gap-3 p-6 border-t border-gray-200 dark:border-zinc-800">
+                <div className="flex flex-col sm:flex-row gap-3 p-6 border-t border-gray-200 dark:border-zinc-800">
                   <Button
                     variant="outline"
                     className="flex-1"
@@ -1752,7 +1752,7 @@ export default function TechnicianPortal() {
                     )}
                   </div>
                 </div>
-                <div className="flex gap-3 p-6 border-t border-gray-200 dark:border-zinc-800">
+                <div className="flex flex-col sm:flex-row gap-3 p-6 border-t border-gray-200 dark:border-zinc-800">
                   <Button
                     variant="outline"
                     className="flex-1"
@@ -1825,7 +1825,7 @@ export default function TechnicianPortal() {
                   </div>
 
                   {/* Severity and Category */}
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
                         Severity *
@@ -1876,7 +1876,7 @@ export default function TechnicianPortal() {
                   </div>
 
                   {/* Submit Buttons */}
-                  <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-zinc-800">
+                  <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-200 dark:border-zinc-800">
                     <Button
                       onClick={() => {
                         if (issueForm.title && issueForm.description) {

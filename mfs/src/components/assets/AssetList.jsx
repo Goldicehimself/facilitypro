@@ -387,7 +387,7 @@ export default function AssetList() {
         {/* ================= FILTER CARD ================= */}
         <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
           <CardContent className="p-6 space-y-4">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
               <h3 className="font-semibold text-slate-900 dark:text-white">Filters</h3>
               <button
                 onClick={() => setFilters({ search: '' })}
@@ -550,13 +550,13 @@ export default function AssetList() {
 
         {/* ================= PAGINATION ================= */}
         {totalPages > 1 && (
-        <div className="flex justify-between items-center text-sm pt-8 border-t border-slate-200 dark:border-slate-700">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-sm pt-8 border-t border-slate-200 dark:border-slate-700">
           <p className="text-slate-600 dark:text-slate-400">
             Showing <span className="font-semibold">{(currentPage - 1) * itemsPerPage + 1}</span>–
             <span className="font-semibold">{Math.min(currentPage * itemsPerPage, totalAssets)}</span> of <span className="font-semibold">{totalAssets}</span>
           </p>
 
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
               disabled={currentPage === 1}
