@@ -1,7 +1,9 @@
 // Notification Controller
 const notificationService = require('../services/notificationService');
 const response = require('../utils/response');
-const { NotFoundError } = require('../utils/errorHandler');
+const { NotFoundError, AuthorizationError } = require('../utils/errorHandler');
+const Notification = require('../models/Notification');
+const constants = require('../constants/constants');
 
 const getNotifications = async (req, res, next) => {
   try {
@@ -77,10 +79,43 @@ const sendReplyToUser = async (req, res, next) => {
   }
 };
 
+const debugNotifications = async (req, res, next) => {
+  try {
+    const role = req.user?.role;
+    if (![constants.ROLES.ADMIN, constants.ROLES.FACILITY_MANAGER].includes(role)) {
+      throw new AuthorizationError('Insufficient permissions');
+    }
+
+    const { userId, limit = 20 } = req.query;
+    const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 20, 1), 50);
+    const orgId = req.user.organization;
+    const targetUserId = userId || req.user.id;
+
+    const [orgLatest, userLatest, orgCount, userCount] = await Promise.all([
+      Notification.find({ organization: orgId }).sort({ createdAt: -1 }).limit(safeLimit),
+      Notification.find({ organization: orgId, user: targetUserId }).sort({ createdAt: -1 }).limit(safeLimit),
+      Notification.countDocuments({ organization: orgId }),
+      Notification.countDocuments({ organization: orgId, user: targetUserId })
+    ]);
+
+    response.success(res, 'Debug notifications', {
+      orgId,
+      targetUserId,
+      orgCount,
+      userCount,
+      orgLatest,
+      userLatest
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getNotifications,
   markNotificationRead,
   markAllNotificationsRead,
   sendTechnicianMessage,
-  sendReplyToUser
+  sendReplyToUser,
+  debugNotifications
 };

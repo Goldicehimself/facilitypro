@@ -9,5 +9,6 @@ router.patch('/:id/read', protect, notificationController.markNotificationRead);
 router.patch('/read-all', protect, notificationController.markAllNotificationsRead);
 router.post('/message-admins', protect, notificationController.sendTechnicianMessage);
 router.post('/reply-user', protect, notificationController.sendReplyToUser);
+router.get('/debug', protect, notificationController.debugNotifications);
 
 module.exports = router;
