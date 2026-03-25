@@ -292,7 +292,7 @@ const notifyAdminsAndManagers = async (organizationId, sender, message, meta = {
       ...meta
     }
   };
-  return createNotificationsForUsers(recipients, payload);
+  return createNotificationsForUsers(recipients, payload, { force: true });
 };
 
 const notifyUser = async (organizationId, recipientId, sender, message, meta = {}) => {
@@ -314,7 +314,7 @@ const notifyUser = async (organizationId, recipientId, sender, message, meta = {
       ...meta
     }
   };
-  return createNotification({ ...payload, user: recipientId });
+  return createNotification({ ...payload, user: recipientId }, { force: true });
 };
 
 module.exports = {
