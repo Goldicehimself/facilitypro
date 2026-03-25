@@ -283,6 +283,7 @@ const notifyAdminsAndManagers = async (organizationId, sender, message, meta = {
   if (!recipients.length) return { notifications: [], debug };
 
   const senderName = [sender?.firstName, sender?.lastName].filter(Boolean).join(' ').trim() || sender?.email || 'Technician';
+  const dedupeKey = `technician_message_${sender?._id || sender?.id || 'unknown'}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   const payload = {
     organization: organizationId,
     title: 'Message from technician',
@@ -291,6 +292,7 @@ const notifyAdminsAndManagers = async (organizationId, sender, message, meta = {
     entityType: 'User',
     entityId: sender?._id || sender?.id,
     link: '/technician-portal',
+    dedupeKey,
     metadata: {
       senderId: sender?._id || sender?.id,
       senderName,
@@ -321,6 +323,7 @@ const notifyAdminsAndManagers = async (organizationId, sender, message, meta = {
 const notifyUser = async (organizationId, recipientId, sender, message, meta = {}) => {
   if (!recipientId) return null;
   const senderName = [sender?.firstName, sender?.lastName].filter(Boolean).join(' ').trim() || sender?.email || 'Admin';
+  const dedupeKey = `admin_reply_${sender?._id || sender?.id || 'unknown'}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   const payload = {
     organization: organizationId,
     title: 'Reply from admin',
@@ -329,6 +332,7 @@ const notifyUser = async (organizationId, recipientId, sender, message, meta = {
     entityType: 'User',
     entityId: sender?._id || sender?.id,
     link: '/technician-portal',
+    dedupeKey,
     metadata: {
       senderId: sender?._id || sender?.id,
       senderName,
