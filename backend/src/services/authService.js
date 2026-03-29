@@ -483,12 +483,10 @@ const login = async (email, password, orgCode, rememberMe = false, mfaToken = nu
       user.mfaCodeSentAt = now;
       await user.save();
 
-      const emailBaseUrl = getEmailBaseUrl();
-      const securityHtml = renderTemplate('facilitypro-password-reset.html', {
+      const securityHtml = renderTemplate('facilitypro-mfa-code.html', {
         recipient_name: getRecipientName(user),
-        org_name: organization.name,
-        reset_url: `${emailBaseUrl}/login`,
-        reset_expiry: '10 minutes',
+        security_code: code,
+        expires_in: '10 minutes',
         support_email: getSupportEmail(organization),
         year: new Date().getFullYear()
       });
@@ -499,7 +497,10 @@ const login = async (email, password, orgCode, rememberMe = false, mfaToken = nu
         html: securityHtml || `<p>Your FacilityPro security code is <strong>${code}</strong>. It expires in 10 minutes.</p>`
       });
 
-      return { mfaRequired: true, mfaDelivery: 'email' };
+      return {
+        mfaRequired: true,
+        mfaDelivery: 'email'
+      };
     }
 
     const candidate = crypto.createHash('sha256').update(normalizedMfa).digest('hex');

@@ -539,6 +539,53 @@ const SuperAdmin = () => {
           </div>
         </div>
 
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Billing Overview</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400">All organizations and their current billing status.</p>
+          <div className="mt-4 overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs uppercase tracking-wide text-slate-500 border-b border-slate-200 dark:border-slate-800">
+                  <th className="py-2 pr-4">Organization</th>
+                  <th className="py-2 pr-4">Plan</th>
+                  <th className="py-2 pr-4">Status</th>
+                  <th className="py-2 pr-4">Trial Ends</th>
+                  <th className="py-2 pr-4">Last Paid</th>
+                  <th className="py-2 pr-4">Amount</th>
+                  <th className="py-2 pr-4">Reference</th>
+                </tr>
+              </thead>
+              <tbody>
+                {orgs.map((org) => {
+                  const billingInfo = org?.settings?.billing || {};
+                  return (
+                    <tr key={`bill-${org._id}`} className="border-b border-slate-100 dark:border-slate-800">
+                      <td className="py-2 pr-4 font-medium text-slate-900 dark:text-slate-100">{org.name}</td>
+                      <td className="py-2 pr-4 capitalize">{billingInfo.plan || 'starter'}</td>
+                      <td className="py-2 pr-4 capitalize">{billingInfo.status || 'trialing'}</td>
+                      <td className="py-2 pr-4">
+                        {billingInfo.trialEndsAt ? new Date(billingInfo.trialEndsAt).toLocaleDateString() : '—'}
+                      </td>
+                      <td className="py-2 pr-4">
+                        {billingInfo.lastPaidAt ? new Date(billingInfo.lastPaidAt).toLocaleDateString() : '—'}
+                      </td>
+                      <td className="py-2 pr-4">
+                        {typeof billingInfo.lastPaymentAmount === 'number' ? billingInfo.lastPaymentAmount.toLocaleString() : '—'}
+                      </td>
+                      <td className="py-2 pr-4 text-xs text-slate-500">{billingInfo.lastPaymentReference || '—'}</td>
+                    </tr>
+                  );
+                })}
+                {orgs.length === 0 && (
+                  <tr>
+                    <td className="py-3 text-slate-500" colSpan="7">No organizations available.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
         {selectedOrg && (
           <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900 space-y-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
