@@ -46,6 +46,7 @@ export const PM_FREQUENCIES = [
 ];
 
 export const USER_ROLES = {
+  super_admin: 'Super Admin',
   facility_manager: 'Facility Manager',
   technician: 'Maintenance Technician',
   vendor: 'Vendor',

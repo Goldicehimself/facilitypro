@@ -27,6 +27,33 @@ const protect = async (req, res, next) => {
         throw new AuthenticationError('Organization is disabled');
       }
     }
+
+    if (decoded?.id) {
+      const User = require('../models/User');
+      const user = await User.findById(decoded.id).select('active tokenVersion');
+      if (!user) {
+        throw new AuthenticationError('User not found');
+      }
+      if (!user.active) {
+        throw new AuthenticationError('User account is suspended');
+      }
+      const currentVersion = typeof user.tokenVersion === 'number' ? user.tokenVersion : 0;
+      if (typeof decoded.tokenVersion === 'number') {
+        if (decoded.tokenVersion !== currentVersion) {
+          throw new AuthenticationError('Session revoked');
+        }
+      } else if (currentVersion > 0) {
+        throw new AuthenticationError('Session revoked');
+      }
+    }
+
+    if (decoded?.authType === 'impersonation' && decoded?.readOnly) {
+      const method = String(req.method || '').toUpperCase();
+      if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) {
+        throw new AuthorizationError('Read-only impersonation');
+      }
+    }
+
     req.user = decoded;
     next();
   } catch (error) {

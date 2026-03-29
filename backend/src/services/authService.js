@@ -28,6 +28,8 @@ const getRecipientName = (user) => {
 
 const getRoleLabel = (role) => {
   switch (role) {
+    case constants.ROLES.SUPER_ADMIN:
+      return 'Super Admin';
     case constants.ROLES.ADMIN:
       return 'Admin';
     case constants.ROLES.FACILITY_MANAGER:
@@ -60,7 +62,13 @@ const isEmailAllowedByPolicy = (email, securityPolicy) => {
 
 const generateToken = (user, expiresIn) => {
   return jwt.sign(
-    { id: user._id, email: user.email, role: user.role, organization: user.organization },
+    {
+      id: user._id,
+      email: user.email,
+      role: user.role,
+      organization: user.organization,
+      tokenVersion: typeof user.tokenVersion === 'number' ? user.tokenVersion : 0
+    },
     constants.JWT_SECRET,
     { expiresIn: expiresIn || constants.JWT_EXPIRE }
   );
@@ -429,7 +437,7 @@ const createInviteCode = async ({ organizationId, role, expiresAt, createdBy, in
   return { code, role, expiresAt: expiresAt || null };
 };
 
-const login = async (email, password, orgCode, rememberMe = false) => {
+const login = async (email, password, orgCode, rememberMe = false, mfaToken = null) => {
   if (!email || !password || !orgCode) {
     throw new ValidationError('Email, password, and orgCode are required');
   }
@@ -453,6 +461,59 @@ const login = async (email, password, orgCode, rememberMe = false) => {
   if (!user.emailVerifiedAt) {
     throw new AuthenticationError('User email is not verified');
   }
+  if (!user.active) {
+    throw new AuthenticationError('User account is suspended');
+  }
+  if (user.passwordResetRequired) {
+    throw new AuthenticationError('Password reset required');
+  }
+
+  const securityPolicy = normalizeSettings(organization).securityPolicy || {};
+  const requiresMfa = user.role === constants.ROLES.SUPER_ADMIN || securityPolicy.enforceMfa;
+
+  if (requiresMfa) {
+    const now = new Date();
+    const normalizedMfa = String(mfaToken || '').trim();
+
+    if (!normalizedMfa) {
+      const code = String(Math.floor(100000 + Math.random() * 900000));
+      const hash = crypto.createHash('sha256').update(code).digest('hex');
+      user.mfaCodeHash = hash;
+      user.mfaCodeExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
+      user.mfaCodeSentAt = now;
+      await user.save();
+
+      const emailBaseUrl = getEmailBaseUrl();
+      const securityHtml = renderTemplate('facilitypro-password-reset.html', {
+        recipient_name: getRecipientName(user),
+        org_name: organization.name,
+        reset_url: `${emailBaseUrl}/login`,
+        reset_expiry: '10 minutes',
+        support_email: getSupportEmail(organization),
+        year: new Date().getFullYear()
+      });
+      await sendEmail({
+        to: user.email,
+        subject: 'Your FacilityPro security code',
+        text: `Your security code is ${code}. It expires in 10 minutes.`,
+        html: securityHtml || `<p>Your FacilityPro security code is <strong>${code}</strong>. It expires in 10 minutes.</p>`
+      });
+
+      return { mfaRequired: true, mfaDelivery: 'email' };
+    }
+
+    const candidate = crypto.createHash('sha256').update(normalizedMfa).digest('hex');
+    if (!user.mfaCodeHash || !user.mfaCodeExpiresAt || user.mfaCodeExpiresAt <= now) {
+      throw new AuthenticationError('MFA code expired');
+    }
+    if (candidate !== user.mfaCodeHash) {
+      throw new AuthenticationError('Invalid MFA code');
+    }
+    user.mfaCodeHash = null;
+    user.mfaCodeExpiresAt = null;
+    user.mfaCodeSentAt = null;
+    await user.save();
+  }
 
   if (isLegacyUploadPath(user.avatar)) {
     user.avatar = sanitizeAvatarValue(user.avatar);
@@ -464,7 +525,10 @@ const login = async (email, password, orgCode, rememberMe = false) => {
   user.lastActive = user.lastLogin;
   await user.save();
 
-  const expiresIn = rememberMe ? constants.JWT_EXPIRE_LONG : constants.JWT_EXPIRE_SHORT;
+  const policyTimeoutMinutes = Number(securityPolicy.sessionTimeoutMinutes);
+  const expiresIn = Number.isFinite(policyTimeoutMinutes) && policyTimeoutMinutes > 0
+    ? `${policyTimeoutMinutes}m`
+    : (rememberMe ? constants.JWT_EXPIRE_LONG : constants.JWT_EXPIRE_SHORT);
   const token = generateToken(user, expiresIn);
   const userResponse = user.toObject();
   delete userResponse.password;
@@ -608,6 +672,10 @@ const resetPassword = async (token, orgCode, newPassword) => {
   user.password = newPassword;
   user.resetPasswordTokenHash = null;
   user.resetPasswordExpiresAt = null;
+  if (user.passwordResetRequired) {
+    user.passwordResetRequired = false;
+  }
+  user.tokenVersion = (user.tokenVersion || 0) + 1;
   await user.save();
 
   return { success: true };

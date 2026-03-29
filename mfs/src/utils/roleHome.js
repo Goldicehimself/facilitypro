@@ -11,6 +11,8 @@ export const getHomeRoute = (role) => {
       return '/finance-portal';
     case 'staff':
       return '/staff-portal';
+    case 'super_admin':
+      return '/super-admin';
     default:
       return '/dashboard';
   }

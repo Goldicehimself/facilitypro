@@ -39,6 +39,7 @@ const MainLayout = ({ children }) => {
   const [sidebarHover, setSidebarHover] = useState(false);
   const hoverTimeoutRef = React.useRef(null);
   const { user, logout } = useAuth();
+  const isSuperAdmin = user?.role === 'super_admin';
   const navigate = useNavigate();
 
   /* =========================
@@ -54,6 +55,11 @@ const MainLayout = ({ children }) => {
   }, [sidebarCollapsed]);
 
   useEffect(() => {
+    if (isSuperAdmin) {
+      setGlobalSearchResults({ workOrders: [], assets: [], vendors: [] });
+      setGlobalSearchLoading(false);
+      return;
+    }
     const query = globalSearch.trim();
     if (!query) {
       setGlobalSearchResults({ workOrders: [], assets: [], vendors: [] });
@@ -95,7 +101,7 @@ const MainLayout = ({ children }) => {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [globalSearch]);
+  }, [globalSearch, isSuperAdmin]);
 
   useEffect(() => {
     let isMounted = true;
@@ -133,6 +139,7 @@ const MainLayout = ({ children }) => {
 
   const getRoleDisplay = (role) => {
     const roles = {
+      super_admin: "Super Admin",
       facility_manager: "Facility Manager",
       technician: "Maintenance Technician",
       vendor: "Vendor",
@@ -197,6 +204,7 @@ const MainLayout = ({ children }) => {
         </div>
 
         {/* Center: Global Search */}
+        {!isSuperAdmin && (
         <div className="hidden lg:flex flex-1 justify-center px-6">
           <div
             className="relative w-full max-w-xl"
@@ -292,6 +300,7 @@ const MainLayout = ({ children }) => {
             )}
           </div>
         </div>
+        )}
 
         {/* Right: Notifications + User */}
         <div className="flex items-center gap-3 relative">

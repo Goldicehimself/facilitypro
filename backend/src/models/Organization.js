@@ -109,10 +109,29 @@ const billingSettingsSchema = new mongoose.Schema({
   lastPaymentAmount: { type: Number, default: null }
 }, { _id: false });
 
+const featureFlagsSchema = new mongoose.Schema({
+  flags: { type: mongoose.Schema.Types.Mixed, default: {} },
+  updatedAt: { type: Date, default: Date.now }
+}, { _id: false });
+
+const licensingSchema = new mongoose.Schema({
+  planOverride: { type: String, default: null },
+  seatCap: { type: Number, default: null },
+  notes: { type: String, trim: true, default: null },
+  updatedAt: { type: Date, default: Date.now }
+}, { _id: false });
+
+const backupVisibilitySchema = new mongoose.Schema({
+  lastBackupAt: { type: Date, default: null },
+  status: { type: String, default: 'unknown' },
+  provider: { type: String, default: null }
+}, { _id: false });
+
 const organizationSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
   industry: { type: String, trim: true },
   orgEmail: { type: String, trim: true, lowercase: true },
+  isSystem: { type: Boolean, default: false },
   orgEmailVerifiedAt: { type: Date, default: null },
   orgEmailVerificationTokenHash: { type: String, default: null },
   orgEmailVerificationExpiresAt: { type: Date, default: null },
@@ -124,7 +143,10 @@ const organizationSchema = new mongoose.Schema({
     notifications: { type: notificationSettingsSchema, default: () => ({}) },
     companyProfile: { type: companyProfileSchema, default: () => ({}) },
     integrations: { type: integrationSettingsSchema, default: () => ({}) },
-    billing: { type: billingSettingsSchema, default: () => ({}) }
+    billing: { type: billingSettingsSchema, default: () => ({}) },
+    featureFlags: { type: featureFlagsSchema, default: () => ({}) },
+    licensing: { type: licensingSchema, default: () => ({}) },
+    backups: { type: backupVisibilitySchema, default: () => ({}) }
   }
 }, {
   timestamps: true

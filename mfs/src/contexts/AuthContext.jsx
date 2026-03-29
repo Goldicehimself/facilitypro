@@ -101,7 +101,7 @@ export const AuthProvider = ({ children }) => {
   const getLocalUsers = () => JSON.parse(localStorage.getItem('local_users') || '[]');
   const saveLocalUsers = (users) => localStorage.setItem('local_users', JSON.stringify(users));
 
-  const login = async (email, password, orgCode, rememberMe = false) => {
+  const login = async (email, password, orgCode, rememberMe = false, mfaToken = '') => {
     try {
       const normalizedOrgCode = String(orgCode || '')
         .toUpperCase()
@@ -148,6 +148,9 @@ export const AuthProvider = ({ children }) => {
             case 'staff':
               navigate('/staff-portal');
               break;
+            case 'super_admin':
+              navigate('/super-admin');
+              break;
             default:
               navigate('/dashboard');
           }
@@ -158,7 +161,13 @@ export const AuthProvider = ({ children }) => {
         throw new Error('Login failed');
       }
 
-      const response = await axiosInstance.post('/auth/login', { email, password, orgCode: normalizedOrgCode, rememberMe });
+      const response = await axiosInstance.post('/auth/login', {
+        email,
+        password,
+        orgCode: normalizedOrgCode,
+        rememberMe,
+        mfaToken: mfaToken || undefined
+      });
       const payload = response.data?.data || {};
       const emailSent =
         typeof payload.emailSent === 'boolean'
@@ -167,6 +176,13 @@ export const AuthProvider = ({ children }) => {
             ? payload.sent
             : true;
       const verificationLink = payload.verificationLink || '';
+      if (payload.mfaRequired) {
+        return {
+          success: false,
+          mfaRequired: true,
+          delivery: payload.mfaDelivery || 'email'
+        };
+      }
       const token = payload.token;
       const apiUser = normalizeUser(payload.user);
       
@@ -204,6 +220,9 @@ export const AuthProvider = ({ children }) => {
           break;
         case 'staff':
           navigate('/staff-portal');
+          break;
+        case 'super_admin':
+          navigate('/super-admin');
           break;
         default:
           navigate('/dashboard');
@@ -250,6 +269,9 @@ export const AuthProvider = ({ children }) => {
             case 'staff':
               navigate('/staff-portal');
               break;
+            case 'super_admin':
+              navigate('/super-admin');
+              break;
             default:
               navigate('/dashboard');
           }
@@ -260,6 +282,11 @@ export const AuthProvider = ({ children }) => {
         // ignore
       }
 
+      const serverMessage = error?.response?.data?.message || '';
+      if (serverMessage.toLowerCase().includes('mfa') || serverMessage.toLowerCase().includes('security code')) {
+        toast.error('Verification failed');
+        throw new Error('MFA_CODE_INVALID');
+      }
       // Show a short, generic message only (do not display server-provided messages).
       toast.error('Login failed');
       throw new Error('Login failed');

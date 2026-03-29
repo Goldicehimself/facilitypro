@@ -56,8 +56,12 @@ const createInvite = async (req, res, next) => {
 
 const login = async (req, res, next) => {
   try {
-    const { email, password, orgCode, rememberMe } = req.validatedData || req.body;
-    const result = await authService.login(email, password, orgCode, rememberMe);
+    const { email, password, orgCode, rememberMe, mfaToken } = req.validatedData || req.body;
+    const result = await authService.login(email, password, orgCode, rememberMe, mfaToken);
+    if (result?.mfaRequired) {
+      response.success(res, 'MFA required', result);
+      return;
+    }
     response.success(res, 'Login successful', result);
     if (result?.user?._id || result?.user?.id) {
       try {

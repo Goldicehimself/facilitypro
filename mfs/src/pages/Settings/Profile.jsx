@@ -302,6 +302,7 @@ const Profile = () => {
 
   const getRoleDisplayName = (role) => {
     const roleMap = {
+      super_admin: 'Super Admin',
       admin: 'Admin',
       facility_manager: 'Facility Manager',
       technician: 'Maintenance Technician',
@@ -673,6 +674,7 @@ const Profile = () => {
                       <SelectValue placeholder="Role" />
                     </SelectTrigger>
                     <SelectContent className="dark:bg-slate-900 dark:text-slate-100">
+                      <SelectItem value="super_admin">Super Admin</SelectItem>
                       <SelectItem value="admin">Admin</SelectItem>
                       <SelectItem value="facility_manager">Facility Manager</SelectItem>
                       <SelectItem value="technician">Maintenance Technician</SelectItem>

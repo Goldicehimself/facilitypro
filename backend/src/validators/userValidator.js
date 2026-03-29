@@ -52,7 +52,8 @@ const loginSchema = Joi.object({
   email: Joi.string().email().required(),
   password: Joi.string().required(),
   orgCode: Joi.string().alphanum().min(6).max(12).required(),
-  rememberMe: Joi.boolean().optional()
+  rememberMe: Joi.boolean().optional(),
+  mfaToken: Joi.string().trim().length(6).optional()
 });
 
 const forgotPasswordSchema = Joi.object({
@@ -88,7 +89,7 @@ const updateUserSchema = Joi.object({
     emailNotifications: Joi.boolean().optional(),
     inAppNotifications: Joi.boolean().optional()
   }).optional(),
-  role: Joi.string().optional().valid('admin', 'facility_manager', 'technician', 'staff', 'vendor', 'finance', 'procurement', 'user'),
+  role: Joi.string().optional().valid('super_admin', 'admin', 'facility_manager', 'technician', 'staff', 'vendor', 'finance', 'procurement', 'user'),
   active: Joi.boolean().optional()
 }).min(1);
 

@@ -19,6 +19,7 @@ module.exports = {
   
   // Role Constants
   ROLES: {
+    SUPER_ADMIN: 'super_admin',
     ADMIN: 'admin',
     FACILITY_MANAGER: 'facility_manager',
     TECHNICIAN: 'technician',

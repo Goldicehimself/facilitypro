@@ -36,6 +36,7 @@ import {
   List as IconList,
   Users2,
   DollarSign,
+  Shield,
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -190,6 +191,12 @@ const NavigationMenu = ({ onCloseMobile = () => {}, collapsed = false, onToggleC
       path: '/settings',
       roles: ['facility_manager', 'admin'],
     },
+    {
+      title: 'System Console',
+      icon: <Shield />,
+      path: '/super-admin',
+      roles: ['super_admin'],
+    },
   ];
 
   if (!user) return null;
@@ -212,6 +219,10 @@ const NavigationMenu = ({ onCloseMobile = () => {}, collapsed = false, onToggleC
     {
       label: 'Admin',
       items: ['Finance Portal', 'Reports', 'Messages', 'Settings'],
+    },
+    {
+      label: 'Super Admin',
+      items: ['System Console'],
     },
   ];
 

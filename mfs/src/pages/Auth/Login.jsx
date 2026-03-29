@@ -13,6 +13,9 @@ const Login = () => {
   const [error, setError] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [mfaRequired, setMfaRequired] = useState(false);
+  const [mfaToken, setMfaToken] = useState('');
+  const [mfaDelivery, setMfaDelivery] = useState('email');
   const { login } = useAuth();
 
   const handleSubmit = async (e) => {
@@ -25,15 +28,33 @@ const Login = () => {
     }
     try {
       setLoading(true);
-      await login(email, password, orgCode, rememberMe);
+      const result = await login(
+        email,
+        password,
+        orgCode,
+        rememberMe,
+        mfaRequired ? mfaToken : ''
+      );
+      if (result?.mfaRequired) {
+        setMfaRequired(true);
+        setMfaDelivery(result.delivery || 'email');
+        setLoading(false);
+        return;
+      }
     } catch (err) {
       setLoading(false);
       const message = err?.response?.data?.message || err?.message || '';
+      if (message === 'MFA_CODE_INVALID') {
+        setError('Invalid or expired security code.');
+        return;
+      }
       const normalized = message.toLowerCase();
       if (normalized.includes('organization email is not verified')) {
         setError('Please verify your organization email before logging in.');
       } else if (normalized.includes('user email is not verified')) {
         setError('Please verify your email before logging in.');
+      } else if (normalized.includes('mfa') || normalized.includes('security code')) {
+        setError('Invalid or expired security code.');
       } else {
         setError('Invalid email or password.');
       }
@@ -59,6 +80,9 @@ const Login = () => {
         </div>
 
         {error && <div className="auth-error">{error}</div>}
+        {mfaRequired && !error && (
+          <div className="auth-info">A security code was sent to your email.</div>
+        )}
 
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="auth-field">
@@ -71,6 +95,7 @@ const Login = () => {
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="email"
               required
+              disabled={mfaRequired}
             />
           </div>
 
@@ -85,6 +110,7 @@ const Login = () => {
                 onChange={(e) => setOrgCode(e.target.value.toUpperCase())}
                 maxLength={12}
                 autoComplete="off"
+                disabled={mfaRequired}
               />
               <button
                 className="auth-icon-btn"
@@ -108,6 +134,7 @@ const Login = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
                 required
+                disabled={mfaRequired}
               />
               <button
                 className="auth-icon-btn"
@@ -120,28 +147,66 @@ const Login = () => {
             </div>
           </div>
 
-          <div className="auth-row">
-            <label className="auth-check">
+          {!mfaRequired && (
+            <div className="auth-row">
+              <label className="auth-check">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                />
+                Remember me
+              </label>
+              <RouterLink className="auth-link" to="/forgot-password">
+                Forgot password?
+              </RouterLink>
+            </div>
+          )}
+
+          {mfaRequired && (
+            <div className="auth-field">
+              <label htmlFor="login-mfa">Security Code</label>
               <input
-                type="checkbox"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
+                id="login-mfa"
+                type="text"
+                placeholder={`Enter the code sent via ${mfaDelivery}`}
+                value={mfaToken}
+                onChange={(e) => setMfaToken(e.target.value)}
+                maxLength={6}
+                autoComplete="one-time-code"
+                required
               />
-              Remember me
-            </label>
-            <RouterLink className="auth-link" to="/forgot-password">
-              Forgot password?
-            </RouterLink>
-          </div>
+              <button
+                className="auth-link mt-2"
+                type="button"
+                onClick={async () => {
+                  setError('');
+                  try {
+                    setLoading(true);
+                    const result = await login(email, password, orgCode, rememberMe, '');
+                    if (result?.mfaRequired) {
+                      setMfaDelivery(result.delivery || 'email');
+                    }
+                  } catch (err) {
+                    setError('Unable to resend security code.');
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+              >
+                Resend code
+              </button>
+            </div>
+          )}
 
           <button className="auth-submit" type="submit" disabled={loading}>
             {loading ? (
               <>
                 <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                Signing In...
+                {mfaRequired ? 'Verifying...' : 'Signing In...'}
               </>
             ) : (
-              'Sign In'
+              mfaRequired ? 'Verify Code' : 'Sign In'
             )}
           </button>
 

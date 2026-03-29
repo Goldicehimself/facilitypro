@@ -38,6 +38,7 @@ const inventoryRoutes = require('./src/routes/inventoryRoutes');
 const serviceRequestRoutes = require('./src/routes/serviceRequestRoutes');
 const financeRoutes = require('./src/routes/financeRoutes');
 const billingRoutes = require('./src/routes/billingRoutes');
+const superAdminRoutes = require('./src/routes/superAdminRoutes');
 
 const EXPRESSPORT = constants.PORT;
 const app = express();
@@ -132,6 +133,7 @@ app.use('/api/v1/inventory', inventoryRoutes);
 app.use('/api/v1/service-requests', serviceRequestRoutes);
 app.use('/api/v1/finance', financeRoutes);
 app.use('/api/v1/billing', billingRoutes);
+app.use('/api/v1/super-admin', superAdminRoutes);
 
 // 404 handler
 app.use((req, res) => {

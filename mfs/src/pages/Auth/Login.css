@@ -85,6 +85,16 @@
   margin-bottom: 12px;
 }
 
+.auth-info {
+  background: #ecfeff;
+  border: 1px solid #a5f3fc;
+  color: #0e7490;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
 .auth-banner {
   border-radius: 10px;
   padding: 10px 12px;

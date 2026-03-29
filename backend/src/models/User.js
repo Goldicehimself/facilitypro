@@ -64,6 +64,26 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  tokenVersion: {
+    type: Number,
+    default: 0
+  },
+  passwordResetRequired: {
+    type: Boolean,
+    default: false
+  },
+  mfaCodeHash: {
+    type: String,
+    default: null
+  },
+  mfaCodeExpiresAt: {
+    type: Date,
+    default: null
+  },
+  mfaCodeSentAt: {
+    type: Date,
+    default: null
+  },
   lastLogin: Date,
   performanceScore: {
     type: Number,

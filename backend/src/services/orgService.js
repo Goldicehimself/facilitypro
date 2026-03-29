@@ -65,6 +65,21 @@ const DEFAULT_SETTINGS = {
     lastPaidAt: null,
     lastPaymentReference: null,
     lastPaymentAmount: null
+  },
+  featureFlags: {
+    flags: {},
+    updatedAt: null
+  },
+  licensing: {
+    planOverride: null,
+    seatCap: null,
+    notes: null,
+    updatedAt: null
+  },
+  backups: {
+    lastBackupAt: null,
+    status: 'unknown',
+    provider: null
   }
 };
 
@@ -106,6 +121,25 @@ const normalizeSettings = (organization) => {
     ...DEFAULT_SETTINGS.billing,
     ...(current.billing || {})
   };
+  if (organization?.isSystem) {
+    billing.status = 'active';
+    billing.trialEndsAt = null;
+  }
+
+  const featureFlags = {
+    ...DEFAULT_SETTINGS.featureFlags,
+    ...(current.featureFlags || {})
+  };
+
+  const licensing = {
+    ...DEFAULT_SETTINGS.licensing,
+    ...(current.licensing || {})
+  };
+
+  const backups = {
+    ...DEFAULT_SETTINGS.backups,
+    ...(current.backups || {})
+  };
 
   if (!companyProfile.companyName && organization?.name) {
     companyProfile.companyName = organization.name;
@@ -114,10 +148,47 @@ const normalizeSettings = (organization) => {
     companyProfile.industry = organization.industry;
   }
 
-  return { securityPolicy, notifications, companyProfile, integrations, billing };
+  return { securityPolicy, notifications, companyProfile, integrations, billing, featureFlags, licensing, backups };
 };
 
-const getEntitlements = (billing = {}) => {
+const getEntitlements = (billing = {}, organization = null) => {
+  if (organization?.isSystem) {
+    return {
+      plan: 'enterprise',
+      features: [
+        'work_orders',
+        'assets',
+        'vendors',
+        'basic_roles',
+        'basic_reporting',
+        'org_code_onboarding',
+        'email_support',
+        'advanced_reporting',
+        'pm_scheduling',
+        'notifications_automation',
+        'role_permissions_custom',
+        'file_attachments',
+        'api_access',
+        'priority_support',
+        'sso',
+        'audit_logs',
+        'advanced_security',
+        'sla_support',
+        'custom_integrations',
+        'dedicated_onboarding',
+        'multi_location',
+        'custom_roles',
+        'data_export_automation',
+        'advanced_analytics'
+      ],
+      seatsIncluded: billing.seatsIncluded ?? DEFAULT_SETTINGS.billing.seatsIncluded,
+      seatCount: billing.seatCount ?? DEFAULT_SETTINGS.billing.seatCount,
+      extraSeatPrice: billing.extraSeatPrice ?? DEFAULT_SETTINGS.billing.extraSeatPrice,
+      billingCycle: billing.billingCycle || DEFAULT_SETTINGS.billing.billingCycle,
+      trialEndsAt: null,
+      status: 'active'
+    };
+  }
   const plan = billing.plan || 'starter';
   const planFeatures = {
     starter: [
@@ -368,7 +439,7 @@ const getSettings = async (organizationId) => {
     .lean();
   if (!org) throw new NotFoundError('Organization');
   const settings = normalizeSettings(org);
-  return { settings, entitlements: getEntitlements(settings.billing) };
+  return { settings, entitlements: getEntitlements(settings.billing, org) };
 };
 
 const updateSettings = async (organizationId, payload = {}) => {
@@ -419,7 +490,37 @@ const updateSettings = async (organizationId, payload = {}) => {
       ...(org.settings.billing || {}),
       ...(payload.billing || {})
     };
+    if (org.isSystem) {
+      updatedBilling.status = 'active';
+      updatedBilling.trialEndsAt = null;
+    }
     org.settings.billing = updatedBilling;
+  }
+
+  if (payload.featureFlags) {
+    org.settings.featureFlags = {
+      ...DEFAULT_SETTINGS.featureFlags,
+      ...(org.settings.featureFlags || {}),
+      ...(payload.featureFlags || {}),
+      updatedAt: new Date()
+    };
+  }
+
+  if (payload.licensing) {
+    org.settings.licensing = {
+      ...DEFAULT_SETTINGS.licensing,
+      ...(org.settings.licensing || {}),
+      ...(payload.licensing || {}),
+      updatedAt: new Date()
+    };
+  }
+
+  if (payload.backups) {
+    org.settings.backups = {
+      ...DEFAULT_SETTINGS.backups,
+      ...(org.settings.backups || {}),
+      ...(payload.backups || {})
+    };
   }
 
   await org.save();

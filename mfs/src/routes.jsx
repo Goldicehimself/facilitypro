@@ -55,6 +55,7 @@ const Help = lazy(() => import('./pages/Help/Help'));
 const PublicHelp = lazy(() => import('./pages/Help/PublicHelp'));
 const Messages = lazy(() => import('./pages/Messages/Messages'));
 const TechnicianMessages = lazy(() => import('./pages/Messages/TechnicianMessages'));
+const SuperAdmin = lazy(() => import('./pages/SuperAdmin/SuperAdmin'));
 
 // Role-based route wrapper
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -329,6 +330,12 @@ const AppRoutes = () => {
       <Route path="/technician-messages" element={
         <ProtectedRoute allowedRoles={["technician"]}>
           <MainLayout><TechnicianMessages /></MainLayout>
+        </ProtectedRoute>
+      } />
+
+      <Route path="/super-admin" element={
+        <ProtectedRoute allowedRoles={["super_admin"]}>
+          <MainLayout><SuperAdmin /></MainLayout>
         </ProtectedRoute>
       } />
       
