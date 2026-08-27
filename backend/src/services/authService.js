@@ -636,7 +636,7 @@ const requestPasswordReset = async (email, orgCode) => {
   user.resetPasswordExpiresAt = expiresAt;
   await user.save();
 
-  const frontendBaseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+  const frontendBaseUrl = getEmailBaseUrl();
   const resetLink = `${frontendBaseUrl}/reset-password?token=${rawToken}&orgCode=${normalizedOrgCode}`;
   const resetHtml = renderTemplate('facilitypro-password-reset.html', {
     recipient_name: getRecipientName(user),

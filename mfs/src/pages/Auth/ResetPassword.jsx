@@ -46,7 +46,12 @@ const ResetPassword = () => {
       setMessage('Password reset successful. You can now log in.');
       setTimeout(() => navigate('/login'), 1200);
     } catch (err) {
-      setError(err?.message || 'Unable to reset password.');
+      const isTimeout = err?.code === 'ECONNABORTED' || String(err?.message || '').toLowerCase().includes('timeout');
+      setError(
+        isTimeout
+          ? 'The server took too long to respond. Please try again once; your reset link remains valid.'
+          : err?.response?.data?.message || err?.message || 'Unable to reset password.'
+      );
       setLoading(false);
     }
   };

@@ -6,7 +6,11 @@ export async function requestPasswordReset(email, orgCode) {
 }
 
 export async function resetPassword({ token, orgCode, password }) {
-  const response = await api.post('/auth/reset-password', { token, orgCode, password }, { suppressToast: true });
+  const response = await api.post(
+    '/auth/reset-password',
+    { token, orgCode, password },
+    { suppressToast: true, skipRetry: true, timeout: 45000 }
+  );
   return response.data?.data;
 }
 

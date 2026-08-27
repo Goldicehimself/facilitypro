@@ -189,8 +189,461 @@
   animation: logo-spin-slow 12s linear infinite;
 }
 
+/* Animated primary CTA, adapted from Uiverse.io by doniaskima. */
+.btn-23,
+.btn-23 *,
+.btn-23::after,
+.btn-23::before {
+  border: 0 solid;
+  box-sizing: border-box;
+}
+
+.btn-23 {
+  --btn-23-bg: var(--mp-brand, #2563eb);
+  --btn-23-fg: #fff;
+  -webkit-tap-highlight-color: transparent;
+  appearance: none;
+  background: var(--btn-23-bg) !important;
+  border: 2px solid var(--btn-23-bg) !important;
+  border-radius: 9999px !important;
+  color: var(--btn-23-fg);
+  cursor: pointer;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 0.78rem;
+  font-weight: 900;
+  line-height: 1.5;
+  min-height: 2.75rem;
+  min-width: 10rem;
+  overflow: hidden;
+  padding: 0.72rem 2rem;
+  position: relative;
+  text-transform: uppercase;
+  isolation: isolate;
+}
+
+.btn-23--wide {
+  min-width: 15.5rem;
+}
+
+.btn-23:disabled {
+  cursor: default;
+  opacity: 0.65;
+}
+
+.btn-23:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--btn-23-bg) 35%, white);
+  outline-offset: 3px;
+}
+
+.btn-23 > span {
+  display: grid;
+  inset: 0;
+  place-items: center;
+  position: absolute;
+  transition: opacity 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-23 .marquee {
+  --spacing: 7em;
+  --start: 0em;
+  --end: 7em;
+  animation: btn-23-marquee 1s linear infinite;
+  animation-play-state: paused;
+  opacity: 0;
+  position: relative;
+  text-shadow:
+    var(--btn-23-fg) var(--spacing) 0,
+    var(--btn-23-fg) calc(var(--spacing) * -1) 0,
+    var(--btn-23-fg) calc(var(--spacing) * -2) 0;
+}
+
+/* The longer trial label needs its own larger loop distance. Keep this after
+   the base marquee rule so the component defaults cannot override it. */
+.btn-23.btn-23--wide .marquee {
+  --spacing: 24em;
+  --end: 24em;
+}
+
+.btn-23:hover .marquee,
+.btn-23:focus-visible .marquee {
+  animation-play-state: running;
+  opacity: 1;
+}
+
+.btn-23:hover .text,
+.btn-23:focus-visible .text {
+  opacity: 0;
+}
+
+@keyframes btn-23-marquee {
+  from { transform: translateX(var(--start)); }
+  to { transform: translateX(var(--end)); }
+}
+
+/* Split-letter CTA, adapted from Uiverse.io by doniaskima. */
+.btn-53,
+.btn-53 *,
+.btn-53::after,
+.btn-53::before {
+  border: 0 solid;
+  box-sizing: border-box;
+}
+
+.btn-53 {
+  -webkit-tap-highlight-color: transparent;
+  appearance: none;
+  background: var(--mp-brand-dark, #162e6b) !important;
+  border: 1px solid var(--mp-brand, #1e3a8a) !important;
+  border-radius: 9999px !important;
+  color: #fff;
+  cursor: pointer;
+  display: block;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 0.78rem;
+  font-weight: 900;
+  line-height: 1.5;
+  min-height: 3.25rem;
+  min-width: 12rem;
+  overflow: hidden;
+  padding: 1rem 2.4rem;
+  position: relative;
+  text-transform: uppercase;
+}
+
+.btn-53:disabled {
+  cursor: default;
+  opacity: 0.65;
+}
+
+.btn-53:focus-visible {
+  outline: 3px solid rgba(255, 255, 255, 0.7);
+  outline-offset: 3px;
+}
+
+.btn-53 .original {
+  background: #fff;
+  color: var(--mp-brand, #1e3a8a);
+  display: grid;
+  inset: 0;
+  place-content: center;
+  position: absolute;
+  transition: transform 0.2s cubic-bezier(0.87, 0, 0.13, 1);
+}
+
+.btn-53--compact {
+  font-size: 0.7rem;
+  min-height: 2.35rem;
+  min-width: 7rem;
+  padding: 0.55rem 1.35rem;
+}
+
+.btn-53--hero {
+  min-height: 3rem;
+  min-width: 10rem;
+  padding: 0.85rem 2rem;
+}
+
+.btn-53:hover .original,
+.btn-53:focus-visible .original {
+  transform: translateY(100%);
+}
+
+.btn-53 .letters {
+  display: inline-flex;
+  justify-content: center;
+  gap: 0.02em;
+}
+
+.btn-53 .letters span {
+  opacity: 0;
+  transform: translateY(-15px);
+  transition: transform 0.2s cubic-bezier(0.87, 0, 0.13, 1), opacity 0.2s;
+}
+
+.btn-53 .letters span:nth-child(2n) {
+  transform: translateY(15px);
+}
+
+.btn-53:hover .letters span,
+.btn-53:focus-visible .letters span {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.btn-53 .letters span:nth-child(2) { transition-delay: 0.04s; }
+.btn-53 .letters span:nth-child(3) { transition-delay: 0.08s; }
+.btn-53 .letters span:nth-child(4) { transition-delay: 0.12s; }
+.btn-53 .letters span:nth-child(5) { transition-delay: 0.16s; }
+.btn-53 .letters span:nth-child(6) { transition-delay: 0.2s; }
+.btn-53 .letters span:nth-child(7) { transition-delay: 0.24s; }
+.btn-53 .letters span:nth-child(8) { transition-delay: 0.28s; }
+.btn-53 .letters span:nth-child(9) { transition-delay: 0.32s; }
+.btn-53 .letters span:nth-child(10) { transition-delay: 0.36s; }
+.btn-53 .letters span:nth-child(11) { transition-delay: 0.4s; }
+.btn-53 .letters span:nth-child(12) { transition-delay: 0.44s; }
+.btn-53 .letters span:nth-child(13) { transition-delay: 0.48s; }
+
+/* Landing-page interaction system */
+.landing-nav-link {
+  border-radius: 9999px;
+  color: #475569;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.55rem 0.85rem;
+  transition: background-color 180ms ease, color 180ms ease, transform 180ms ease;
+}
+
+.landing-nav-link:hover,
+.landing-nav-link:focus-visible {
+  background: color-mix(in srgb, var(--mp-brand) 8%, white);
+  color: var(--mp-brand);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.landing-mobile-link {
+  border-radius: 0.75rem;
+  color: #334155;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 0.7rem 0.8rem;
+  text-align: left;
+  transition: background-color 180ms ease, color 180ms ease;
+}
+
+.landing-mobile-link:hover,
+.landing-mobile-link:focus-visible {
+  background: #f1f5f9;
+  color: var(--mp-brand);
+  outline: none;
+}
+
+.landing-hero {
+  background:
+    radial-gradient(circle at 10% 10%, color-mix(in srgb, var(--mp-brand) 9%, transparent), transparent 32%),
+    linear-gradient(180deg, #fff 0%, #fbfdff 100%);
+}
+
+.landing-hero-grid {
+  background-image:
+    linear-gradient(rgba(30, 58, 138, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(30, 58, 138, 0.035) 1px, transparent 1px);
+  background-size: 42px 42px;
+  inset: 0;
+  mask-image: linear-gradient(to bottom, black, transparent 85%);
+  pointer-events: none;
+  position: absolute;
+}
+
+.landing-orb {
+  border-radius: 9999px;
+  filter: blur(2px);
+  opacity: 0.5;
+  pointer-events: none;
+  position: absolute;
+}
+
+.landing-orb-one {
+  background: color-mix(in srgb, var(--mp-brand) 15%, transparent);
+  height: 14rem;
+  right: 7%;
+  top: 8%;
+  width: 14rem;
+}
+
+.landing-orb-two {
+  background: rgba(16, 185, 129, 0.1);
+  bottom: 6%;
+  height: 11rem;
+  left: 42%;
+  width: 11rem;
+}
+
+.landing-section {
+  position: relative;
+}
+
+.landing-card {
+  isolation: isolate;
+  overflow: hidden;
+  position: relative;
+  transition: border-color 220ms ease;
+}
+
+.landing-card::after {
+  background: linear-gradient(120deg, transparent 30%, rgba(255, 255, 255, 0.75), transparent 70%);
+  content: "";
+  inset: 0;
+  pointer-events: none;
+  position: absolute;
+  transform: translateX(-120%);
+  transition: transform 650ms ease;
+  z-index: -1;
+}
+
+.landing-card:hover {
+  border-color: color-mix(in srgb, var(--mp-brand) 30%, #cbd5e1);
+}
+
+.landing-card:hover::after {
+  transform: translateX(120%);
+}
+
+.landing-step-number {
+  color: var(--mp-brand);
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.landing-step-arrow {
+  color: color-mix(in srgb, var(--mp-brand) 45%, #94a3b8);
+  height: 1.25rem;
+  position: absolute;
+  right: -1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1.25rem;
+  z-index: 2;
+}
+
+/* Branded authentication/workspace splash screen */
+.workspace-splash {
+  align-items: center;
+  background:
+    radial-gradient(circle at 50% 38%, color-mix(in srgb, var(--mp-brand) 13%, transparent), transparent 34%),
+    linear-gradient(145deg, #f8fbff 0%, #ffffff 48%, #f3f7fc 100%);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  overflow: hidden;
+  position: fixed;
+  z-index: 9999;
+}
+
+.workspace-splash-grid {
+  background-image:
+    linear-gradient(rgba(30, 58, 138, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(30, 58, 138, 0.04) 1px, transparent 1px);
+  background-size: 44px 44px;
+  inset: 0;
+  mask-image: radial-gradient(circle at center, black, transparent 72%);
+  position: absolute;
+}
+
+.workspace-splash-content {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  padding: 2rem;
+  position: relative;
+  text-align: center;
+}
+
+.workspace-splash-mark {
+  display: grid;
+  height: 6.5rem;
+  place-items: center;
+  position: relative;
+  width: 6.5rem;
+}
+
+.workspace-splash-logo {
+  align-items: center;
+  background: var(--mp-brand);
+  border-radius: 1.4rem;
+  box-shadow: 0 18px 45px rgba(30, 58, 138, 0.24);
+  color: white;
+  display: flex;
+  height: 4.5rem;
+  justify-content: center;
+  position: relative;
+  width: 4.5rem;
+  z-index: 2;
+}
+
+.workspace-splash-orbit {
+  animation: workspace-orbit 1.7s linear infinite;
+  border: 2px solid transparent;
+  border-radius: 9999px;
+  border-right-color: var(--mp-brand);
+  border-top-color: color-mix(in srgb, var(--mp-brand) 40%, white);
+  inset: 0;
+  position: absolute;
+}
+
+.workspace-splash-brand {
+  color: #0f172a;
+  font-size: clamp(1.55rem, 4vw, 2rem);
+  font-weight: 800;
+  margin-top: 1.15rem;
+  text-transform: uppercase;
+}
+
+.workspace-splash-message {
+  color: #64748b;
+  font-size: 0.875rem;
+  margin-top: 0.65rem;
+}
+
+.workspace-splash-track {
+  background: #dbe5f1;
+  border-radius: 9999px;
+  height: 0.25rem;
+  margin-top: 1.5rem;
+  overflow: hidden;
+  width: min(15rem, 70vw);
+}
+
+.workspace-splash-track span {
+  background: linear-gradient(90deg, var(--mp-brand), var(--mp-primary));
+  border-radius: inherit;
+  display: block;
+  height: 100%;
+}
+
+@keyframes workspace-orbit {
+  to { transform: rotate(360deg); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .logo-spin-slow {
     animation: none;
+  }
+
+  .btn-23 .marquee {
+    animation: none;
+  }
+
+  .btn-23:hover .marquee,
+  .btn-23:focus-visible .marquee {
+    opacity: 0;
+  }
+
+  .btn-23:hover .text,
+  .btn-23:focus-visible .text {
+    opacity: 1;
+  }
+
+  .btn-53 .original,
+  .btn-53:hover .original,
+  .btn-53:focus-visible .original {
+    transform: none;
+  }
+
+  .btn-53 .letters {
+    visibility: hidden;
+  }
+
+  .landing-card,
+  .landing-card::after,
+  .landing-nav-link {
+    transition: none;
+  }
+
+  .workspace-splash-orbit {
+    animation: none;
+    border-color: color-mix(in srgb, var(--mp-brand) 35%, white);
   }
 }

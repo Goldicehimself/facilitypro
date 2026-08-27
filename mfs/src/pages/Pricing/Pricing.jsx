@@ -51,11 +51,18 @@ const Pricing = () => {
               </ul>
               <Button
                 size="lg"
-                className="mt-6 w-full rounded-full"
+                className={`mt-6 w-full ${p.name === 'Enterprise' ? 'rounded-full' : 'btn-23 btn-23--wide'}`}
                 variant={p.name === 'Enterprise' ? 'outline' : 'default'}
                 onClick={() => navigate(p.name === 'Enterprise' ? '/contact-sales' : `/register?plan=${p.id}`)}
               >
-                {p.name === 'Enterprise' ? 'Contact Sales' : 'Start 14-day Free Trial'}
+                {p.name === 'Enterprise' ? (
+                  'Contact Sales'
+                ) : (
+                  <>
+                    <span className="text">Start 14-day Free Trial</span>
+                    <span className="marquee" aria-hidden="true">Start 14-day Free Trial</span>
+                  </>
+                )}
               </Button>
               {p.name !== 'Enterprise' && (
                 <p className="mt-3 text-xs text-slate-500 text-center">14-day free trial Â· 20% off annual billing</p>

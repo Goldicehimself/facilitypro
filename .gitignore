@@ -1,1 +1,26 @@
 SUPER_ADMIN_TODO.md
+
+# Dependencies and build output
+**/node_modules/
+**/dist/
+
+# Local environment and secrets
+.env
+**/.env
+.env.*
+**/.env.*
+!.env.example
+!**/.env.example
+
+# Local presentation-generation artifacts
+.pptx-tools/
+tools/generate_facilitypro_*.js
+*.pptx
+FACILITYPRO_SALES_PITCH_DECK.md
+
+# Logs and local editor/system files
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

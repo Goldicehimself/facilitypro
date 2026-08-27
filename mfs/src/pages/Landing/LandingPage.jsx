@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import {
   CheckCircle,
@@ -9,11 +9,13 @@ import {
   BarChart3,
   ShieldCheck,
   CalendarDays,
+  ChevronDown,
+  ArrowRight,
   Menu,
   X,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { motion, useReducedMotion, useMotionValue, useTransform, useSpring } from 'framer-motion';
+import { AnimatePresence, animate, motion, useInView, useReducedMotion, useMotionValue, useScroll, useTransform, useSpring } from 'framer-motion';
 import { PRICING_PLANS, formatNgnParts } from '../../data/pricing';
 
 // Optimized variants created by tools/generate-screenshots.js
@@ -28,11 +30,50 @@ const CenterImageSrcSet = [640, 960, 1280, 1600]
   .map((w) => `/media/optimized/center-image-${w}.webp ${w}w`)
   .join(', ');
 
+const AnimatedStatValue = ({ value, reduceMotion }) => {
+  const valueRef = useRef(null);
+  const inView = useInView(valueRef, { once: true, amount: 0.7 });
+  const target = Number.parseFloat(value) || 0;
+  const isRating = value.includes('/');
+  const suffix = isRating ? '/5' : '%';
+  const decimals = isRating ? 1 : 0;
+  const [displayValue, setDisplayValue] = useState(() => reduceMotion ? target.toFixed(decimals) : (0).toFixed(decimals));
+
+  useEffect(() => {
+    if (!inView) return undefined;
+    if (reduceMotion) {
+      setDisplayValue(target.toFixed(decimals));
+      return undefined;
+    }
+
+    const counter = animate(0, target, {
+      duration: 1.6,
+      ease: [0.22, 1, 0.36, 1],
+      onUpdate: (latest) => setDisplayValue(latest.toFixed(decimals)),
+    });
+
+    return () => counter.stop();
+  }, [decimals, inView, reduceMotion, target]);
+
+  return <span ref={valueRef}>{displayValue}{suffix}</span>;
+};
+
 const LandingPage = () => {
   const navigate = useNavigate();
   const reduceMotion = useReducedMotion();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [workOrderStatus, setWorkOrderStatus] = useState('in_progress');
+  const [headerElevated, setHeaderElevated] = useState(false);
+  const [openFaq, setOpenFaq] = useState(0);
+  const heroRef = useRef(null);
+  const { scrollYProgress } = useScroll();
+  const progressScaleX = useSpring(scrollYProgress, { stiffness: 150, damping: 28, restDelta: 0.001 });
+  const { scrollYProgress: heroScrollProgress } = useScroll({
+    target: heroRef,
+    offset: ['start start', 'end start'],
+  });
+  const heroCopyY = useTransform(heroScrollProgress, [0, 1], [0, -46]);
+  const heroCopyOpacity = useTransform(heroScrollProgress, [0, 0.72, 1], [1, 0.96, 0.35]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -40,6 +81,18 @@ const LandingPage = () => {
     }, 3200);
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    const handleScroll = () => setHeaderElevated(window.scrollY > 16);
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToSection = (id) => {
+    setMobileMenuOpen(false);
+    document.getElementById(id)?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+  };
 
   const workOrderStatusLabel = workOrderStatus === 'completed' ? 'Completed' : 'In progress';
   const workOrderStatusClass = workOrderStatus === 'completed'
@@ -50,7 +103,7 @@ const LandingPage = () => {
   const rawMouseX = useMotionValue(0);
   const rawMouseY = useMotionValue(0);
 
-  // ✅ ADDED: spring smoothing (professional feel)
+  // Spring smoothing for a more polished parallax effect.
   const mouseX = useSpring(rawMouseX, { stiffness: 120, damping: 20 });
   const mouseY = useSpring(rawMouseY, { stiffness: 120, damping: 20 });
 
@@ -66,7 +119,7 @@ const LandingPage = () => {
   const handleMouseMove = (e) => {
     if (reduceMotion) return;
     const rect = e.currentTarget.getBoundingClientRect();
-    rawMouseX.set((e.clientX - rect.left - rect.width / 2) * 0.6); // ✅ ADDED damping
+    rawMouseX.set((e.clientX - rect.left - rect.width / 2) * 0.6);
     rawMouseY.set((e.clientY - rect.top - rect.height / 2) * 0.6);
   };
 
@@ -187,8 +240,8 @@ const LandingPage = () => {
   };
 
   const sectionFade = {
-    hidden: { opacity: 0, y: 16 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } },
+    hidden: { opacity: 0, y: 28 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.72, ease: [0.22, 1, 0.36, 1] } },
   };
 
   const cardStagger = {
@@ -197,8 +250,8 @@ const LandingPage = () => {
   };
 
   const cardItem = {
-    hidden: { opacity: 0, y: 14 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } },
+    hidden: { opacity: 0, y: 22, scale: 0.98 },
+    visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.58, ease: [0.22, 1, 0.36, 1] } },
   };
 
   const floatIn = {
@@ -206,11 +259,33 @@ const LandingPage = () => {
     visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.55, ease: 'easeOut' } },
   };
 
+  const heroCopySequence = {
+    hidden: {},
+    visible: { transition: { delayChildren: 0.12, staggerChildren: 0.11 } },
+  };
+
+  const heroCopyItem = {
+    hidden: { opacity: 0, y: 24, filter: 'blur(7px)' },
+    visible: {
+      opacity: 1,
+      y: 0,
+      filter: 'blur(0px)',
+      transition: { duration: 0.68, ease: [0.22, 1, 0.36, 1] },
+    },
+  };
+
   return (
     <div className="min-h-screen bg-white text-slate-900">
+      {!reduceMotion && (
+        <motion.div
+          className="fixed inset-x-0 top-0 z-[70] h-[3px] origin-left"
+          style={{ scaleX: progressScaleX, backgroundColor: 'var(--mp-brand)' }}
+          aria-hidden="true"
+        />
+      )}
 
       {/* ================= HEADER ================= */}
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur border-b border-slate-100">
+      <header className={`sticky top-0 z-50 border-b transition-all duration-300 ${headerElevated ? 'border-slate-200 bg-white/95 shadow-[0_10px_30px_rgba(15,23,42,0.08)] backdrop-blur-xl' : 'border-slate-100 bg-white/80 backdrop-blur-md'}`}>
         <div className="mx-auto max-w-7xl px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div
@@ -225,10 +300,24 @@ const LandingPage = () => {
             </div>
           </div>
 
-          <div className="hidden md:flex items-center gap-4">
-            <Button variant="ghost" onClick={() => navigate("/login")}>Sign in</Button>
-            <Button className="rounded-full px-5" style={{ backgroundColor: "var(--mp-brand)", color: "#fff" }} onClick={() => navigate("/register")}>
-              Get Started
+          <nav className="hidden lg:flex items-center gap-1" aria-label="Landing page navigation">
+            <button type="button" className="landing-nav-link" onClick={() => scrollToSection('features')}>Features</button>
+            <button type="button" className="landing-nav-link" onClick={() => scrollToSection('workflow')}>How it works</button>
+            <button type="button" className="landing-nav-link" onClick={() => scrollToSection('pricing')}>Pricing</button>
+          </nav>
+
+          <div className="hidden md:flex items-center gap-3">
+            <Button className="btn-53 btn-53--compact" onClick={() => navigate("/login")} aria-label="Sign In">
+              <div className="original">Sign In</div>
+              <div className="letters" aria-hidden="true">
+                {Array.from("Sign In").map((letter, index) => (
+                  <span key={`${letter}-${index}`}>{letter === " " ? "\u00a0" : letter}</span>
+                ))}
+              </div>
+            </Button>
+            <Button className="btn-23" onClick={() => navigate("/register")} aria-label="Get Started">
+              <span className="text">Get Started</span>
+              <span className="marquee" aria-hidden="true">Get Started</span>
             </Button>
           </div>
 
@@ -251,25 +340,33 @@ const LandingPage = () => {
           className={`${mobileMenuOpen ? 'block' : 'hidden'} md:hidden border-t border-slate-100 bg-white`}
         >
           <div className="mx-auto max-w-7xl px-6 py-4 flex flex-col gap-3">
+            <button type="button" className="landing-mobile-link" onClick={() => scrollToSection('features')}>Features</button>
+            <button type="button" className="landing-mobile-link" onClick={() => scrollToSection('workflow')}>How it works</button>
+            <button type="button" className="landing-mobile-link" onClick={() => scrollToSection('pricing')}>Pricing</button>
             <Button
-              variant="ghost"
-              className="justify-start"
+              className="btn-53 btn-53--compact w-full"
+              aria-label="Sign In"
               onClick={() => {
                 setMobileMenuOpen(false);
                 navigate("/login");
               }}
             >
-              Sign in
+              <div className="original">Sign In</div>
+              <div className="letters" aria-hidden="true">
+                {Array.from("Sign In").map((letter, index) => (
+                  <span key={`${letter}-${index}`}>{letter === " " ? "\u00a0" : letter}</span>
+                ))}
+              </div>
             </Button>
             <Button
-              className="rounded-full px-5"
-              style={{ backgroundColor: "var(--mp-brand)", color: "#fff" }}
+              className="btn-23 w-full"
               onClick={() => {
                 setMobileMenuOpen(false);
                 navigate("/register");
               }}
             >
-              Get Started
+              <span className="text">Get Started</span>
+              <span className="marquee" aria-hidden="true">Get Started</span>
             </Button>
           </div>
         </div>
@@ -278,44 +375,72 @@ const LandingPage = () => {
       <main>
         {/* ================= HERO ================= */}
         <motion.section
-          className="relative overflow-hidden"
+          ref={heroRef}
+          className="landing-hero relative overflow-hidden"
           variants={!reduceMotion ? sectionFade : undefined}
           initial="hidden"
           animate="visible"
         >
+        <div className="landing-hero-grid" aria-hidden="true" />
+        <motion.div
+          className="landing-orb landing-orb-one"
+          animate={!reduceMotion ? { x: [0, 26, 0], y: [0, -18, 0], scale: [1, 1.08, 1] } : undefined}
+          transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
+          aria-hidden="true"
+        />
+        <motion.div
+          className="landing-orb landing-orb-two"
+          animate={!reduceMotion ? { x: [0, -22, 0], y: [0, 20, 0] } : undefined}
+          transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut' }}
+          aria-hidden="true"
+        />
         <div className="mx-auto max-w-7xl px-6 pt-14 pb-16 grid lg:grid-cols-2 gap-14 items-center">
 
           {/* Copy */}
-          <div>
-            <span className="inline-flex items-center gap-2 rounded-full px-4 py-1 text-sm font-medium" style={{ backgroundColor: "#eef6ff", color: "var(--mp-brand)" }}>
+          <motion.div
+            variants={!reduceMotion ? heroCopySequence : undefined}
+            initial="hidden"
+            animate="visible"
+            style={!reduceMotion ? { y: heroCopyY, opacity: heroCopyOpacity } : undefined}
+          >
+            <motion.span variants={!reduceMotion ? heroCopyItem : undefined} className="inline-flex items-center gap-2 rounded-full px-4 py-1 text-sm font-medium" style={{ backgroundColor: "#eef6ff", color: "var(--mp-brand)" }}>
               <span className="h-2 w-2 rounded-full" style={{ backgroundColor: "var(--mp-brand)" }} />
               Smart Maintenance Management Platform
-            </span>
+            </motion.span>
 
             <h1 className="mt-6 text-5xl sm:text-6xl font-extrabold tracking-tight leading-tight">
-              Manage Facilities Smarter.
-              <br />
-              <span style={{ color: "var(--mp-brand)" }}>Reduce Downtime. Control Costs.</span>
+              <motion.span variants={!reduceMotion ? heroCopyItem : undefined} className="block">
+                Manage Facilities Smarter.
+              </motion.span>
+              <motion.span variants={!reduceMotion ? heroCopyItem : undefined} className="block" style={{ color: "var(--mp-brand)" }}>
+                Reduce Downtime. Control Costs.
+              </motion.span>
             </h1>
 
-            <p className="mt-6 text-lg text-slate-600 max-w-xl">
-              All-in-one platform to manage facilities, maintenance, vendors, and costs — in real time.
-            </p>
+            <motion.p variants={!reduceMotion ? heroCopyItem : undefined} className="mt-6 text-lg text-slate-600 max-w-xl">
+              All-in-one platform to manage facilities, maintenance, vendors, and costs &mdash; in real time.
+            </motion.p>
 
-            <div className="mt-10 flex flex-wrap gap-4">
-              <Button size="lg" className="rounded-full px-6" style={{ backgroundColor: "var(--mp-brand)", color: "#fff" }} onClick={() => navigate("/register")}>
-                Start 14-day Free Trial
+            <motion.div variants={!reduceMotion ? heroCopyItem : undefined} className="mt-10 flex flex-wrap gap-4">
+              <Button size="lg" className="btn-23 btn-23--wide" onClick={() => navigate("/register")} aria-label="Start 14-day Free Trial">
+                <span className="text">Start 14-day Free Trial</span>
+                <span className="marquee" aria-hidden="true">Start 14-day Free Trial</span>
               </Button>
 
-              <Button size="lg" variant="outline" className="rounded-full px-6" style={{ borderColor: "var(--mp-brand)", color: "var(--mp-brand)" }} onClick={() => navigate("/demo")}>
-                View Demo
+              <Button size="lg" className="btn-53 btn-53--hero" onClick={() => navigate("/demo")} aria-label="View Demo">
+                <div className="original">View Demo</div>
+                <div className="letters" aria-hidden="true">
+                  {Array.from("View Demo").map((letter, index) => (
+                    <span key={`${letter}-${index}`}>{letter === " " ? "\u00a0" : letter}</span>
+                  ))}
+                </div>
               </Button>
-            </div>
+            </motion.div>
 
-            <p className="mt-4 text-sm text-slate-500">
-              14-day free trial · No credit card required · Secure · Role-based access
-            </p>
-          </div>
+            <motion.p variants={!reduceMotion ? heroCopyItem : undefined} className="mt-4 text-sm text-slate-500">
+              14-day free trial &middot; No credit card required &middot; Secure &middot; Role-based access
+            </motion.p>
+          </motion.div>
 
           {/* Visual */}
           <div className="relative">
@@ -332,7 +457,7 @@ const LandingPage = () => {
               {/* Calendar (hidden on small screens) */}
               <motion.div
                 style={{ x: calendarX, y: calendarY }}
-                whileHover={!reduceMotion ? { y: -6, boxShadow: '0 12px 30px rgba(2,6,23,0.12)' } : undefined} // ✅ ADDED
+                whileHover={!reduceMotion ? { y: -6, boxShadow: '0 12px 30px rgba(2,6,23,0.12)' } : undefined}
                 className="hidden lg:block absolute lg:-right-12 lg:-top-12 w-80 h-60 rounded-2xl shadow-2xl overflow-hidden bg-slate-50"
               >
                 <picture>
@@ -386,7 +511,7 @@ const LandingPage = () => {
 
                   <div className="mt-2">
                     <div className="text-sm font-semibold text-slate-900">Air handler vibration</div>
-                    <div className="text-xs text-slate-500">HQ � Floor 3 � AHU-12</div>
+                    <div className="text-xs text-slate-500">HQ • Floor 3 • AHU-12</div>
                   </div>
 
                   <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
@@ -403,7 +528,8 @@ const LandingPage = () => {
 
       {/* ================= FEATURE HIGHLIGHTS ================= */}
       <motion.section
-        className="py-24"
+        id="features"
+        className="landing-section py-24 scroll-mt-24"
         variants={!reduceMotion ? sectionFade : undefined}
         initial="hidden"
         whileInView="visible"
@@ -426,9 +552,10 @@ const LandingPage = () => {
             {featureHighlights.map((feature) => (
               <motion.div
                 key={feature.title}
-                className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+                className="landing-card group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
                 variants={!reduceMotion ? cardItem : undefined}
-                whileHover={!reduceMotion ? { y: -6, boxShadow: '0 16px 34px rgba(2,6,23,0.12)' } : undefined}
+                whileHover={!reduceMotion ? { y: -7, scale: 1.012, boxShadow: '0 20px 44px rgba(15,23,42,0.12)' } : undefined}
+                transition={{ type: 'spring', stiffness: 320, damping: 24 }}
               >
                 <div className="h-10 w-10 rounded-lg flex items-center justify-center text-white mb-4" style={{ backgroundColor: "var(--mp-brand)" }}>
                   <feature.icon className="h-5 w-5" />
@@ -466,9 +593,10 @@ const LandingPage = () => {
             {roleHighlights.map((role) => (
               <motion.div
                 key={role.title}
-                className="rounded-2xl border border-slate-200 bg-white p-6"
+                className="landing-card group rounded-2xl border border-slate-200 bg-white p-6"
                 variants={!reduceMotion ? cardItem : undefined}
-                whileHover={!reduceMotion ? { y: -6, boxShadow: '0 16px 34px rgba(2,6,23,0.12)' } : undefined}
+                whileHover={!reduceMotion ? { y: -7, scale: 1.012, boxShadow: '0 20px 44px rgba(15,23,42,0.12)' } : undefined}
+                transition={{ type: 'spring', stiffness: 320, damping: 24 }}
               >
                 <div className="h-10 w-10 rounded-lg flex items-center justify-center text-white mb-4" style={{ backgroundColor: "var(--mp-brand)" }}>
                   <role.icon className="h-5 w-5" />
@@ -503,7 +631,9 @@ const LandingPage = () => {
                 className="rounded-2xl border border-slate-200 bg-white p-6 text-center"
                 variants={!reduceMotion ? floatIn : undefined}
               >
-                <div className="text-3xl font-bold">{stat.value}</div>
+                <div className="text-3xl font-bold tabular-nums">
+                  <AnimatedStatValue value={stat.value} reduceMotion={reduceMotion} />
+                </div>
                 <div className="mt-2 text-sm text-slate-600">{stat.label}</div>
               </motion.div>
             ))}
@@ -513,7 +643,8 @@ const LandingPage = () => {
 
       {/* ================= HOW IT WORKS ================= */}
       <motion.section
-        className="py-24 bg-slate-50"
+        id="workflow"
+        className="landing-section py-24 bg-slate-50 scroll-mt-24"
         variants={!reduceMotion ? sectionFade : undefined}
         initial="hidden"
         whileInView="visible"
@@ -533,15 +664,16 @@ const LandingPage = () => {
             whileInView="visible"
             viewport={{ once: true, amount: 0.2 }}
           >
-            {howItWorks.map((step) => (
+            {howItWorks.map((step, index) => (
               <motion.div
                 key={step.step}
-                className="rounded-2xl border border-slate-200 bg-white p-6"
+                className="landing-step relative rounded-2xl border border-slate-200 bg-white p-6"
                 variants={!reduceMotion ? cardItem : undefined}
               >
-                <div className="text-sm font-semibold text-slate-500">{step.step}</div>
+                <div className="landing-step-number">{step.step}</div>
                 <h3 className="mt-2 text-base font-semibold">{step.title}</h3>
                 <p className="mt-2 text-sm text-slate-600">{step.desc}</p>
+                {index < howItWorks.length - 1 && <ArrowRight className="landing-step-arrow hidden lg:block" aria-hidden="true" />}
               </motion.div>
             ))}
           </motion.div>
@@ -644,14 +776,35 @@ const LandingPage = () => {
             whileInView="visible"
             viewport={{ once: true, amount: 0.2 }}
           >
-            {faqs.map((item) => (
+            {faqs.map((item, index) => (
               <motion.div
                 key={item.q}
-                className="rounded-2xl border border-slate-200 bg-white p-6"
+                className={`overflow-hidden rounded-2xl border bg-white transition-colors ${openFaq === index ? 'border-blue-200 shadow-sm' : 'border-slate-200'}`}
                 variants={!reduceMotion ? cardItem : undefined}
               >
-                <div className="font-semibold">{item.q}</div>
-                <div className="mt-2 text-sm text-slate-600">{item.a}</div>
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-between gap-4 p-6 text-left"
+                  onClick={() => setOpenFaq(openFaq === index ? -1 : index)}
+                  aria-expanded={openFaq === index}
+                >
+                  <span className="font-semibold">{item.q}</span>
+                  <motion.span animate={{ rotate: openFaq === index ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                    <ChevronDown className="h-5 w-5 text-slate-500" />
+                  </motion.span>
+                </button>
+                <AnimatePresence initial={false}>
+                  {openFaq === index && (
+                    <motion.div
+                      initial={reduceMotion ? false : { height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={reduceMotion ? { opacity: 0 } : { height: 0, opacity: 0 }}
+                      transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                    >
+                      <p className="px-6 pb-6 text-sm leading-6 text-slate-600">{item.a}</p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </motion.div>
             ))}
           </motion.div>
@@ -683,7 +836,8 @@ const LandingPage = () => {
 
       {/* ================= PRICING PREVIEW ================= */}
       <motion.section
-        className="py-24 bg-slate-50"
+        id="pricing"
+        className="landing-section py-24 bg-slate-50 scroll-mt-24"
         variants={!reduceMotion ? sectionFade : undefined}
         initial="hidden"
         whileInView="visible"
@@ -746,7 +900,7 @@ const LandingPage = () => {
                     <div className="mt-4 text-4xl font-bold">Custom</div>
                   ) : (
                     <div className="mt-4 flex items-baseline justify-center gap-1">
-                      <span className="text-base font-semibold text-slate-600">₦</span>
+                      <span className="text-base font-semibold text-slate-600">&#8358;</span>
                       <span className="text-4xl font-bold tabular-nums">
                         {formatNgnParts(plan.monthly).amount}
                       </span>
@@ -777,14 +931,14 @@ const LandingPage = () => {
                     </Button>
                   ) : (
                     <Button
-                      className="w-full rounded-full"
-                      style={{ backgroundColor: "var(--mp-brand)", color: "#fff" }}
+                      className="btn-23 w-full"
                       onClick={(event) => {
                         event.stopPropagation();
                         navigate(`/register?plan=${plan.id}`);
                       }}
                     >
-                      Get Started
+                      <span className="text">Get Started</span>
+                      <span className="marquee" aria-hidden="true">Get Started</span>
                     </Button>
                   )}
                 </div>
@@ -810,22 +964,32 @@ const LandingPage = () => {
             Start managing maintenance smarter today with FacilityPro.
           </p>
 
-          <div className="mt-8 flex justify-center gap-4">
+          <div className="mt-8 flex flex-wrap justify-center gap-4">
             <Button
               size="lg"
-              className="rounded-full px-6"
-              style={{ backgroundColor: "#fff", color: "var(--mp-brand)" }}
+              className="btn-53"
               onClick={() => navigate("/register")}
+              aria-label="Create Account"
             >
-              Create Account
+              <div className="original">Create Account</div>
+              <div className="letters" aria-hidden="true">
+                {Array.from("Create Account").map((letter, index) => (
+                  <span key={`${letter}-${index}`}>{letter === " " ? "\u00a0" : letter}</span>
+                ))}
+              </div>
             </Button>
             <Button
               size="lg"
-              variant="outline"
-              className="rounded-full border-white text-white px-6"
+              className="btn-53"
               onClick={() => navigate("/login")}
+              aria-label="Sign In"
             >
-              Sign In
+              <div className="original">Sign In</div>
+              <div className="letters" aria-hidden="true">
+                {Array.from("Sign In").map((letter, index) => (
+                  <span key={`${letter}-${index}`}>{letter === " " ? "\u00a0" : letter}</span>
+                ))}
+              </div>
             </Button>
           </div>
         </div>
@@ -892,7 +1056,7 @@ const LandingPage = () => {
 
           <div className="border-t border-slate-200 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-sm text-slate-500">
-              © {new Date().getFullYear()} FacilityPro. All rights reserved.
+              &copy; {new Date().getFullYear()} FacilityPro. All rights reserved.
             </p>
             <div className="flex gap-6 text-sm text-slate-500">
               <a href="#" className="hover:text-slate-900">Privacy Policy</a>

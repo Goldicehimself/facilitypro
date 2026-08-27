@@ -38,6 +38,10 @@ axiosInstance.interceptors.response.use(
       return handleError(error);
     }
 
+    if (config.skipRetry) {
+      return handleError(error);
+    }
+
     // Initialize retry count if not present
     config._retryCount = config._retryCount || 0;
 

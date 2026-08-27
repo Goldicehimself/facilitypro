@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../api/axiosConfig';
 import { toast } from 'react-toastify';
@@ -16,7 +16,22 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [workspacePreparing, setWorkspacePreparing] = useState(false);
+  const workspaceTimerRef = useRef(null);
   const navigate = useNavigate();
+
+  const startWorkspacePreparation = () => {
+    if (workspaceTimerRef.current) clearTimeout(workspaceTimerRef.current);
+    setWorkspacePreparing(true);
+    workspaceTimerRef.current = setTimeout(() => {
+      setWorkspacePreparing(false);
+      workspaceTimerRef.current = null;
+    }, 1200);
+  };
+
+  useEffect(() => () => {
+    if (workspaceTimerRef.current) clearTimeout(workspaceTimerRef.current);
+  }, []);
 
   const getFirstName = (value) => {
     if (!value) return 'there';
@@ -128,6 +143,7 @@ export const AuthProvider = ({ children }) => {
           }
           axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
           setUser(normalized);
+          startWorkspacePreparation();
           recordLoginHistory(normalized);
 
           // Redirect based on role
@@ -201,6 +217,7 @@ export const AuthProvider = ({ children }) => {
       axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       
       setUser(apiUser);
+      startWorkspacePreparation();
       recordLoginHistory(apiUser);
       
       // Redirect based on role
@@ -249,6 +266,7 @@ export const AuthProvider = ({ children }) => {
           }
           axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
           setUser(normalized);
+          startWorkspacePreparation();
           recordLoginHistory(normalized);
 
           // Redirect based on role
@@ -453,6 +471,7 @@ export const AuthProvider = ({ children }) => {
     updateUser,
     isAuthenticated: !!user,
     loading,
+    workspacePreparing,
   };
 
   return (
