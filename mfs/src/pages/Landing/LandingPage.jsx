@@ -324,52 +324,108 @@ const LandingPage = () => {
           <div className="md:hidden flex items-center gap-2">
             <button
               type="button"
-              className="p-2 rounded-md hover:bg-slate-100"
+              className="relative grid h-10 w-10 place-items-center overflow-hidden rounded-full transition-colors hover:bg-slate-100"
               aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
               aria-expanded={mobileMenuOpen}
               aria-controls="mobile-nav"
               onClick={() => setMobileMenuOpen((open) => !open)}
             >
-              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              <AnimatePresence initial={false} mode="wait">
+                <motion.span
+                  key={mobileMenuOpen ? 'close' : 'open'}
+                  initial={reduceMotion ? false : { opacity: 0, rotate: -35, scale: 0.7 }}
+                  animate={{ opacity: 1, rotate: 0, scale: 1 }}
+                  exit={reduceMotion ? { opacity: 0 } : { opacity: 0, rotate: 35, scale: 0.7 }}
+                  transition={{ duration: 0.18, ease: 'easeOut' }}
+                >
+                  {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                </motion.span>
+              </AnimatePresence>
             </button>
           </div>
         </div>
 
-        <div
-          id="mobile-nav"
-          className={`${mobileMenuOpen ? 'block' : 'hidden'} md:hidden border-t border-slate-100 bg-white`}
-        >
-          <div className="mx-auto max-w-7xl px-6 py-4 flex flex-col gap-3">
-            <button type="button" className="landing-mobile-link" onClick={() => scrollToSection('features')}>Features</button>
-            <button type="button" className="landing-mobile-link" onClick={() => scrollToSection('workflow')}>How it works</button>
-            <button type="button" className="landing-mobile-link" onClick={() => scrollToSection('pricing')}>Pricing</button>
-            <Button
-              className="btn-53 btn-53--compact w-full"
-              aria-label="Sign In"
-              onClick={() => {
-                setMobileMenuOpen(false);
-                navigate("/login");
-              }}
+        <AnimatePresence initial={false}>
+          {mobileMenuOpen && (
+            <motion.div
+              id="mobile-nav"
+              className="overflow-hidden border-t border-slate-100 bg-white/95 shadow-lg shadow-slate-950/5 backdrop-blur-xl md:hidden"
+              initial={reduceMotion ? { opacity: 0 } : { height: 0, opacity: 0, y: -8 }}
+              animate={reduceMotion ? { opacity: 1 } : { height: 'auto', opacity: 1, y: 0 }}
+              exit={reduceMotion ? { opacity: 0 } : { height: 0, opacity: 0, y: -8 }}
+              transition={{ duration: reduceMotion ? 0.12 : 0.3, ease: [0.22, 1, 0.36, 1] }}
             >
-              <div className="original">Sign In</div>
-              <div className="letters" aria-hidden="true">
-                {Array.from("Sign In").map((letter, index) => (
-                  <span key={`${letter}-${index}`}>{letter === " " ? "\u00a0" : letter}</span>
+              <motion.div
+                className="mx-auto flex max-w-7xl flex-col gap-3 px-6 py-5"
+                initial="hidden"
+                animate="visible"
+                exit="hidden"
+                variants={{
+                  hidden: {},
+                  visible: { transition: { staggerChildren: reduceMotion ? 0 : 0.065, delayChildren: 0.04 } },
+                }}
+              >
+                {[
+                  ['Features', 'features'],
+                  ['How it works', 'workflow'],
+                  ['Pricing', 'pricing'],
+                ].map(([label, section], index) => (
+                  <motion.button
+                    key={section}
+                    type="button"
+                    className="landing-mobile-link"
+                    variants={{
+                      hidden: { opacity: 0, x: reduceMotion ? 0 : index % 2 === 0 ? -34 : 34 },
+                      visible: { opacity: 1, x: 0, transition: { duration: 0.32, ease: [0.22, 1, 0.36, 1] } },
+                    }}
+                    onClick={() => scrollToSection(section)}
+                  >
+                    {label}
+                  </motion.button>
                 ))}
-              </div>
-            </Button>
-            <Button
-              className="btn-23 w-full"
-              onClick={() => {
-                setMobileMenuOpen(false);
-                navigate("/register");
-              }}
-            >
-              <span className="text">Get Started</span>
-              <span className="marquee" aria-hidden="true">Get Started</span>
-            </Button>
-          </div>
-        </div>
+                <motion.div
+                  variants={{
+                    hidden: { opacity: 0, x: reduceMotion ? 0 : 34 },
+                    visible: { opacity: 1, x: 0, transition: { duration: 0.32, ease: [0.22, 1, 0.36, 1] } },
+                  }}
+                >
+                  <Button
+                    className="btn-53 btn-53--compact w-full"
+                    aria-label="Sign In"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      navigate("/login");
+                    }}
+                  >
+                    <div className="original">Sign In</div>
+                    <div className="letters" aria-hidden="true">
+                      {Array.from("Sign In").map((letter, index) => (
+                        <span key={`${letter}-${index}`}>{letter === " " ? "\u00a0" : letter}</span>
+                      ))}
+                    </div>
+                  </Button>
+                </motion.div>
+                <motion.div
+                  variants={{
+                    hidden: { opacity: 0, x: reduceMotion ? 0 : -34 },
+                    visible: { opacity: 1, x: 0, transition: { duration: 0.32, ease: [0.22, 1, 0.36, 1] } },
+                  }}
+                >
+                  <Button
+                    className="btn-23 w-full"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      navigate("/register");
+                    }}
+                  >
+                    <span className="text">Get Started</span>
+                    <span className="marquee" aria-hidden="true">Get Started</span>
+                  </Button>
+                </motion.div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
 
       <main>
