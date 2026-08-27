@@ -13,8 +13,13 @@ import { isEmailAllowedByPolicy } from '../../utils/securityPolicy';
 import { getPublicOrgSecurityPolicy } from '../../api/org';
 
 const isPhoneValid = (value) => {
-  const digits = String(value || '').replace(/\D/g, '');
-  return digits.length >= 6 && digits.length <= 15;
+  const normalized = String(value || '').replace(/[\s()-]/g, '');
+  return /^\+[1-9]\d{7,14}$/.test(normalized);
+};
+
+const isCompleteEmail = (value) => {
+  const normalized = String(value || '').trim().toLowerCase();
+  return /^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z]{2,63})+$/.test(normalized);
 };
 
 const schema = yup.object({
@@ -29,11 +34,15 @@ const schema = yup.object({
   inviteCode: yup.string().optional(),
   firstName: yup.string().required('First name is required'),
   lastName: yup.string().required('Last name is required'),
-  email: yup.string().email('Invalid email').required('Email is required'),
+  email: yup
+    .string()
+    .trim()
+    .required('Email is required')
+    .test('complete-email', 'Enter a complete email address, for example name@company.com', (value) => isCompleteEmail(value)),
   phone: yup
     .string()
     .required('Phone number is required')
-    .test('phone-basic', 'Phone number is invalid', (value) => isPhoneValid(value)),
+    .test('phone-complete', 'Enter a complete phone number including the country code', (value) => isPhoneValid(value)),
   department: yup.string().optional(),
   password: yup.string().min(6).required('Password is required'),
   confirmPassword: yup
@@ -95,6 +104,8 @@ const Register = () => {
     watch,
   } = useForm({
     resolver: yupResolver(schema),
+    mode: 'onBlur',
+    reValidateMode: 'onChange',
     defaultValues: {
       mode: inviteCodeFromQuery ? 'join' : 'org',
       inviteCode: inviteCodeFromQuery || '',
@@ -178,6 +189,7 @@ const Register = () => {
       vendorState,
       vendorServices,
     } = data;
+    const normalizedPhone = String(phone || '').replace(/[\s()-]/g, '');
     if ((submitMode === 'join' || inviteCode) && !isEmailAllowedByPolicy(email, orgSecurityPolicy)) {
       toast.error('This organization restricts invites to approved email domains.');
       return;
@@ -207,7 +219,7 @@ const Register = () => {
       firstName,
       lastName,
       email,
-      phone,
+      phone: normalizedPhone,
       department,
       password,
       role,
@@ -341,11 +353,17 @@ const Register = () => {
         <form onSubmit={handleSubmit(onSubmit)} className="auth-form">
           <input type="hidden" {...register('mode')} />
 
-          <div className="auth-tabs">
+          <div
+            className={`auth-tabs ${mode === 'join' ? 'auth-tabs--join' : ''}`}
+            role="tablist"
+            aria-label="Registration type"
+          >
             <button
               type="button"
               className={`auth-tab-btn ${mode === 'org' ? 'is-active' : ''}`}
               onClick={() => setValue('mode', 'org')}
+              role="tab"
+              aria-selected={mode === 'org'}
             >
               Create Organization
             </button>
@@ -353,6 +371,8 @@ const Register = () => {
               type="button"
               className={`auth-tab-btn ${mode === 'join' ? 'is-active' : ''}`}
               onClick={() => setValue('mode', 'join')}
+              role="tab"
+              aria-selected={mode === 'join'}
             >
               Join Organization
             </button>
@@ -483,11 +503,13 @@ const Register = () => {
             <input
               id="register-email"
               type="email"
-              placeholder="Enter your email"
+              placeholder="name@company.com"
               {...register('email')}
               autoComplete="email"
+              inputMode="email"
+              spellCheck="false"
             />
-            {showDomainHint && watchedEmail && !isEmailAllowedByPolicy(watchedEmail, policy) && (
+            {showDomainHint && watchedEmail && isCompleteEmail(watchedEmail) && !isEmailAllowedByPolicy(watchedEmail, orgSecurityPolicy) && (
               <div className="auth-helper auth-helper--error">
                 This email domain is not approved for this organization.
               </div>
@@ -515,10 +537,14 @@ const Register = () => {
                     name: field.name,
                     onBlur: field.onBlur,
                     autoComplete: 'tel',
+                    inputMode: 'tel',
                   }}
                 />
               )}
             />
+            {!errors.phone && (
+              <div className="auth-helper">Select your country and enter the full phone number.</div>
+            )}
             {errors.phone && (
               <div className="auth-helper auth-helper--error">
                 {errors.phone.message}

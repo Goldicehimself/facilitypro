@@ -4,12 +4,14 @@ const Joi = require('joi');
 const registerSchema = Joi.object({
   firstName: Joi.string().required().min(2).max(50),
   lastName: Joi.string().required().min(2).max(50),
-  email: Joi.string().email().required(),
+  email: Joi.string().trim().lowercase().email({ minDomainSegments: 2, tlds: { allow: true } }).required(),
   password: Joi.string().required().min(6).max(50),
   role: Joi.string().valid('admin', 'facility_manager', 'technician', 'staff', 'vendor', 'finance', 'procurement', 'user'),
   orgCode: Joi.string().alphanum().min(6).max(12).empty(''),
   inviteCode: Joi.string().alphanum().min(8).max(12).empty(''),
-  phone: Joi.string().optional(),
+  phone: Joi.string().pattern(/^\+[1-9]\d{7,14}$/).required().messages({
+    'string.pattern.base': 'Phone number must include a valid country code and number'
+  }),
   gender: Joi.string().valid('male', 'female', 'other').optional(),
   department: Joi.string().optional(),
   vendorProfile: Joi.object({
@@ -35,9 +37,11 @@ const registerOrgSchema = Joi.object({
   industry: Joi.string().optional().max(100),
   firstName: Joi.string().required().min(2).max(50),
   lastName: Joi.string().required().min(2).max(50),
-  email: Joi.string().email().required(),
+  email: Joi.string().trim().lowercase().email({ minDomainSegments: 2, tlds: { allow: true } }).required(),
   password: Joi.string().required().min(6).max(50),
-  phone: Joi.string().optional(),
+  phone: Joi.string().pattern(/^\+[1-9]\d{7,14}$/).required().messages({
+    'string.pattern.base': 'Phone number must include a valid country code and number'
+  }),
   gender: Joi.string().valid('male', 'female', 'other').optional()
 });
 
