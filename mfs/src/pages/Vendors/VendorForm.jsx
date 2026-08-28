@@ -677,10 +677,11 @@ const VendorForm = () => {
                   )}
                   <Button
                     type="submit"
-                    disabled={loading}
+                    loading={loading}
+                    loadingText="Saving vendor"
                     className="w-full bg-blue-700 hover:bg-blue-800 text-white"
                   >
-                    {loading ? 'Saving...' : isEdit ? 'Update Vendor' : 'Create Vendor'}
+                    {isEdit ? 'Update Vendor' : 'Create Vendor'}
                   </Button>
                 </div>
               )}

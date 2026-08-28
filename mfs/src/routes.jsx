@@ -2,6 +2,7 @@ import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import { getHomeRoute } from './utils/roleHome';
+import Loading from './components/common/Loading';
 
 // Layout Components
 const MainLayout = lazy(() => import('./components/common/Layout/MainLayout'));
@@ -62,11 +63,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, isAuthenticated, loading } = useAuth();
   
   if (loading) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <div>Loading...</div>
-      </div>
-    );
+    return <Loading fullScreen label="Checking your workspace" />;
   }
   
   if (!isAuthenticated) {
@@ -100,11 +97,7 @@ const UnauthorizedPage = () => {
   );
 };
 
-const LoadingScreen = () => (
-  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-    <div>Loading...</div>
-  </div>
-);
+const LoadingScreen = () => <Loading fullScreen label="Loading FacilityPro" />;
 
 const AppRoutes = () => {
   return (

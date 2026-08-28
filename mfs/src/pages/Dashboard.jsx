@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { ArrowUpRight, BarChart3, Clock, Sparkles } from 'lucide-react';
+import { AlertTriangle, ArrowUpRight, BarChart3, Boxes, ClipboardList, Clock, Handshake, Inbox, ShieldCheck, Sparkles } from 'lucide-react';
+import { motion, useReducedMotion } from 'framer-motion';
 
 // Components
 import KPICard from '../components/dashboard/KPICards';
@@ -23,6 +24,7 @@ import { getRecentActivities, clearRecentActivities } from '../api/activities';
 import { useAuth } from '../contexts/AuthContext';
 
 const Dashboard = () => {
+  const reduceMotion = useReducedMotion();
   const navigate = useNavigate();
   const { activities, addActivity, setActivities } = useActivity();
   const { user } = useAuth();
@@ -202,7 +204,7 @@ const Dashboard = () => {
       value: Number(safeDashboardData.openWorkOrders) || 0,
       change: '+12%',
       trend: 'up',
-      icon: '??',
+      icon: <ClipboardList size={21} />,
       color: 'primary',
       link: '/work-orders?status=open'
     },
@@ -211,7 +213,7 @@ const Dashboard = () => {
       value: Number(safeDashboardData.overdueWorkOrders) || 0,
       change: '-5%',
       trend: 'down',
-      icon: '??',
+      icon: <AlertTriangle size={21} />,
       color: 'error',
       link: '/work-orders?status=overdue'
     },
@@ -220,7 +222,7 @@ const Dashboard = () => {
       value: `${Number(safeDashboardData.pmCompliance) || 0}%`,
       change: '+8%',
       trend: 'up',
-      icon: '?',
+      icon: <ShieldCheck size={21} />,
       color: 'success',
       link: '/preventive-maintenance'
     },
@@ -229,7 +231,7 @@ const Dashboard = () => {
       value: Number(safeDashboardData.pendingRequests) || 0,
       change: '+3%',
       trend: 'up',
-      icon: '??',
+      icon: <Inbox size={21} />,
       color: 'warning',
       link: '/service-requests'
     },
@@ -238,7 +240,7 @@ const Dashboard = () => {
       value: Number(safeDashboardData.activeAssets) || 0,
       change: '+2%',
       trend: 'up',
-      icon: '??',
+      icon: <Boxes size={21} />,
       color: 'info',
       link: '/assets'
     },
@@ -247,7 +249,7 @@ const Dashboard = () => {
       value: `${Number(safeDashboardData.vendorPerformance) || 0}%`,
       change: '+4%',
       trend: 'up',
-      icon: '??',
+      icon: <Handshake size={21} />,
       color: 'secondary',
       link: '/vendors'
     }
@@ -256,8 +258,15 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(59,130,246,0.12),_transparent_55%),radial-gradient(circle_at_85%_10%,_rgba(14,165,233,0.10),_transparent_45%),linear-gradient(180deg,#f8fafc_0%,#ffffff_65%)] dark:bg-[radial-gradient(circle_at_top_left,_rgba(59,130,246,0.18),_transparent_55%),radial-gradient(circle_at_85%_10%,_rgba(14,165,233,0.12),_transparent_45%),linear-gradient(180deg,#0b1220_0%,#0f172a_65%)]">
       <div className="mx-auto max-w-6xl px-4 py-8 space-y-6">
-        <GreetingBanner subtitle="Real-time visibility across work orders, assets, and compliance health." />
-        <div className="mt-5 rounded-2xl border border-slate-200/70 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 p-6 shadow-[0_18px_60px_-40px_rgba(15,23,42,0.65)]">
+        <motion.div initial={reduceMotion ? false : { opacity: 0, y: -14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .4 }}>
+          <GreetingBanner subtitle="Real-time visibility across work orders, assets, and compliance health." />
+        </motion.div>
+        <motion.div
+          initial={reduceMotion ? false : { opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: .5, delay: .08, ease: [0.22, 1, 0.36, 1] }}
+          className="relative mt-5 overflow-hidden rounded-3xl border border-slate-200/70 bg-white/90 p-5 shadow-[0_22px_70px_-45px_rgba(15,23,42,.7)] backdrop-blur-xl dark:border-slate-800 dark:bg-slate-900/90 sm:p-7"
+        >
+          <div className="pointer-events-none absolute -right-16 -top-20 h-52 w-52 rounded-full bg-blue-500/10 blur-3xl" />
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <p className="text-xs uppercase tracking-[0.25em] text-slate-400 dark:text-slate-500">Operations</p>
@@ -299,7 +308,7 @@ const Dashboard = () => {
                     navigate('/service-requests/new');
                   }}
                 >
-                  ?? New Request
+                  New Request
                 </Button>
               )}
               <Button
@@ -322,17 +331,21 @@ const Dashboard = () => {
               </Button>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {kpis.map((kpi, index) => (
-            <KPICard key={index} {...kpi} />
+            <motion.div key={kpi.title}
+              initial={reduceMotion ? false : { opacity: 0, y: 20, scale: .98 }} animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: .42, delay: reduceMotion ? 0 : .14 + index * .055, ease: [0.22, 1, 0.36, 1] }}>
+              <KPICard {...kpi} />
+            </motion.div>
           ))}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
-            <Card className="border-0 shadow-md dark:bg-slate-900">
+            <Card className="border border-slate-200/70 shadow-[0_18px_50px_-38px_rgba(15,23,42,.8)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_60px_-38px_rgba(37,99,235,.45)] dark:border-slate-800 dark:bg-slate-900">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <div>
@@ -357,7 +370,7 @@ const Dashboard = () => {
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-md dark:bg-slate-900">
+            <Card className="border border-slate-200/70 shadow-[0_18px_50px_-38px_rgba(15,23,42,.8)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_60px_-38px_rgba(37,99,235,.45)] dark:border-slate-800 dark:bg-slate-900">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <div>
@@ -380,7 +393,7 @@ const Dashboard = () => {
           </div>
 
           <div className="space-y-6">
-            <Card className="border-0 shadow-md h-full dark:bg-slate-900">
+            <Card className="h-full border border-slate-200/70 shadow-[0_18px_50px_-38px_rgba(15,23,42,.8)] transition-all duration-300 hover:-translate-y-1 dark:border-slate-800 dark:bg-slate-900">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
@@ -410,7 +423,7 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <Card className="border-0 shadow-md dark:bg-slate-900">
+        <Card className="border border-slate-200/70 shadow-[0_18px_50px_-38px_rgba(15,23,42,.8)] dark:border-slate-800 dark:bg-slate-900">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
@@ -429,7 +442,7 @@ const Dashboard = () => {
                 </p>
               ) : (
                 serviceCategories.map((category) => (
-                  <div key={category.name} className="text-center p-4 rounded-lg bg-gray-50 dark:bg-zinc-800 hover:shadow-md transition-shadow">
+                  <div key={category.name} className="group text-center p-4 rounded-xl border border-transparent bg-slate-50 dark:bg-zinc-800 hover:-translate-y-1 hover:border-blue-100 hover:bg-blue-50/60 hover:shadow-lg hover:shadow-blue-900/5 transition-all duration-300">
                     <div className="text-3xl font-bold text-indigo-600 dark:text-indigo-400 mb-2">
                       {category.count}
                     </div>

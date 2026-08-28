@@ -25,7 +25,7 @@ import {
   Wrench,
   X,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "../../../contexts/AuthContext";
 import { getWorkOrders } from "../../../api/workOrders";
@@ -89,6 +89,7 @@ const MainLayout = ({ children }) => {
   const { user, logout } = useAuth();
   const isSuperAdmin = user?.role === 'super_admin';
   const navigate = useNavigate();
+  const location = useLocation();
 
   /* =========================
      Prevent background scroll on mobile
@@ -216,7 +217,8 @@ const MainLayout = ({ children }) => {
           flex items-center justify-between
           px-4 md:px-6
           border-b border-slate-200 dark:border-slate-800
-          bg-white dark:bg-slate-950
+          bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl
+          transition-[margin] duration-300 ease-out
           ${sidebarCollapsed && !sidebarHover ? "md:ml-20" : "md:ml-72"}
         `}
         style={{ fontFamily: '"Space Grotesk", "IBM Plex Sans", "Segoe UI", sans-serif' }}
@@ -472,9 +474,9 @@ const MainLayout = ({ children }) => {
         className={`
           fixed left-0 top-0 z-40
           h-screen
-          bg-white dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 shadow-sm
+          bg-white dark:bg-slate-950 border-r border-slate-200/80 dark:border-slate-800 shadow-[8px_0_35px_-28px_rgba(15,23,42,.55)]
           overflow-y-auto
-          transition-all duration-300
+          transition-[width,transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)]
           ${sidebarCollapsed && !sidebarHover ? "w-20" : "w-[85%] sm:w-72"}
           ${mobileOpen ? "translate-x-0" : "-translate-x-full"}
           md:translate-x-0
@@ -504,18 +506,35 @@ const MainLayout = ({ children }) => {
       </aside>
 
       {/* Mobile overlay */}
-      {mobileOpen && (
-        <div
-          className="fixed inset-0 z-30 bg-black/40 md:hidden"
-          onClick={() => setMobileOpen(false)}
-        />
-      )}
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.button
+            type="button"
+            aria-label="Close navigation"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.22 }}
+            className="fixed inset-0 z-30 bg-slate-950/55 backdrop-blur-[2px] md:hidden"
+            onClick={() => setMobileOpen(false)}
+          />
+        )}
+      </AnimatePresence>
 
       {/* ================= MAIN ================= */}
-      <main className={`p-4 md:p-6 ${sidebarCollapsed && !sidebarHover ? "md:ml-20" : "md:ml-72"}`}>
-        <div className="mp-mobile-surface">
-          {children}
-        </div>
+      <main className={`p-2 sm:p-4 md:p-6 transition-[margin] duration-300 ease-out ${sidebarCollapsed && !sidebarHover ? "md:ml-20" : "md:ml-72"}`}>
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={location.pathname}
+            className="mp-mobile-surface"
+            initial={{ opacity: 0, y: 12, filter: 'blur(3px)' }}
+            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            exit={{ opacity: 0, y: -6, filter: 'blur(2px)' }}
+            transition={{ duration: .28, ease: [0.22, 1, 0.36, 1] }}
+          >
+            {children}
+          </motion.div>
+        </AnimatePresence>
       </main>
 
     </div>

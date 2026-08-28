@@ -236,10 +236,12 @@ const Checkout = () => {
             <Button
               size="lg"
               disabled={!plan || status === 'loading'}
+              loading={status === 'loading'}
+              loadingText="Starting payment"
               onClick={handlePay}
               className="rounded-full px-8"
             >
-              {status === 'loading' ? 'Starting payment...' : 'Pay with Paystack'}
+              Pay with Paystack
             </Button>
             <button
               type="button"

@@ -50,13 +50,18 @@ export const createAppTheme = (mode = 'light') => {
       h5: { fontSize: '1.25rem', fontWeight: 600 },
       h6: { fontSize: '1rem', fontWeight: 600 },
     },
-    shape: { borderRadius: 8 },
+    shape: { borderRadius: 12 },
     components: {
       MuiButton: {
         styleOverrides: {
           root: {
             textTransform: 'none',
-            fontWeight: 500,
+            fontWeight: 650,
+            borderRadius: 12,
+            minHeight: 40,
+            transition: 'transform .22s ease, box-shadow .22s ease, background-color .22s ease, border-color .22s ease',
+            '&:hover': { transform: 'translateY(-1px)' },
+            '&:active': { transform: 'scale(.98)' },
           },
         },
       },
@@ -68,8 +73,32 @@ export const createAppTheme = (mode = 'light') => {
               : '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
             border: `1px solid ${isDark ? '#1f2937' : '#e5e7eb'}`,
             backgroundColor: isDark ? '#0f172a' : '#ffffff',
+            borderRadius: 18,
+            transition: 'transform .3s cubic-bezier(.22,1,.36,1), box-shadow .3s ease, border-color .3s ease',
+            '&:hover': {
+              borderColor: isDark ? 'rgba(96,165,250,.28)' : 'rgba(37,99,235,.2)',
+              boxShadow: isDark ? '0 22px 55px -38px rgba(59,130,246,.38)' : '0 22px 55px -38px rgba(37,99,235,.35)',
+            },
           },
         },
+      },
+      MuiOutlinedInput: {
+        styleOverrides: {
+          root: {
+            borderRadius: 12,
+            backgroundColor: isDark ? 'rgba(15,23,42,.72)' : 'rgba(255,255,255,.86)',
+            transition: 'background-color .2s ease, box-shadow .2s ease',
+            '& .MuiOutlinedInput-notchedOutline': { transition: 'border-color .2s ease, border-width .2s ease' },
+            '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: isDark ? '#64748b' : '#94a3b8' },
+            '&.Mui-focused': { boxShadow: '0 0 0 4px rgba(37,99,235,.11)' },
+          },
+        },
+      },
+      MuiInputLabel: {
+        styleOverrides: { root: { fontWeight: 500 } },
+      },
+      MuiDialog: {
+        styleOverrides: { paper: { borderRadius: 20, backgroundImage: 'none' } },
       },
       MuiListItemIcon: {
         styleOverrides: {

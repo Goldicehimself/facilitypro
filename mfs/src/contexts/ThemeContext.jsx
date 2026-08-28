@@ -5,31 +5,19 @@ import { createAppTheme } from '../styles/theme';
 const ThemeContext = createContext(null);
 const STORAGE_KEY = 'mp_theme';
 
-const getSystemTheme = () => {
-  if (typeof window === 'undefined') return 'light';
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-};
-
 export const ThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState(() => {
-    if (typeof window === 'undefined') return 'system';
-    return localStorage.getItem(STORAGE_KEY) || 'system';
+    if (typeof window === 'undefined') return 'dark';
+    const savedTheme = localStorage.getItem(STORAGE_KEY);
+    return savedTheme === 'light' || savedTheme === 'dark' ? savedTheme : 'dark';
   });
   const [resolvedTheme, setResolvedTheme] = useState(() => {
-    if (typeof window === 'undefined') return 'light';
-    return theme === 'system' ? getSystemTheme() : theme;
+    if (typeof window === 'undefined') return 'dark';
+    return theme;
   });
 
   useEffect(() => {
-    if (theme === 'system') {
-      const media = window.matchMedia('(prefers-color-scheme: dark)');
-      const sync = () => setResolvedTheme(media.matches ? 'dark' : 'light');
-      sync();
-      media.addEventListener('change', sync);
-      return () => media.removeEventListener('change', sync);
-    }
     setResolvedTheme(theme);
-    return undefined;
   }, [theme]);
 
   useEffect(() => {
@@ -45,6 +33,7 @@ export const ThemeProvider = ({ children }) => {
     } else {
       root.classList.remove('dark');
     }
+    root.style.colorScheme = resolvedTheme;
   }, [resolvedTheme]);
 
   const muiTheme = useMemo(() => createAppTheme(resolvedTheme), [resolvedTheme]);

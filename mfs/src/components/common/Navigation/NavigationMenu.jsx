@@ -29,8 +29,6 @@ import {
   ChevronsRight,
   ChevronUp,
   ChevronDown,
-  Sun,
-  Moon,
   MessageSquare,
   PlusCircle,
   List as IconList,
@@ -405,21 +403,28 @@ const NavigationMenu = ({ onCloseMobile = () => {}, collapsed = false, onToggleC
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, justifyContent: collapsed ? 'center' : 'flex-start' }}>
           <Box
             sx={{
-              width: 56,
-              height: 56,
-              borderRadius: 2,
+              width: collapsed ? 46 : 50,
+              height: collapsed ? 46 : 50,
+              borderRadius: 3,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               bgcolor: 'var(--mp-brand)',
               color: '#fff',
+              boxShadow: '0 12px 25px -12px rgba(37,99,235,.75)',
+              transition: 'all .25s ease',
             }}
           >
             <Wrench size={22} />
           </Box>
 
           {!collapsed && (
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <div style={{ display: 'flex', flex: 1, alignItems: 'center', justifyContent: 'space-between', minWidth: 0 }}>
+              <div style={{ minWidth: 0 }}>
+                <p className="mp-sidebar-header-title">FacilityPro</p>
+                <p className="mp-sidebar-header-subtitle">Facility workspace</p>
+              </div>
+              <div style={{ display: 'flex', gap: 2, alignItems: 'center' }}>
               <IconButton size="small" onClick={() => navigate('/profile')} title="Profile">
                 <Avatar sx={{ width: 28, height: 28 }}>{user?.name?.charAt(0) || 'U'}</Avatar>
               </IconButton>
@@ -428,6 +433,7 @@ const NavigationMenu = ({ onCloseMobile = () => {}, collapsed = false, onToggleC
                   <Settings2 size={16} />
                 </IconButton>
               )}
+              </div>
             </div>
           )}
         </Box>
@@ -575,19 +581,31 @@ const NavigationMenu = ({ onCloseMobile = () => {}, collapsed = false, onToggleC
       </Popover>
 
       <Box sx={{ mt: 'auto', px: 2, py: 1.5, borderTop: `1px solid ${theme.palette.divider}` }}>
-        <ListItemButton
-          onClick={toggleTheme}
-          className="mp-nav-item"
-          title={resolvedTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-          sx={{
-            justifyContent: collapsed ? 'center' : 'flex-start',
-            px: collapsed ? 1 : 2,
-          }}
+        <Box
+          className="mp-theme-control"
+          sx={{ justifyContent: collapsed ? 'center' : 'space-between' }}
         >
-          <ListItemIcon sx={{ minWidth: 36 }}>
-            {resolvedTheme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-          </ListItemIcon>
-        </ListItemButton>
+          {!collapsed && (
+            <Box>
+              <Typography sx={{ fontSize: 14, fontWeight: 600, color: 'text.primary' }}>Appearance</Typography>
+              <Typography sx={{ fontSize: 11, color: 'text.secondary', mt: .15 }}>
+                {resolvedTheme === 'dark' ? 'Dark mode on' : 'Light mode on'}
+              </Typography>
+            </Box>
+          )}
+          <label
+            className="ui-switch"
+            title={resolvedTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            <input
+              type="checkbox"
+              checked={resolvedTheme === 'dark'}
+              onChange={toggleTheme}
+              aria-label={resolvedTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            />
+            <span className="slider" aria-hidden="true"><span className="circle" /></span>
+          </label>
+        </Box>
 
         <ListItemButton
           onClick={onToggleCollapse}
@@ -601,6 +619,7 @@ const NavigationMenu = ({ onCloseMobile = () => {}, collapsed = false, onToggleC
           <ListItemIcon sx={{ minWidth: 36 }}>
             {collapsed ? <ChevronsRight size={18} /> : <ChevronsLeft size={18} />}
           </ListItemIcon>
+          {!collapsed && <ListItemText primary="Collapse sidebar" />}
         </ListItemButton>
       </Box>
     </Box>
