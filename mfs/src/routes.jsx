@@ -99,9 +99,16 @@ const UnauthorizedPage = () => {
 
 const LoadingScreen = () => <Loading fullScreen label="Loading FacilityPro" />;
 
-const AppRoutes = () => {
+const InitialRouteReady = ({ onReady }) => {
+  React.useEffect(() => {
+    onReady?.();
+  }, [onReady]);
+  return null;
+};
+
+const AppRoutes = ({ onInitialRouteReady, initialRouteReady = false }) => {
   return (
-    <Suspense fallback={<LoadingScreen />}>
+    <Suspense fallback={initialRouteReady ? <LoadingScreen /> : null}>
       <Routes>
         {/* Auth Routes */}
         <Route path="/login" element={<AuthLayout><Login /></AuthLayout>} />
@@ -337,6 +344,7 @@ const AppRoutes = () => {
       {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      <InitialRouteReady onReady={onInitialRouteReady} />
     </Suspense>
   );
 };

@@ -10,6 +10,7 @@ import WorkspaceSplash from './components/common/Loading/WorkspaceSplash';
 function AuthenticatedApp() {
   const { loading, workspacePreparing } = useAuth();
   const [initialSplashComplete, setInitialSplashComplete] = React.useState(false);
+  const [initialRouteReady, setInitialRouteReady] = React.useState(false);
 
   React.useEffect(() => {
     if (loading) return undefined;
@@ -17,10 +18,22 @@ function AuthenticatedApp() {
     return () => clearTimeout(timer);
   }, [loading]);
 
-  const showSplash = loading || workspacePreparing || !initialSplashComplete;
+  const showSplash = loading || workspacePreparing || !initialSplashComplete || !initialRouteReady;
 
   return (
     <>
+      {!loading && (
+        <NotificationProvider>
+          <ActivityProvider>
+            <InvitationProvider>
+              <AppRoutes
+                initialRouteReady={initialRouteReady}
+                onInitialRouteReady={() => setInitialRouteReady(true)}
+              />
+            </InvitationProvider>
+          </ActivityProvider>
+        </NotificationProvider>
+      )}
       <AnimatePresence mode="wait">
         {showSplash && (
           <WorkspaceSplash
@@ -29,15 +42,6 @@ function AuthenticatedApp() {
           />
         )}
       </AnimatePresence>
-      {!showSplash && (
-        <NotificationProvider>
-          <ActivityProvider>
-            <InvitationProvider>
-              <AppRoutes />
-            </InvitationProvider>
-          </ActivityProvider>
-        </NotificationProvider>
-      )}
     </>
   );
 }
