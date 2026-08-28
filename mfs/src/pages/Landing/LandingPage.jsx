@@ -30,6 +30,25 @@ const CenterImageSrcSet = [640, 960, 1280, 1600]
   .map((w) => `/media/optimized/center-image-${w}.webp ${w}w`)
   .join(', ');
 
+const FacilityGearbox = ({ reduceMotion }) => (
+  <div className={`facility-gearbox ${reduceMotion ? 'is-static' : ''}`} aria-hidden="true">
+    <div className="facility-gearbox-glow" />
+    {[
+      { position: 'one', large: false },
+      { position: 'two', large: true },
+      { position: 'three', large: false },
+      { position: 'four', large: false },
+    ].map(({ position, large }) => (
+      <div key={position} className={`facility-gear ${position} ${large ? 'large' : ''}`}>
+        <div className="facility-gear-inner">
+          {Array.from({ length: 6 }).map((_, index) => <span className="facility-gear-bar" key={index} />)}
+        </div>
+      </div>
+    ))}
+    <div className="facility-gearbox-overlay" />
+  </div>
+);
+
 const AnimatedStatValue = ({ value, reduceMotion }) => {
   const valueRef = useRef(null);
   const inView = useInView(valueRef, { once: true, amount: 0.7 });
@@ -714,24 +733,37 @@ const LandingPage = () => {
             </p>
           </div>
           <motion.div
-            className="mt-12 grid md:grid-cols-2 lg:grid-cols-4 gap-6"
+            className="mt-12 grid items-stretch gap-7 lg:grid-cols-[minmax(280px,.8fr)_minmax(0,2fr)]"
             variants={!reduceMotion ? cardStagger : undefined}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, amount: 0.2 }}
           >
-            {howItWorks.map((step, index) => (
-              <motion.div
-                key={step.step}
-                className="landing-step relative rounded-2xl border border-slate-200 bg-white p-6"
-                variants={!reduceMotion ? cardItem : undefined}
-              >
-                <div className="landing-step-number">{step.step}</div>
-                <h3 className="mt-2 text-base font-semibold">{step.title}</h3>
-                <p className="mt-2 text-sm text-slate-600">{step.desc}</p>
-                {index < howItWorks.length - 1 && <ArrowRight className="landing-step-arrow hidden lg:block" aria-hidden="true" />}
-              </motion.div>
-            ))}
+            <motion.div variants={!reduceMotion ? cardItem : undefined} className="workflow-automation-panel relative overflow-hidden rounded-3xl border border-blue-200/60 p-6">
+              <div className="relative z-10">
+                <span className="inline-flex items-center gap-2 rounded-full border border-blue-400/20 bg-blue-500/10 px-3 py-1 text-xs font-bold uppercase tracking-[.16em] text-blue-700">
+                  <Wrench className="h-3.5 w-3.5" /> Smart automation
+                </span>
+                <h3 className="mt-4 text-xl font-bold text-slate-950">Every moving part, working together.</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">FacilityPro connects requests, teams, assets, and vendors in one coordinated workflow.</p>
+              </div>
+              <div className="relative z-10 mt-6 flex justify-center"><FacilityGearbox reduceMotion={reduceMotion} /></div>
+              <div className="relative z-10 mt-5 flex items-center gap-2 text-xs font-semibold text-emerald-700">
+                <span className="relative flex h-2.5 w-2.5"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-50" /><span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" /></span>
+                Workflows running smoothly
+              </div>
+            </motion.div>
+
+            <div className="grid gap-5 sm:grid-cols-2">
+              {howItWorks.map((step, index) => (
+                <motion.div key={step.step} className="landing-step relative rounded-2xl border border-slate-200 bg-white p-6" variants={!reduceMotion ? cardItem : undefined}>
+                  <div className="landing-step-number">{step.step}</div>
+                  <h3 className="mt-2 text-base font-semibold">{step.title}</h3>
+                  <p className="mt-2 text-sm text-slate-600">{step.desc}</p>
+                  {index < howItWorks.length - 1 && <ArrowRight className="landing-step-arrow hidden" aria-hidden="true" />}
+                </motion.div>
+              ))}
+            </div>
           </motion.div>
         </div>
       </motion.section>
